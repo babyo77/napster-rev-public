@@ -17,6 +17,5 @@ or copy and open in new tab - https://t7uy9dv1k3t.typeform.com/to/zUPL46hx
 
 - React
 - Appwrite
-- Howler-js
 
 
