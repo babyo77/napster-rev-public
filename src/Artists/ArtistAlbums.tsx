@@ -10,7 +10,7 @@ const ArtistAlbums: React.FC<albums> = ({
 }) => {
   return (
     <Link to={`/album/${albumId}?id=${artistId}`}>
-      <div className="flex items-center justify-center mt-0.5  px-4">
+      <div className="flex items-center justify-center mt-0.5  px-3">
         <div>
           <div className=" h-36 w-36">
             <LazyLoadImage
@@ -19,7 +19,7 @@ const ArtistAlbums: React.FC<albums> = ({
               effect="blur"
               src={thumbnailUrl}
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-                (e.currentTarget.src = "/demo3.jpeg")
+                (e.currentTarget.src = "/liked.webp")
               }
               alt="Image"
               className="rounded-lg object-cover h-[100%] w-[100%]"

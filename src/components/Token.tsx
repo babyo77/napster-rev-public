@@ -29,7 +29,7 @@ export function Token() {
   return (
     <Dialog>
       <DialogTrigger>
-        <p className=" rounded-xl py-2.5 mt-3 bg-secondary w-full text-base">
+        <p className=" rounded-xl py-2.5 mt-3 bg-neutral-900  w-full text-base">
           Token
         </p>
       </DialogTrigger>
@@ -55,12 +55,12 @@ export function Token() {
             type="submit"
             size="sm"
             variant={"secondary"}
-            className="px-3 bg-zinc-800 text-white"
+            className="px-3 bg-zinc-800 hover:bg-zinc-100/20 text-white"
           >
             <span className="sr-only" onClick={handleCopy}>
               Copy
             </span>
-            <CopyIcon className="h-4 w-4" onClick={handleCopy} />
+            <CopyIcon className="h-4 w-4 " onClick={handleCopy} />
           </Button>
         </div>
         <DialogFooter className="sm:justify-start">
@@ -68,7 +68,7 @@ export function Token() {
             <Button
               asChild
               variant={"secondary"}
-              className="font-bold py-5 w-full rounded-xl"
+              className=" py-5 w-full rounded-xl"
             >
               <p>Close</p>
             </Button>

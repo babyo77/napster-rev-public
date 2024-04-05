@@ -8,35 +8,39 @@
     />
     <meta name="author" content="babyo7_" />
     <meta
+      name="keywords"
+      content="music, digital music, streaming, NapsterDrx"
+    />
+    <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=0"
     />
     <meta name="robots" content="index, follow" />
 
     <!-- Favicon and manifest -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.webp" />
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/newfavicon.jpg" />
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- Title and application name -->
-    <title>Napster</title>
+    <title>NapsterDrx</title>
     <meta name="application-name" content="NapsterDrx" />
 
     <!-- Icons for various platforms -->
     <link
       rel="icon"
       sizes="16x16 32x32 48x48"
-      href="/assets/icons/icon-48x48x.png"
+      href="/assets/icons/favicon-48x48x.png"
     />
-    <link rel="icon" sizes="512x512" href="/assets/icons/icon-512x512x.png" />
+    <link rel="icon" sizes="512x512" href="/assets/icons/newfavicon.jpg" />
     <link
       rel="apple-touch-icon"
       sizes="512x512"
-      href="/assets/icons/icon-512x512x.png"
+      href="/assets/icons/newfavicon.jpg"
     />
 
     <!-- Apple-specific meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="#09090b" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="#121212" />
     <meta name="apple-mobile-web-app-title" content="NapsterDrx" />
 
     <!-- Open Graph Protocol for social media sharing -->
@@ -45,9 +49,17 @@
       property="og:description"
       content="A digital music service that gives you access to millions of songs."
     />
-    <meta property="og:image" content="/favicon.jpeg" />
+    <meta
+      property="og:image"
+      content="https://napster-drx.vercel.app/newfavicon.jpg"
+    />
     <meta property="og:url" content="https://napster-drx.vercel.app" />
     <meta property="og:type" content="website" />
+    <!-- For iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <!-- For Android -->
+    <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- Twitter Card for Twitter sharing -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -59,7 +71,7 @@
     />
     <meta
       name="twitter:image"
-      content="https://napster-drx.vercel.app/favicon.jpeg"
+      content="https://napster-drx.vercel.app/newfavicon.jpg"
     />
 
     <!-- Canonical URL to specify the preferred version of the page -->
@@ -71,12 +83,27 @@
         "@type": "Organization",
         "name": "NapsterDrx",
         "url": "https://napster-drx.vercel.app",
-        "logo": "https://napster-drx.vercel.app/favicon.jpeg,
+        "logo": "https://napster-drx.vercel.app/newfavicon.jpg,
         "sameAs": [
           "https://www.instagram.com/babyo7_",
           "https://twitter.com/tanmay11117",
         ]
       }
+    </script>
+
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-CBP9L999P9"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-CBP9L999P9");
     </script>
 
     <!-- CSS and JavaScript -->

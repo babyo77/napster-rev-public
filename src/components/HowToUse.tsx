@@ -17,13 +17,13 @@ function HowToUse() {
   return (
     <Dialog>
       <DialogTrigger>
-        <p className=" rounded-xl py-2.5 mt-3 bg-secondary w-full text-base">
-          Load from Spotify
+        <p className=" rounded-xl bg-green-500 py-2.5 mt-3  w-full text-base">
+          Transfer from Spotify
         </p>
       </DialogTrigger>
-      <DialogContent className="w-[87vw] rounded-2xl">
+      <DialogContent className="w-[87vw]  rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="  text-lg">Adding Soon...</DialogTitle>
+          <DialogTitle className="  text-lg">In app coming soon</DialogTitle>
         </DialogHeader>
 
         <div>
@@ -32,9 +32,9 @@ function HowToUse() {
               width="100%"
               height="100%"
               effect="blur"
-              src="/favicon.jpeg"
-              alt="install-NGLdrx"
-              className=" border rounded-xl object-cover h-[100%] w-[100%]"
+              src="https://i.pinimg.com/originals/27/6f/27/276f273d11f8b9dbc0a9c55bb38ea8c6.gif"
+              alt="Transfer"
+              className=" border rounded-2xl object-cover h-[100%] w-[100%]"
             />
           </AspectRatio>
         </div>
@@ -43,9 +43,11 @@ function HowToUse() {
             <Button
               asChild
               variant={"secondary"}
-              className="font-bold py-5 w-full rounded-xl"
+              className=" py-5 w-full rounded-xl"
             >
-              <p>Start listening</p>
+              <a href="https://www.tunemymusic.com/transfer" target="_blank">
+                Try Third Party
+              </a>
             </Button>
           </DialogClose>
         </DialogFooter>

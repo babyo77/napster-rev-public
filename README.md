@@ -1,4 +1,4 @@
-# `NaspterDrx `
+# `NaspterDrx - by babyo7_`
 [![X](https://img.shields.io/badge/X-%23000000.svg?style=for-the-badge&logo=X&logoColor=white)](https://twitter.com/tanmay11117)
 ### ``Introduction``
 
@@ -17,5 +17,6 @@ or copy and open in new tab - https://t7uy9dv1k3t.typeform.com/to/zUPL46hx
 
 - React
 - Appwrite
+
 
 

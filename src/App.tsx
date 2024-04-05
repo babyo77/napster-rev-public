@@ -21,6 +21,7 @@ function AppComp() {
       try {
         db.createDocument(DATABASE_ID, NEW_USER, ID.unique(), {
           user: localStorage.getItem("uid") || "error",
+          ios: ScreenSizeCheck(),
         });
       } catch (error) {
         console.log(error);
@@ -44,7 +45,14 @@ function AppComp() {
     );
   }
 
-  if (!Compatible) {
+  return (
+    <>
+      <Outlet />
+      <Tabs />
+    </>
+  );
+
+  if (Compatible) {
     return (
       <div className=" w-full   fade-in flex-col h-screen flex justify-center items-center">
         <span className="text-base font-semibold text-zinc-400 py-3 px-4">
@@ -56,13 +64,6 @@ function AppComp() {
       </div>
     );
   }
-
-  return (
-    <>
-      <Outlet />
-      <Tabs />
-    </>
-  );
 }
 
 const App = React.memo(AppComp);

@@ -1,5 +1,7 @@
 interface playlistSongs {
+  $id?: string;
   youtubeId: string;
+  for?: string;
   title: string;
   artists: artists[];
   thumbnailUrl: string;
@@ -9,6 +11,22 @@ interface homePagePlaylist {
   image: string;
   url: string;
   type: string;
+}
+
+interface Sponsors {
+  name: string;
+  discord: string;
+  image: string;
+  snapchat: string;
+  instagram: string;
+  twitter: string;
+}
+
+interface spotifyTransfer {
+  name: string;
+  image: string;
+  creator: string;
+  tracks: [{ track: string }];
 }
 
 interface artists {
@@ -22,7 +40,14 @@ interface recentSearch {
   user: string;
 }
 
+interface lyrics {
+  title: string;
+  lyrics: string;
+}
+
 interface SearchPlaylist {
+  name?: string;
+  fromSearch?: boolean;
   playlistId: string;
   title: string;
   totalSongs?: number;
@@ -48,7 +73,15 @@ interface albums {
   year: string;
   thumbnailUrl: string;
 }
+
+interface searchAlbumsInterface {
+  fromSearch?: boolean;
+  albumId: string;
+  title: string;
+  thumbnailUrl: string;
+}
 interface suggestedArtists {
+  fromSearch?: boolean;
   artistId: string;
   name: string;
   thumbnailUrl: string;
@@ -64,10 +97,21 @@ interface ArtistDetails {
   singles: albums[];
   suggestedArtists: suggestedArtists[];
   thumbnails: thumbnails[];
+  songsPlaylistId: string;
 }
 
+interface lastPlayed {
+  seek: number;
+  user: string;
+  playlisturl: string;
+  navigator: string;
+  curentsongid: string;
+  index: number;
+}
 interface likedSongs {
+  type?: "album" | "playlist" | "music" | "artist";
   for: string;
+  $id: string;
   youtubeId: string;
   artists: artists[];
   title: string;
@@ -75,6 +119,8 @@ interface likedSongs {
 }
 
 interface savedPlaylist {
+  image?: string;
+  artistId?: string;
   $id?: string;
   name: string;
   creator: string;
@@ -82,7 +128,14 @@ interface savedPlaylist {
   for: string;
 }
 
+interface favArtist {
+  for: string;
+  $id: string;
+  artistId: string;
+}
 export type {
+  favArtist,
+  lyrics,
   playlistSongs,
   SearchPlaylist,
   artists,
@@ -91,8 +144,12 @@ export type {
   savedPlaylist,
   AlbumSongs,
   recentSearch,
+  Sponsors,
+  lastPlayed,
+  spotifyTransfer,
   albums,
   likedSongs,
   ArtistDetails,
   suggestedArtists,
+  searchAlbumsInterface,
 };

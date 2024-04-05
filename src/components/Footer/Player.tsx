@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import { FaPause } from "react-icons/fa6";
 import { useCallback } from "react";
-import { play, setCurrentIndex } from "@/Store/Player";
+import { play, setCurrentIndex, setIsIphone } from "@/Store/Player";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
@@ -19,6 +19,7 @@ export function Player() {
   const isPlaying = useSelector(
     (state: RootState) => state.musicReducer.isPlaying
   );
+  const isLooped = useSelector((state: RootState) => state.musicReducer.isLoop);
   const isPlaylist = useSelector(
     (state: RootState) => state.musicReducer.playlist
   );
@@ -26,6 +27,9 @@ export function Player() {
     (state: RootState) => state.musicReducer.currentIndex
   );
 
+  const isStandalone = useSelector(
+    (state: RootState) => state.musicReducer.isIphone
+  );
   const handlePlay = useCallback(() => {
     if (isPlaying) {
       music?.pause();
@@ -37,14 +41,18 @@ export function Player() {
   }, [dispatch, isPlaying, music]);
 
   const handleNext = useCallback(() => {
+    if (!isStandalone) {
+      dispatch(setIsIphone(true));
+    }
+    if (isLooped) return;
     if (isPlaylist.length > 1) {
       dispatch(setCurrentIndex((currentIndex + 1) % isPlaylist.length));
     }
-  }, [dispatch, currentIndex, isPlaylist.length]);
+  }, [dispatch, currentIndex, isPlaylist.length, isLooped, isStandalone]);
 
   return (
     <>
-      <div className="flex items-center fade-in py-2 backdrop-blur-md space-x-5 bg-zinc-100/10 w-[94vw] rounded-2xl shadow-md mb-1.5">
+      <div className="flex items-center w-[95vw] ml-0.5 fade-in py-2 backdrop-blur-md space-x-5 bg-zinc-800/70  rounded-2xl shadow-md z-10 -mb-3">
         {isPlaylist && isPlaylist.length > 0 ? (
           <AudioPLayer />
         ) : (
@@ -67,9 +75,9 @@ export function Player() {
               </div>
             </div>
             {isLoading ? (
-              <Loader />
+              <Loader loading={true} />
             ) : (
-              <div className="flex fade-in space-x-3 pr-1">
+              <div className="flex fade-in space-x-3 pr-3">
                 <IoPlay className="h-7 w-7" />
 
                 <TbPlayerTrackNextFilled
@@ -84,18 +92,20 @@ export function Player() {
           </>
         )}
         {isLoading ? (
-          <Loader />
+          <div className="pr-[13vw]">
+            <Loader loading={true} />
+          </div>
         ) : (
           <>
             {isPlaylist && isPlaylist.length > 0 && (
-              <div className="flex fade-in space-x-3  pr-1">
+              <div className="flex fade-in space-x-3  pr-3">
                 {isPlaying ? (
                   <FaPause className="h-7 w-7" onClick={handlePlay} />
                 ) : (
                   <IoPlay className="h-7 w-7" onClick={handlePlay} />
                 )}
                 <TbPlayerTrackNextFilled
-                  className={`h-7 w-7 ${
+                  className={`h-7 w-7  ${
                     isPlaylist && isPlaylist.length > 0
                       ? "text-zinc-200"
                       : "text-zinc-400"

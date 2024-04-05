@@ -1,23 +1,32 @@
-import { lineSpinner } from "ldrs";
+import { tailspin } from "ldrs";
 
-lineSpinner.register();
-
+tailspin.register();
 function Loader({
   size,
   color,
   stroke,
+  loading,
+  className,
 }: {
+  className?: string;
   size?: string;
+  loading?: boolean;
   color?: string;
   stroke?: string;
 }) {
   return (
-    <l-line-spinner
-      size={size || "27"}
-      stroke={stroke || "1.7"}
-      speed="1"
-      color={color || "gray"}
-    ></l-line-spinner>
+    <div
+      className={`flex flex-col space-y-2 justify-center items-center text-xs font-normal ${className}`}
+    >
+      <l-tailspin
+        size={size || "30"}
+        stroke={stroke || "4"}
+        speed="1"
+        color={color || "gray"}
+      ></l-tailspin>
+
+      {!loading && <p></p>}
+    </div>
   );
 }
 

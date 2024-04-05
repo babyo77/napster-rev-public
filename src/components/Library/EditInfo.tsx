@@ -1,71 +1,83 @@
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { AiOutlineMenu } from "react-icons/ai";
 import { Button } from "../ui/button";
-import { FcFullTrash } from "react-icons/fc";
 import { useCallback, useRef } from "react";
+
 import {
   DATABASE_ID,
   PLAYLIST_COLLECTION_ID,
   db,
 } from "@/appwrite/appwriteConfig";
-import { useDispatch } from "react-redux";
-import { removePlaylist } from "@/Store/Player";
+import { useQueryClient } from "react-query";
+import { savedPlaylist } from "@/Interface";
+import { RxCross2 } from "react-icons/rx";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import { AlertTitle } from "../ui/alert";
 
-const EditInfo: React.FC<{ id: string; f: string }> = ({ id, f }) => {
-  const dispatch = useDispatch();
+const EditInfo: React.FC<{ id: string; f: string; collection?: string }> = ({
+  id,
+  f,
+  collection,
+}) => {
+  const q = useQueryClient();
   const closeRef = useRef<HTMLButtonElement>(null);
   const handleDelete = useCallback(() => {
-    db.deleteDocument(DATABASE_ID, PLAYLIST_COLLECTION_ID, id).then(() => {
-      dispatch(removePlaylist(id));
+    db.deleteDocument(
+      DATABASE_ID,
+      collection || PLAYLIST_COLLECTION_ID,
+      id
+    ).then(async () => {
+      if (!collection) {
+        await q.refetchQueries<savedPlaylist[]>("savedPlaylist");
+      }
       closeRef.current?.click();
+      await q.refetchQueries<savedPlaylist[]>("savedAlbums");
     });
-  }, [id, dispatch]);
+  }, [id, collection, q]);
 
   return (
-    <Dialog>
-      <DialogTrigger>
-        <AiOutlineMenu className="h-7 w-7 text-zinc-400" />
-      </DialogTrigger>
-      <DialogContent className="items-center rounded-2xl flex flex-col w-[80vw]">
-        <DialogHeader>
-          <DialogTitle className="text-zinc-400 font-bold">
+    <AlertDialog>
+      <AlertDialogTrigger className="flex w-full items-center justify-end space-x-2">
+        <RxCross2 className="h-6 w-6 text-zinc-500" />
+      </AlertDialogTrigger>
+      <AlertDialogContent className="items-center m-0 p-0 pt-3 pb-1 border-none rounded-2xl flex flex-col w-[60vw] bg-neutral-900/95">
+        <AlertDialogHeader>
+          <AlertTitle className="text-zinc-300  font-semibold pt-1">
             Are you sure?
-          </DialogTitle>
-        </DialogHeader>
+          </AlertTitle>
+        </AlertDialogHeader>
 
-        <FcFullTrash className="h-24 w-24" />
-        <Button
-          disabled={f === "default" ? true : false}
-          variant={"destructive"}
-          onClick={handleDelete}
-          className=" py-4 rounded-xl w-52 bg-red-500"
-        >
-          Delete
-        </Button>
-
-        <DialogClose>
-          <Button
-            asChild
-            ref={closeRef}
-            variant={"secondary"}
-            className=" py-4 rounded-xl w-52"
-          >
-            <p>Close</p>
-          </Button>
-        </DialogClose>
-        <DialogFooter className="text-center text-xs text-zinc-500">
-          {id}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="flex items-center flex-col w-full justify-center ">
+          <div className=" h-[0.11rem] bg-zinc-800/30 w-full"></div>
+          <AlertDialogCancel className="w-full bg-transparent  border-none p-0 m-0">
+            <Button
+              asChild
+              disabled={f === "default" ? true : false}
+              variant={"secondary"}
+              onClick={handleDelete}
+              className="px-7 py-5 bg-transparent text-lg font-normal rounded-xl  text-red-500 "
+            >
+              <p className=" w-full">Yes</p>
+            </Button>
+          </AlertDialogCancel>
+          <div className=" h-[0.11rem] bg-zinc-800/30 w-full"></div>
+          <AlertDialogCancel className="w-full bg-transparent  border-none p-0 m-0">
+            <Button
+              asChild
+              ref={closeRef}
+              variant={"secondary"}
+              className="px-7 bg-transparent text-zinc-400 font-normal text-base rounded-xl "
+            >
+              <p className="font-normal w-full">No</p>
+            </Button>
+          </AlertDialogCancel>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 
