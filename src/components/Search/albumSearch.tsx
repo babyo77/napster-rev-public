@@ -50,7 +50,7 @@ function AlbumSearchComp({
   return (
     <div
       onClick={handleClick}
-      className="flex fade-in py-2 space-x-2 items-center"
+      className="flex  animate-fade-right py-2 space-x-2 items-center"
     >
       <Link to={`/album/${albumId}`}>
         <div className="overflow-hidden h-14 w-14 space-y-2">

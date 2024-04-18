@@ -11,7 +11,7 @@ const SuggestedArtist: React.FC<suggestedArtists> = ({
     <Link to={`/artist/${artistId}`}>
       <div
         id={artistId}
-        className="flex items-center fade-in mt-1 overflow-scroll pb-40 space-x-3 px-3"
+        className="flex items-center  mt-1 overflow-scroll pb-40 space-x-3 px-3"
       >
         <div>
           <div className=" h-20 w-20 mb-1">
@@ -21,10 +21,12 @@ const SuggestedArtist: React.FC<suggestedArtists> = ({
               effect="blur"
               src={thumbnailUrl}
               alt="Image"
-              className="rounded-full object-cover h-[100%] w-[100%]"
+              className="rounded-full animate-fade-right object-cover h-[100%] w-[100%]"
             />
           </div>
-          <h1 className="text-center text-xs mt-3 w-[5rem] truncate">{name}</h1>
+          <h1 className="text-center animate-fade-right text-xs mt-3 w-[5rem] truncate">
+            {name}
+          </h1>
         </div>
       </div>
     </Link>

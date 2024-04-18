@@ -200,12 +200,12 @@ function ArtistPageComp() {
               }
               alt="Image"
               loading="lazy"
-              className="object-cover rounded-full h-[100%] w-[100%]"
+              className="object-cover animate-fade-down rounded-full h-[100%] w-[100%]"
             />
           </div>
 
           <div className=" absolute flex bottom-2 px-4  left-0 items-center justify-between right-0">
-            <h1 className="text-center  font-semibold py-2 text-3xl capitalize">
+            <h1 className="text-center animate-fade-right  font-semibold py-2 text-3xl capitalize">
               {data?.name}
             </h1>
             <div className="flex space-x-4 py-1">
@@ -213,7 +213,7 @@ function ArtistPageComp() {
                 type="button"
                 onClick={handleShufflePlay}
                 variant={"secondary"}
-                className="px-2.5 flex justify-center items-center   text-white shadow-none bg-red-600 backdrop-blur-lg
+                className="px-2.5 flex animate-fade-left justify-center items-center   text-white shadow-none bg-red-600 backdrop-blur-lg
                   rounded-full "
               >
                 <IoPlay className="h-4 w-4" />
@@ -226,7 +226,9 @@ function ArtistPageComp() {
       {data && data.albums.length > 0 && (
         <div className="flex flex-col">
           <div className="flex  px-3 py-2 pt-3 ">
-            <h1 className="text-start font-semibold text-xl">Albums</h1>
+            <h1 className="text-start font-semibold animate-fade-right    text-xl">
+              Albums
+            </h1>
           </div>
           <div className="flex overflow-x-scroll -space-x-3  items-center">
             {data &&
@@ -248,7 +250,9 @@ function ArtistPageComp() {
       {data && data.singles.length > 0 && (
         <div className="flex flex-col">
           <div className="flex  px-3 py-2 pt-3 ">
-            <h1 className="text-start font-semibold text-xl">Singles</h1>
+            <h1 className="text-start animate-fade-right font-semibold text-xl">
+              Singles
+            </h1>
           </div>
           <div className="flex overflow-x-scroll -space-x-3  items-center">
             {data &&
@@ -272,7 +276,9 @@ function ArtistPageComp() {
       {data && data.suggestedArtists.length > 0 && (
         <div className="flex flex-col">
           <div className="flex  px-3 py-2 pt-3 ">
-            <h1 className="text-start font-semibold text-xl">Fans also like</h1>
+            <h1 className="text-start font-semibold animate-fade-right text-xl">
+              Fans also like
+            </h1>
           </div>
           <div className="flex overflow-x-scroll -space-x-3 items-center">
             {data &&

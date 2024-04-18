@@ -5,6 +5,8 @@ import {
   LISTEN_NOW_COLLECTION_ID,
   db,
 } from "@/appwrite/appwriteConfig";
+import { useNavigate } from "react-router-dom";
+
 import { homePagePlaylist, playlistSongs } from "@/Interface";
 import { useQuery } from "react-query";
 import Artist from "./Artist";
@@ -17,21 +19,19 @@ import Header from "../Header/Header";
 import NapsterSuggested from "./NapsterSuggested";
 import { SuggestionSearchApi, streamApi } from "@/API/api";
 import Loader from "../Loaders/Loader";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
+
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
-import { SetFeed, SetFeedMode } from "@/Store/Player";
+import { SetFeed } from "@/Store/Player";
 import { useInView } from "react-intersection-observer";
 import ReactPullToRefresh from "react-simple-pull-to-refresh";
 import FeedSong from "./FeedSongs";
+
 export function ListenNowComp() {
   const checked = useSelector(
     (state: RootState) => state.musicReducer.feedMode
   );
-  const lastPlayed = useSelector(
-    (state: RootState) => state.musicReducer.lastPlayed
-  );
+
   const music = useSelector((state: RootState) => state.musicReducer.Feed);
 
   const [report, setReport] = React.useState<boolean>();
@@ -106,7 +106,9 @@ export function ListenNowComp() {
     if (!report) {
       try {
         axios.get(
-          `https://api.telegram.org/bot6178294062:AAEi72UVOgyEm_RhZqilO_ANsKcRcW06C-0/sendMessage?chat_id=5356614395&text=plyback server is down${streamApi}`
+          `https://api.telegram.org/bot6178294062:AAEi72UVOgyEm_RhZqilO_ANsKcRcW06C-0/sendMessage?chat_id=5356614395&text=plyback server is down${streamApi}reported by ${localStorage.getItem(
+            "uid"
+          )}`
         );
         setReport(true);
       } catch (error) {
@@ -116,6 +118,15 @@ export function ListenNowComp() {
     refetch();
   };
 
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const online = navigator.onLine;
+    if (!online) {
+      navigate("/offline/");
+    }
+  }, [navigate]);
+
   const playlist = useSelector(
     (state: RootState) => state.musicReducer.playlist
   );
@@ -123,9 +134,16 @@ export function ListenNowComp() {
   const query = async () => {
     const currentIndex = Math.floor(Math.random() * playlist.length);
     const q = await axios.get(
-      `${SuggestionSearchApi}${playlist[currentIndex].youtubeId}`
+      `${SuggestionSearchApi}${
+        playlist[currentIndex].youtubeId.startsWith("https")
+          ? "sem" +
+            playlist[currentIndex].title +
+            " " +
+            playlist[currentIndex].artists[0].name
+          : playlist[currentIndex].youtubeId
+      }`
     );
-    dispatch(SetFeed(q.data.slice(1)));
+    dispatch(SetFeed(q.data));
     return q.data as playlistSongs[];
   };
 
@@ -136,17 +154,20 @@ export function ListenNowComp() {
       refetchOnWindowFocus: false,
       staleTime: 60 * 60000,
       refetchOnMount: false,
+
       onError() {
         refetchFeed();
       },
       onSuccess(data) {
         data.length == 0 && refetchFeed();
+        data[0].youtubeId == null && refetchFeed();
       },
     }
   );
 
   const { ref, inView } = useInView({
     threshold: 0,
+    rootMargin: "500px",
   });
 
   React.useEffect(() => {
@@ -154,7 +175,7 @@ export function ListenNowComp() {
       axios
         .get(`${SuggestionSearchApi}${music[music.length - 1].youtubeId}`)
         .then((q) => {
-          dispatch(SetFeed(music.concat(q.data.slice(1))));
+          dispatch(SetFeed(music.concat(q.data.slice(1, 7))));
         });
     }
   }, [inView, music, dispatch]);
@@ -169,12 +190,13 @@ export function ListenNowComp() {
           <Alert className=" fade-in bg-red-500 top-4 border-none">
             <AlertTitle>Playback Server is Down !</AlertTitle>
             <AlertDescription>
-              <span className="flex">
-                music will not play for a while{" "}
-                <p onClick={handleReport} className="ml-1">
+              <p>
+                Restart the app to connect to another server, or wait until it's
+                back online.{" "}
+                <span onClick={handleReport}>
                   {report ? "@check again" : "@send report"}
-                </p>
-              </span>
+                </span>
+              </p>
             </AlertDescription>
           </Alert>
         </div>
@@ -184,9 +206,10 @@ export function ListenNowComp() {
           <Alert className=" fade-in bg-red-500 top-4 border-none">
             <AlertTitle>Playback Server is Down !</AlertTitle>
             <AlertDescription>
-              <p className="flex">
-                music will not play for a while{" "}
-                <span onClick={handleReport} className="ml-1">
+              <p>
+                Restart the app to connect to another server, or wait until it's
+                back online.{" "}
+                <span onClick={handleReport}>
                   {report ? "@check again" : "@send report"}
                 </span>
               </p>
@@ -206,18 +229,7 @@ export function ListenNowComp() {
           <Loader />
         </div>
       )}
-      {lastPlayed && (
-        <div className=" rounded-xl fade-in -mt-4  py-2.5  items-center space-x-2 flex px-5">
-          <Label htmlFor="airplane-mode" className="text-base">
-            Feed mode
-          </Label>
-          <Switch
-            checked={checked}
-            id="airplane-mode"
-            onClick={() => dispatch(SetFeedMode(!checked))}
-          />
-        </div>
-      )}
+
       {checked && music && (
         <ReactPullToRefresh
           pullingContent={""}
@@ -234,7 +246,7 @@ export function ListenNowComp() {
                 <div key={r.youtubeId + i} ref={ref}>
                   <FeedSong
                     fromSearch={true}
-                    artistId={r.artists[0].id}
+                    artistId={r.artists[0]?.id || ""}
                     audio={r.youtubeId}
                     artistName={r.artists[0].name}
                     id={r.youtubeId}
@@ -248,7 +260,7 @@ export function ListenNowComp() {
         </ReactPullToRefresh>
       )}
       {!checked && (
-        <div className="h-[80dvh] pb-20 overflow-scroll">
+        <div className="h-[80dvh] pb-28 overflow-scroll">
           {suggested && suggested.length > 0 && (
             <NapsterSuggested data={suggested} />
           )}

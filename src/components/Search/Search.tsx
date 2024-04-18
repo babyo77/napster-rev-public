@@ -161,7 +161,7 @@ function SearchComp() {
           <div className="border rounded-lg rounded-r-none border-r-0 px-2 border-zinc-800">
             <IoSearchOutline
               onClick={clearSearchQuery}
-              className=" text-white fade-in left-6 mt-2 h-5 w-5"
+              className=" text-white  animate-fade-right left-6 mt-2 h-5 w-5"
             />
           </div>
           <Input
@@ -169,7 +169,7 @@ function SearchComp() {
             type="text"
             onChange={() => search(1100)}
             placeholder="Artists, Songs, Playlists and More"
-            className="  px-2 relative  shadow-none rounded-lg rounded-l-none border-l-0 "
+            className="  px-2 relative   animate-fade-down shadow-none rounded-lg rounded-l-none border-l-0 "
           />
         </div>
         {searchQuery.length > 0 && (
@@ -306,9 +306,7 @@ function SearchComp() {
                     .map((p) => (
                       <PlaylistSearchComp
                         key={p.thumbnailUrl + p.playlistId}
-                        playlistId={p.playlistId
-                          .replace("VL", "")
-                          .replace("MPSP", "")}
+                        playlistId={p.playlistId}
                         thumbnailUrl={p.thumbnailUrl}
                         title={p.title}
                       />
@@ -353,9 +351,7 @@ function SearchComp() {
                     .map((p) => (
                       <PlaylistSearchComp
                         key={p.thumbnailUrl + p.playlistId}
-                        playlistId={p.playlistId
-                          .replace("VL", "")
-                          .replace("MPSP", "")}
+                        playlistId={p.playlistId}
                         thumbnailUrl={p.thumbnailUrl}
                         title={p.title}
                       />
@@ -397,9 +393,7 @@ function SearchComp() {
                     .map((p) => (
                       <PlaylistSearchComp
                         key={p.thumbnailUrl + p.playlistId}
-                        playlistId={p.playlistId
-                          .replace("VL", "")
-                          .replace("MPSP", "")}
+                        playlistId={p.playlistId}
                         thumbnailUrl={p.thumbnailUrl}
                         title={p.title}
                       />

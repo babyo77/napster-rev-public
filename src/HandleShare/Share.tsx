@@ -13,10 +13,10 @@ function Share() {
     }
   }, [uid]);
   return (
-    <div className="fade-in">
+    <div className="">
       <GoShare
         onClick={handleShare}
-        className="h-8 w-8 fade-in   backdrop-blur-md text-white bg-black/30 rounded-full p-1.5"
+        className="h-8 w-8 animate-fade-left backdrop-blur-md text-white bg-black/30 rounded-full p-1.5"
       />
     </div>
   );

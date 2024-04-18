@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -121,12 +121,6 @@ function UpNextSongs({
     transform: CSS.Transform.toString(transform),
   };
 
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const toFocus = ref.current;
-    toFocus?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [currentIndex]);
-
   const handleDelete = useCallback(() => {
     //@ts-expect-error:added custom id
     const index = playlist.findIndex((i) => i.id == id);
@@ -157,6 +151,7 @@ function UpNextSongs({
     >
       {!album ? (
         <div
+          id={audio}
           onClick={handlePlay}
           className="overflow-hidden h-12 w-12 space-y-2"
         >
@@ -181,6 +176,7 @@ function UpNextSongs({
 
       <div
         onClick={handlePlay}
+        id={audio}
         className="flex  flex-col pl-1 space-y-0.5 text-start w-[69dvw] "
       >
         <p
@@ -190,21 +186,21 @@ function UpNextSongs({
         >
           {title.replace("______________________________________", "untitled")}
         </p>
-        {link ? (
+        {link && artistId ? (
           <Link to={`/artist/${artistId}`} className="w-[40vw]">
             <p className="-mt-0.5 h-[1rem] capitalize text-xs  text-zinc-400 w-[40dvw]  truncate">
-              {artist}
+              {artist || "Unknown"}
             </p>
           </Link>
         ) : (
           <p className="-mt-0.5 text-xs  text-zinc-400 w-[40dvw]  truncate">
-            {artist}
+            {artist || "Unknown"}
           </p>
         )}
       </div>
       <div>
         {queue[currentIndex]?.youtubeId == audio ? (
-          <div ref={ref}>
+          <div>
             {isPlaying ? (
               <FaPause
                 className={` h-5 w-5 transition-all duration-300`}

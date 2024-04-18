@@ -1,7 +1,14 @@
-import { savedPlaylist, playlistSongs, suggestedArtists } from "@/Interface";
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import {
+  savedPlaylist,
+  playlistSongs,
+  suggestedArtists,
+  spotifyTransfer,
+} from "@/Interface";
+import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
+import { RootState } from "./Store";
 
 interface Player {
+  user: boolean;
   playlistUrl: string;
   playingPlaylistUrl: string;
   playlist: playlistSongs[];
@@ -25,14 +32,20 @@ interface Player {
   seek: number;
   uid: string | null;
   lastPlayed: boolean;
+  SpotifyProgress: number;
   sharePlayCode: string;
   Feed: playlistSongs[];
   isLikedSong: boolean;
+  spotifyTrack: spotifyTransfer | null;
   currentArtistId: string;
   savedPlaylist: savedPlaylist[];
   savedAlbums: savedPlaylist[];
   savedArtists: suggestedArtists[];
   sharePlayConnected: boolean;
+  reels: playlistSongs[];
+  reelsIndex: number;
+  limit: number;
+  sentQue: string[];
   shareLyrics:
     | [
         {
@@ -45,18 +58,22 @@ interface Player {
 
 const initialState: Player = {
   isLikedSong: false,
+  user: false,
   sharePlayCode: "",
   lastPlayed: false,
   uid: localStorage.getItem("uid"),
   currentArtistId: "",
   isIphone: false,
+  spotifyTrack: null,
   PlaylistOrAlbum: "",
   playingPlaylistUrl: "",
-  progress: "--:--",
-  duration: "--:--",
+  progress: 0,
+  duration: 0,
+  SpotifyProgress: 0,
   isLoop: false,
   seek: 0,
   feedMode: true,
+  sentQue: [],
   Feed: [],
   sharePlayConnected: false,
   currentToggle: "Playlists",
@@ -70,12 +87,15 @@ const initialState: Player = {
   isPlaying: false,
   currentPlaying: null,
   currentIndex: 0,
+  reelsIndex: 0,
   music: null,
   currentSongId: "",
   search: "",
+  limit: 0,
   savedPlaylist: [],
   savedAlbums: [],
   savedArtists: [],
+  reels: [],
 };
 
 const MusicPlayer = createSlice({
@@ -97,6 +117,9 @@ const MusicPlayer = createSlice({
     SetPlaylistOrAlbum: (state, action: PayloadAction<string>) => {
       state.PlaylistOrAlbum = action.payload;
     },
+    SetSentQue: (state, action: PayloadAction<string[]>) => {
+      state.sentQue = action.payload;
+    },
     SetCurrentPlaying: (state, action: PayloadAction<playlistSongs>) => {
       state.currentPlaying = action.payload;
     },
@@ -106,11 +129,17 @@ const MusicPlayer = createSlice({
     SetQueue: (state, action: PayloadAction<playlistSongs[]>) => {
       state.queue = action.payload;
     },
+    SetReels: (state, action: PayloadAction<playlistSongs[]>) => {
+      state.reels = action.payload;
+    },
     SetLastPlayed: (state, action: PayloadAction<boolean>) => {
       state.lastPlayed = action.payload;
     },
     SetSeek: (state, action: PayloadAction<number>) => {
       state.seek = action.payload;
+    },
+    SetSpotifyProgress: (state, action: PayloadAction<number>) => {
+      state.SpotifyProgress = action.payload;
     },
     SetCurrentSongId: (state, action: PayloadAction<string>) => {
       state.currentSongId = action.payload;
@@ -192,6 +221,12 @@ const MusicPlayer = createSlice({
       state.queue = state.playlist;
       state.currentIndex = action.payload;
     },
+    setReelsIndex: (state, action: PayloadAction<number>) => {
+      state.reelsIndex = action.payload;
+    },
+    setLimit: (state, action: PayloadAction<number>) => {
+      state.limit = action.payload;
+    },
     setNextPrev: (state, action: PayloadAction<string>) => {
       state.queue = state.playlist;
       if (action.payload == "prev") {
@@ -211,11 +246,26 @@ const MusicPlayer = createSlice({
     setSavedArtists: (state, action: PayloadAction<suggestedArtists[]>) => {
       state.savedArtists = action.payload;
     },
+    setSpotifyTrack: (state, action: PayloadAction<spotifyTransfer | null>) => {
+      state.spotifyTrack = action.payload;
+    },
+    setUser: (state, action: PayloadAction<boolean>) => {
+      state.user = action.payload;
+    },
   },
 });
 
+export const selectLyricsProgress = (state: RootState) =>
+  state.musicReducer.progress;
+
+export const selectMemoizedLyricsProgress = createSelector(
+  [selectLyricsProgress],
+  (progress) => progress
+);
+
 export const {
   shuffle,
+  setUser,
   play,
   SetFeedMode,
   SetLastPlayed,
@@ -226,24 +276,30 @@ export const {
   setSavedAlbums,
   SetSharePlayCode,
   setCurrentToggle,
+  SetSentQue,
   SetPlaylistOrAlbum,
   setPlaylist,
   setCurrentIndex,
   SetQueue,
   SetCurrentPlaying,
   setPlayer,
+  setLimit,
   setSearchToggle,
   setNextQueue,
   SetFeed,
   setSearch,
+  setReelsIndex,
+  SetReels,
+  SetSpotifyProgress,
+  setSpotifyTrack,
   setPlaylistUrl,
   setSavedPlaylist,
   setIsLikedSong,
   setIsLoading,
   isLoop,
+  setProgressLyrics,
   setNextPrev,
   SetCurrentSongId,
-  setProgressLyrics,
   setIsIphone,
   setCurrentArtistId,
   setDurationLyrics,

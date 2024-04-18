@@ -122,7 +122,7 @@ function PlaylistShare({
   return (
     <Drawer>
       <DrawerTrigger className="p-0 m-0">
-        <GoShare className="h-8 w-8 fade-in   backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
+        <GoShare className="h-8 w-8 animate-fade-left backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
       </DrawerTrigger>
       <DrawerContent className="  h-[100dvh] rounded-none px-[4.5vw] ">
         {!round && (
@@ -130,7 +130,7 @@ function PlaylistShare({
             <Loader color="white" />
           </div>
         )}
-        <div className=" relative flex pt-[5vh] flex-col space-y-3 justify-center items-center py-[1vh] ">
+        <div className=" relative flex animate-fade-down pt-[5vh] flex-col space-y-3 justify-center items-center py-[1vh] ">
           <AspectRatio
             id="lyrics"
             ref={lyricsRef}
@@ -202,7 +202,7 @@ function PlaylistShare({
               variant={"secondary"}
               onClick={shareLyrics}
               id="share"
-              className=" text-xs flex items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
             >
               <IoShareOutline className=" h-6 w-6" />
               <p>Share</p>
@@ -210,7 +210,7 @@ function PlaylistShare({
             <Button
               variant={"secondary"}
               onClick={() => encodeImageToBlurhash(cover)}
-              className=" text-xs flex items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
             >
               <LiaExchangeAltSolid className=" h-6 w-6" />
               <p>Change BG</p>
@@ -218,7 +218,7 @@ function PlaylistShare({
             <Button
               variant={"secondary"}
               onClick={handleCopyLink}
-              className=" text-xs flex items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
             >
               <BiLinkAlt className=" h-6 w-6" />
               <p>Copy Link</p>
@@ -227,7 +227,7 @@ function PlaylistShare({
               <Button
                 variant={"secondary"}
                 onClick={handleShareSong}
-                className="text-xs fade-in flex items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+                className="text-xs fade-in flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
               >
                 {ShareSong ? (
                   <TbMicrophone2 className=" h-6 w-6" />

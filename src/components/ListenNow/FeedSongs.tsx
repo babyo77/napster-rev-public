@@ -18,6 +18,7 @@ import axios from "axios";
 import { SuggestionSearchApi } from "@/API/api";
 import { useQuery } from "react-query";
 import SongsOptions from "../Library/SongsOptions";
+
 function FeedSong({
   title,
   artist,
@@ -46,10 +47,12 @@ function FeedSong({
     return r.data as playlistSongs[];
   };
   const { data } = useQuery<playlistSongs[]>(
-    ["suggestedSongs", id],
+    ["suggestedFeed", id],
     getSuggestedSongs,
     {
       refetchOnWindowFocus: false,
+      refetchOnMount: false,
+      staleTime: 5 * 60000,
     }
   );
 
@@ -106,10 +109,13 @@ function FeedSong({
   );
 
   const image = async () => {
-    const response = await axios.get(cover, { responseType: "arraybuffer" });
+    const response = await axios.get(cover, {
+      responseType: "arraybuffer",
+    });
     const blob = new Blob([response.data], {
       type: response.headers["content-type"],
     });
+
     return URL.createObjectURL(blob);
   };
 
@@ -118,13 +124,14 @@ function FeedSong({
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
+
   return (
-    <div className="flex fade-in flex-col py-2 space-y-2 ">
+    <div className="flex  animate-fade-up flex-col py-2 space-y-2 ">
       <div className="overflow-hidden  space-y-2">
-        <AspectRatio ratio={4 / 4}>
+        <AspectRatio ratio={4 / 5} className=" rounded-xl overflow-hidden">
           <LazyLoadImage
             onClick={handlePlay}
-            src={c || cover}
+            src={c ? c : "/cache.jpg"}
             width="100%"
             height="100%"
             effect="blur"
@@ -133,12 +140,12 @@ function FeedSong({
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
               (e.currentTarget.src = "/liked.webp")
             }
-            className="rounded-md object-cover h-[100%] w-[100%]"
+            className="rounded-xl object-cover object-center h-[100%] w-[100%]"
           />
         </AspectRatio>
       </div>
       <div className=" flex justify-between">
-        <div className="flex space-y-0.5  flex-col  text-start w-[85dvw]">
+        <div className="flex space-y-0.5 px-1 flex-col  text-start w-[85dvw]">
           <p
             onClick={handlePlay}
             className={`w-[80dvw] ${

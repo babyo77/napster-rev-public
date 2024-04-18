@@ -19,7 +19,11 @@ import { ChangeLyrics } from "./ChangeLyrics";
 
 function ShareLyrics({
   lyrics,
+  size,
+  className,
 }: {
+  size?: boolean;
+  className?: string;
   lyrics?: [{ time: number | string; lyrics: string }];
 }) {
   const currentIndex = useSelector(
@@ -113,8 +117,16 @@ function ShareLyrics({
 
   return (
     <Drawer>
-      <DrawerTrigger className="m-0 p-1.5 flex  justify-center items-center bg-zinc-900 rounded-full">
-        <IoShareOutline className="h-6 w-6 text-white" />
+      <DrawerTrigger
+        className={`m-0 p-1.5 flex  justify-center items-center ${
+          className ? "" : "bg-zinc-900"
+        }   rounded-full `}
+      >
+        <IoShareOutline
+          className={` text-white ${
+            size ? "h-[1.1rem] w-[1.1rem]" : "h-6 w-6"
+          }`}
+        />
       </DrawerTrigger>
       <DrawerContent className="  h-[100dvh] rounded-none px-[4.5vw]">
         {!round && (
@@ -122,7 +134,7 @@ function ShareLyrics({
             <Loader color="white" />
           </div>
         )}
-        <div className=" relative flex pt-[5vh] flex-col space-y-3 justify-center items-center py-[1vh] ">
+        <div className=" relative flex animate-fade-down pt-[5vh] flex-col space-y-3 justify-center items-center py-[1vh] ">
           <AspectRatio
             id="lyrics"
             ref={lyricsRef}
@@ -146,7 +158,7 @@ function ShareLyrics({
                 visibleByDefault
                 loading="lazy"
                 src={
-                  playlist[currentIndex].thumbnailUrl.replace(
+                  playlist[currentIndex]?.thumbnailUrl.replace(
                     "w120-h120",
                     "w1080-h1080"
                   ) || "./favicon.jpeg"
@@ -164,7 +176,7 @@ function ShareLyrics({
                   <div className="overflow-hidden flex h-[15.5rem] w-[15.5rem]">
                     <LazyLoadImage
                       src={
-                        playlist[currentIndex].thumbnailUrl.replace(
+                        playlist[currentIndex]?.thumbnailUrl.replace(
                           "w120-h120",
                           "w1080-h1080"
                         ) || "/favicon.jpeg"
@@ -204,7 +216,7 @@ function ShareLyrics({
               variant={"secondary"}
               onClick={shareLyrics}
               id="share"
-              className=" text-xs flex items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
             >
               <IoShareOutline className=" h-6 w-6" />
               <p>Share</p>
@@ -219,7 +231,7 @@ function ShareLyrics({
                   )}`
                 )
               }
-              className=" text-xs flex items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
             >
               <LiaExchangeAltSolid className=" h-6 w-6" />
               <p>Change BG</p>
@@ -228,7 +240,7 @@ function ShareLyrics({
               <Button
                 variant={"secondary"}
                 onClick={handleShareSong}
-                className="text-xs fade-in flex items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+                className="text-xs fade-in flex  animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
               >
                 {ShareSong ? (
                   <TbMicrophone2 className=" h-6 w-6" />

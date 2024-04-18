@@ -1,16 +1,5 @@
 import { MdOutlineEdit } from "react-icons/md";
 
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -43,6 +32,14 @@ import {
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { SearchPlaylist } from "@/Interface";
 import "react-lazy-load-image-component/src/effects/blur.css";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "../ui/drawer";
 
 const FormSchema = z.object({
   Playlist: z.string().min(2, {
@@ -134,105 +131,116 @@ export function EditCustomPlaylist({
     [id, reload, thumbnailUrl]
   );
   return (
-    <Dialog>
-      <DialogTrigger>
+    <Drawer>
+      <DrawerTrigger>
         <div className="">
-          <MdOutlineEdit className="h-8 w-8 fade-in backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
+          <MdOutlineEdit className="h-8 w-8 animate-fade-left  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
         </div>
-      </DialogTrigger>
-      <DialogContent className="w-[80vw] rounded-xl flex justify-center flex-col items-center">
-        <DialogHeader>
-          <DialogTitle>Edit Playlist details</DialogTitle>
-          <DialogDescription></DialogDescription>
-        </DialogHeader>
+      </DrawerTrigger>
+      <DrawerContent className="h-[100dvh] rounded-xl flex justify-center flex-col items-center ">
+        <div className="h-dvh items-center border-none px-5 justify-center flex flex-col w-full  rounded-2x">
+          <DrawerHeader>
+            <DrawerTitle className="text-2xl animate-fade-down font-semibold -mb-2.5">
+              Edit Playlist details
+            </DrawerTitle>
+          </DrawerHeader>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="w-full space-y-4"
-          >
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              id="file"
-              onChange={handleCover}
-            />
-            <label htmlFor="file">
-              {isLoading ? (
-                <div className="h-[60vw] flex justify-center items-center w-full">
-                  {<Loader loading={true} />}
-                </div>
-              ) : (
-                <div className="h-[60vw] w-full">
-                  <LazyLoadImage
-                    effect="blur"
-                    width="100%"
-                    height="100%"
-                    src={image}
-                    alt="Image"
-                    loading="lazy"
-                    className="object-cover rounded-xl h-[100%] w-[100%]"
-                  />
-                </div>
-              )}
-            </label>
-
-            <FormField
-              control={form.control}
-              name="Playlist"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="Playlist Name" {...field} />
-                  </FormControl>
-
-                  <FormMessage className="text-red-500 text-xs" />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="creator"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="By" {...field} />
-                  </FormControl>
-
-                  <FormMessage className="text-red-500 text-xs" />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter className=" space-y-2 flex flex-col">
-              <Button
-                type="submit"
-                className=" rounded-xl"
-                variant={"secondary"}
-                disabled={isSubmit}
-              >
-                {isSubmit ? (
-                  <Loader size="20" loading={true} />
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="w-full space-y-2 px-4"
+            >
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="file"
+                onChange={handleCover}
+              />
+              <label htmlFor="file">
+                {isLoading ? (
+                  <div className="h-[60vw] flex justify-center items-center w-full">
+                    {<Loader loading={true} />}
+                  </div>
                 ) : (
-                  "Save changes"
+                  <div className=" animate-fade-down h-80 w-full">
+                    <LazyLoadImage
+                      effect="blur"
+                      width="100%"
+                      height="100%"
+                      src={image}
+                      alt="Image"
+                      loading="lazy"
+                      className="object-cover rounded-xl h-[100%] w-[100%]"
+                    />
+                  </div>
                 )}
-              </Button>
-              <DialogClose className="flex w-full">
+              </label>
+
+              <FormField
+                control={form.control}
+                name="Playlist"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        placeholder="Playlist Name"
+                        {...field}
+                        className="animate-fade-up"
+                      />
+                    </FormControl>
+
+                    <FormMessage className="animate-fade-up text-red-500 text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="creator"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        placeholder="By"
+                        {...field}
+                        className="animate-fade-up"
+                      />
+                    </FormControl>
+
+                    <FormMessage className="animate-fade-up text-red-500 text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <div className=" space-y-2 flex flex-col">
                 <Button
-                  asChild
-                  ref={close}
-                  type="button"
+                  type="submit"
+                  className=" rounded-xl animate-fade-up"
                   variant={"secondary"}
-                  className="w-full  rounded-xl"
+                  disabled={isSubmit}
                 >
-                  <p>Close</p>
+                  {isSubmit ? (
+                    <Loader size="20" loading={true} />
+                  ) : (
+                    "Save changes"
+                  )}
                 </Button>
-              </DialogClose>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                <DrawerClose className="flex w-full">
+                  <Button
+                    asChild
+                    ref={close}
+                    type="button"
+                    variant={"secondary"}
+                    className="w-full  rounded-xl animate-fade-up"
+                  >
+                    <p>Close</p>
+                  </Button>
+                </DrawerClose>
+              </div>
+            </form>
+          </Form>
+        </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

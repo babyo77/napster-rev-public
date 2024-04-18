@@ -196,7 +196,7 @@ function AlbumPageComp() {
               )}
               <Share />
             </div>
-            <div className="h-[60vw] w-[60vw]">
+            <div className="h-56  w-56">
               <LazyLoadImage
                 effect="blur"
                 width="100%"
@@ -204,11 +204,11 @@ function AlbumPageComp() {
                 src={data[0]?.thumbnailUrl.replace("w120-h120", "w1080-h1080")}
                 alt="Image"
                 loading="lazy"
-                className="object-cover rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
               />
             </div>
             <div className=" absolute bottom-[1.5vh] px-4 left-0  right-0">
-              <h1 className="text-center truncate pb-2 font-semibold py-[1vh] text-2xl capitalize">
+              <h1 className="text-center truncate animate-fade-down pb-2 font-semibold py-[1vh] text-2xl capitalize">
                 {data[0]?.album}
               </h1>
               <div className="flex space-x-4 py-1 justify-center  items-center w-full">
@@ -216,7 +216,7 @@ function AlbumPageComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 shadow-none animate-fade-right bg-zinc-800 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -225,7 +225,7 @@ function AlbumPageComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6 shadow-none animate-fade-left bg-zinc-800 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

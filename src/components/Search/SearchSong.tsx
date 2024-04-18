@@ -119,7 +119,7 @@ function SearchSong({
     staleTime: Infinity,
   });
   return (
-    <div className="flex fade-in py-2 space-x-2 items-center">
+    <div className="flex animate-fade-right py-2 space-x-2 items-center">
       <div className="overflow-hidden h-14 w-14 space-y-2">
         <AspectRatio ratio={1 / 1}>
           <LazyLoadImage

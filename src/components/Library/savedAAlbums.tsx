@@ -42,7 +42,7 @@ function SavedAlbumCard({
   );
 
   return (
-    <div className="flex space-x-2.5 items-center justify-between">
+    <div className="flex space-x-2.5 animate-fade-right items-center justify-between">
       {isLoading && <SkeletonP />}
       {!isLoading && link && (
         <>
@@ -58,7 +58,7 @@ function SavedAlbumCard({
                   effect="blur"
                   src={Image}
                   alt="Image"
-                  className="rounded-lg object-cover w-[100%] h-[100%]"
+                  className="rounded-md object-cover w-[100%] h-[100%]"
                 />
               </AspectRatio>
             </div>

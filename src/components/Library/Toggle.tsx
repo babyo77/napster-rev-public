@@ -37,11 +37,11 @@ export function ToggleLibrary() {
   return (
     <ToggleGroup
       type="single"
-      className=" justify-start p-0 m-0 pb-3 px-4  space-x-0.5"
+      className=" justify-start animate-fade-right p-0 m-0 pb-3 px-4  space-x-0.5"
     >
       <ToggleGroupItem
         ref={PlaylistRef}
-        className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+        className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
         variant={"outline"}
         value="Playlists"
         aria-label="Playlists"
@@ -53,7 +53,7 @@ export function ToggleLibrary() {
       {savedAlbums.length > 0 && (
         <ToggleGroupItem
           ref={AlbumsRef}
-          className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
           variant={"outline"}
           value="Albums"
           aria-label="Albums"
@@ -65,7 +65,7 @@ export function ToggleLibrary() {
       {savedArtists.length > 0 && (
         <ToggleGroupItem
           ref={ArtistsRef}
-          className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
           variant={"outline"}
           value="Artists"
           aria-label="Artists"

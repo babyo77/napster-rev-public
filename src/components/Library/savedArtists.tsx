@@ -26,7 +26,10 @@ function ArtistSearch({ name, artistId, thumbnailUrl }: suggestedArtists) {
   }, [artistId, name]);
 
   return (
-    <div onClick={handleClick} className="flex fade-in  space-x-2 items-center">
+    <div
+      onClick={handleClick}
+      className="flex  animate-fade-right  space-x-2 items-center"
+    >
       <Link to={`/artist/${artistId}`}>
         <div className="overflow-hidden h-14 w-14 space-y-2">
           <AspectRatio ratio={1 / 1}>

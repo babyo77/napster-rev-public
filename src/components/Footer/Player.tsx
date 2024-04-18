@@ -10,6 +10,7 @@ import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import Loader from "../Loaders/Loader";
+import { useLocation } from "react-router-dom";
 export function Player() {
   const dispatch = useDispatch();
   const isLoading = useSelector(
@@ -49,35 +50,51 @@ export function Player() {
       dispatch(setCurrentIndex((currentIndex + 1) % isPlaylist.length));
     }
   }, [dispatch, currentIndex, isPlaylist.length, isLooped, isStandalone]);
-
+  const location = useLocation();
   return (
     <>
-      <div className="flex items-center w-[95vw] ml-0.5 fade-in py-2 backdrop-blur-md space-x-5 bg-zinc-800/70  rounded-2xl shadow-md z-10 -mb-3">
+      <div
+        className={`  ${
+          location.pathname !== "/share-play"
+            ? "flex items-center rounded-2xl shadow-md z-10 -mb-3   w-[95vw] ml-0.5 fade-in  backdrop-blur-md space-x-5 py-2 bg-zinc-800/70"
+            : ""
+        } `}
+      >
         {isPlaylist && isPlaylist.length > 0 ? (
           <AudioPLayer />
         ) : (
           <>
-            <div className="items-center fade-in flex space-x-2 w-[68dvw]  border-white   px-2.5">
-              <div className=" h-11 w-11 overflow-hidden rounded-xl">
-                <AspectRatio>
-                  <LazyLoadImage
-                    width="100%"
-                    height="100%"
-                    effect="blur"
-                    src="https://i.pinimg.com/originals/f1/91/a4/f191a4786289ade562884722ef784cff.jpg"
-                    alt="Image"
-                    className="object-cover rounded-xl w-[100%] h-[100%] "
-                  />
-                </AspectRatio>
+            {location.pathname !== "/share-play" && (
+              <div
+                className={`items-center animate-fade-up  ${
+                  location.pathname == "/share-play" ? "hidden" : ""
+                } flex space-x-2 w-[68dvw]  border-white   px-2.5`}
+              >
+                <div className=" h-11 w-11 overflow-hidden rounded-xl">
+                  <AspectRatio>
+                    <LazyLoadImage
+                      width="100%"
+                      height="100%"
+                      effect="blur"
+                      src="/cache.jpg"
+                      alt="Image"
+                      className="object-cover rounded-xl w-[100%] h-[100%] "
+                    />
+                  </AspectRatio>
+                </div>
+                <div className="flex flex-col text-start">
+                  <p className="truncate w-44   font-semibold">Not Playing</p>
+                </div>
               </div>
-              <div className="flex flex-col text-start">
-                <p className="truncate w-44   font-semibold">Not Playing</p>
-              </div>
-            </div>
-            {isLoading ? (
+            )}
+            {isLoading && location.pathname !== "/share-play" ? (
               <Loader loading={true} />
             ) : (
-              <div className="flex fade-in space-x-3 pr-3">
+              <div
+                className={` ${
+                  location.pathname == "/share-play" ? "hidden" : "flex"
+                } space-x-3 pr-3`}
+              >
                 <IoPlay className="h-7 w-7" />
 
                 <TbPlayerTrackNextFilled
@@ -91,29 +108,37 @@ export function Player() {
             )}
           </>
         )}
-        {isLoading ? (
+        {isLoading && location.pathname !== "/share-play" ? (
           <div className="pr-[13vw]">
             <Loader loading={true} />
           </div>
         ) : (
           <>
-            {isPlaylist && isPlaylist.length > 0 && (
-              <div className="flex fade-in space-x-3  pr-3">
-                {isPlaying ? (
-                  <FaPause className="h-7 w-7" onClick={handlePlay} />
-                ) : (
-                  <IoPlay className="h-7 w-7" onClick={handlePlay} />
-                )}
-                <TbPlayerTrackNextFilled
-                  className={`h-7 w-7  ${
-                    isPlaylist && isPlaylist.length > 0
-                      ? "text-zinc-200"
-                      : "text-zinc-400"
-                  }`}
-                  onClick={handleNext}
-                />
-              </div>
-            )}
+            {isPlaylist &&
+              location.pathname !== "/share-play" &&
+              isPlaylist.length > 0 && (
+                <div
+                  className={`flex ${
+                    location.pathname == "/share-play" ? "hidden" : ""
+                  }  fade-in space-x-3  pr-3`}
+                >
+                  {isPlaying && location.pathname !== "/share-play" ? (
+                    <FaPause className="h-7 w-7" onClick={handlePlay} />
+                  ) : (
+                    <IoPlay className="h-7 w-7" onClick={handlePlay} />
+                  )}
+                  <TbPlayerTrackNextFilled
+                    className={`h-7 w-7  ${
+                      isPlaylist &&
+                      location.pathname !== "/share-play" &&
+                      isPlaylist.length > 0
+                        ? "text-zinc-200"
+                        : "text-zinc-400"
+                    }`}
+                    onClick={handleNext}
+                  />
+                </div>
+              )}
           </>
         )}
       </div>

@@ -22,9 +22,9 @@ import {
   setProgressLyrics,
 } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
-import { GetImage, streamApi } from "@/API/api";
+import { streamApi } from "@/API/api";
 import Loader from "../Loaders/Loader";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import {
@@ -32,6 +32,7 @@ import {
   ID,
   LAST_PLAYED,
   LIKE_SONG,
+  MOST_PLAYED,
   db,
 } from "@/appwrite/appwriteConfig";
 import { useQuery } from "react-query";
@@ -41,14 +42,15 @@ import { IoIosList } from "react-icons/io";
 import { AiFillStar } from "react-icons/ai";
 import Options from "./Options";
 import Lyrics from "./Lyrics";
+import axios from "axios";
 function AudioPLayerComp() {
   const [next, setNext] = useState<boolean>();
   const [prev, setPrev] = useState<boolean>();
   const [playEffect, setPlayEffect] = useState<boolean>();
   const dispatch = useDispatch();
-  const [duration, setDuration] = useState<number | "--:--">();
+  const [duration, setDuration] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0);
   const music = useSelector((state: RootState) => state.musicReducer.music);
-  const [progress, setProgress] = useState<number | "--:--">();
   const [liked, SetLiked] = useState<boolean>();
   const PlaylistOrAlbum = useSelector(
     (state: RootState) => state.musicReducer.PlaylistOrAlbum
@@ -219,28 +221,50 @@ function AudioPLayerComp() {
   //   }
   // }, [updateSeek, isPlaying]);
 
-  // const playingInsights = useCallback(() => {
-  //   db.createDocument(DATABASE_ID, MOST_PLAYED, ID.unique(), {
-  //     user: localStorage.getItem("uid"),
-  //     sname: playlist[currentIndex].title,
-  //     sid: playlist[currentIndex].youtubeId,
-  //     sartist: playlist[currentIndex].artists[0].name,
-  //   });
-  // }, [playlist, currentIndex]);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [online, setOnline] = useState<boolean>();
+  useEffect(() => {
+    const online = navigator.onLine;
+    setOnline(online);
+  }, []);
   useEffect(() => {
     if (audioRef.current) {
       dispatch(setIsLoading(true));
 
       const sound: HTMLAudioElement | null = audioRef.current;
-      sound.src = `${streamApi}${playlist[currentIndex]?.youtubeId}`;
+      sound.src = `${
+        online && !playlist[currentIndex]?.youtubeId.startsWith("http")
+          ? streamApi
+          : ""
+      }${playlist[currentIndex]?.youtubeId}`;
       const handlePlay = () => {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: playlist[currentIndex].title,
+          artist: playlist[currentIndex].artists[0]?.name,
+          album: "",
+          artwork: [
+            {
+              src: playlist[currentIndex].thumbnailUrl.replace(
+                "w120-h120",
+                "w1080-h1080"
+              ),
+            },
+          ],
+        });
+
+        navigator.mediaSession.setActionHandler("play", () => sound.play());
+        navigator.mediaSession.setActionHandler("pause", () => sound.pause());
+        navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+        navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
+        navigator.mediaSession.setActionHandler("seekto", handleSeek);
         if (isLooped) {
           sound.loop = true;
         }
         dispatch(play(true));
         dispatch(setDurationLyrics(sound.duration));
-        saveLastPlayed();
+        if (online) {
+          saveLastPlayed();
+        }
       };
 
       const handlePause = () => {
@@ -248,8 +272,8 @@ function AudioPLayerComp() {
       };
 
       const handleError = () => {
-        setDuration("--:--");
-        setProgress("--:--");
+        setDuration(0);
+        setProgress(0);
         dispatch(setIsLoading(false));
         sound.pause();
         dispatch(play(false));
@@ -333,8 +357,24 @@ function AudioPLayerComp() {
     handleNext,
     refetch,
     isLooped,
+    online,
     saveLastPlayed,
   ]);
+
+  const playingInsights = useCallback(() => {
+    db.createDocument(DATABASE_ID, MOST_PLAYED, ID.unique(), {
+      user: localStorage.getItem("uid"),
+      sname: playlist[currentIndex].title,
+      sid: playlist[currentIndex].youtubeId,
+      sartist: playlist[currentIndex].artists[0].name,
+    });
+  }, [playlist, currentIndex]);
+
+  useEffect(() => {
+    if (Math.floor(progress) == 30 && online) {
+      playingInsights();
+    }
+  }, [progress, playingInsights, online]);
 
   const handleLoop = useCallback(async () => {
     if (music && isPlaying) {
@@ -366,37 +406,71 @@ function AudioPLayerComp() {
     return `${formattedMinutes}:${formattedSeconds}`;
   }, []);
 
+  const image = async () => {
+    const response = await axios.get(
+      playlist[currentIndex]?.thumbnailUrl.replace("w120-h120", "w1080-h1080"),
+      {
+        responseType: "arraybuffer",
+      }
+    );
+    const blob = new Blob([response.data], {
+      type: response.headers["content-type"],
+    });
+    return URL.createObjectURL(blob);
+  };
+
+  const { data: c } = useQuery(
+    ["image", playlist[currentIndex]?.thumbnailUrl],
+    image,
+    {
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      staleTime: Infinity,
+    }
+  );
+  const location = useLocation();
+
   return (
     <>
-      <audio src="" hidden ref={audioRef}></audio>
+      <audio src="" preload="true" hidden ref={audioRef}></audio>
       {isStandalone ? (
-        <p className="w-[68dvw]  px-4">app not installed</p>
+        <p
+          className={`w-[68dvw] ${
+            location.pathname == "/share-play" ? "hidden" : ""
+          }  px-4`}
+        >
+          app not installed
+        </p>
       ) : (
         <Drawer>
           <DrawerTrigger>
-            <div className="items-center fade-in flex space-x-2 w-[68dvw]   px-2.5">
-              <div className=" h-11 w-11 overflow-hidden rounded-xl">
-                <LazyLoadImage
-                  height="100%"
-                  width="100%"
-                  src={
-                    `${GetImage}${playlist[currentIndex].thumbnailUrl}` ||
-                    "https://i.pinimg.com/564x/d4/40/76/d44076613b20dd92a8e4da29a8df538e.jpg"
-                  }
-                  alt="Image"
-                  effect="blur"
-                  className="object-cover transition-all duration-300 w-[100%] h-[100%] "
-                />
+            {location.pathname == "/share-play" ? (
+              <></>
+            ) : (
+              <div className="items-center  flex space-x-2 w-[68dvw]   px-2.5">
+                <div className=" h-11 w-11 overflow-hidden rounded-xl">
+                  <LazyLoadImage
+                    height="100%"
+                    width="100%"
+                    src={c || playlist[currentIndex]?.thumbnailUrl}
+                    onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
+                      (e.currentTarget.src = "/newfavicon.jpg")
+                    }
+                    alt="Image"
+                    effect="blur"
+                    className="object-cover  transition-all duration-300 w-[100%] h-[100%] "
+                  />
+                </div>
+                <div className="flex flex-col text-start">
+                  <p className=" text-sm truncate animate-fade-up w-[50vw] ">
+                    {playlist[currentIndex]?.title}
+                  </p>
+                  <p className=" text-xs w-[30vw] animate-fade-up truncate">
+                    {playlist[currentIndex].artists[0]?.name || "Unknown"}
+                  </p>
+                </div>
               </div>
-              <div className="flex flex-col text-start">
-                <p className=" text-sm truncate  w-[50vw] ">
-                  {playlist[currentIndex].title}
-                </p>
-                <p className=" text-xs w-[30vw] truncate">
-                  {playlist[currentIndex].artists[0]?.name}
-                </p>
-              </div>
-            </div>
+            )}
           </DrawerTrigger>
 
           <DrawerContent className=" h-[100dvh]  rounded-none bg-[#121212] ">
@@ -408,15 +482,11 @@ function AudioPLayerComp() {
                    
                      rounded-2xl mx-1 `}
                 >
-                  <div className="flex justify-center items-center  h-[44dvh]">
+                  <div className="flex  justify-center items-center  h-[44dvh]">
                     <LazyLoadImage
-                      src={playlist[currentIndex].thumbnailUrl.replace(
-                        "w120-h120",
-                        "w1080-h1080"
-                      )}
+                      src={c || playlist[currentIndex]?.thumbnailUrl}
                       onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
-                        (e.currentTarget.src =
-                          "https://i.pinimg.com/564x/d4/40/76/d44076613b20dd92a8e4da29a8df538e.jpg")
+                        (e.currentTarget.src = "/newfavicon.jpg")
                       }
                       alt="Image"
                       visibleByDefault
@@ -430,27 +500,35 @@ function AudioPLayerComp() {
                 </div>
                 <div className=" absolute bottom-[35.5vh] w-full text-start px-2 ">
                   <div className="flex items-center  w-fit space-x-3">
-                    <h1 className="text-3xl truncate transition-all duration-300  w-[63vw] font-semibold">
+                    <h1
+                      className={`text-3xl truncate transition-all duration-300  ${
+                        online ? "w-[63vw] " : "w-[87vw]"
+                      } font-semibold`}
+                    >
                       {" "}
-                      {playlist[currentIndex].title}
+                      {playlist[currentIndex]?.title}
                     </h1>
-                    <div className=" bg-zinc-900 p-1.5 rounded-full">
-                      {liked ? (
-                        <AiFillStar
-                          onClick={RemoveLike}
-                          className="h-6 w-6 fade-in "
+                    {online && (
+                      <>
+                        <div className=" bg-zinc-900 p-1.5 rounded-full">
+                          {liked ? (
+                            <AiFillStar
+                              onClick={RemoveLike}
+                              className="h-6 w-6 fade-in "
+                            />
+                          ) : (
+                            <FaRegStar
+                              className="h-6 w-6 fade-in"
+                              onClick={handleLink}
+                            />
+                          )}
+                        </div>
+                        <Options
+                          id={playingPlaylistUrl}
+                          music={playlist[currentIndex]}
                         />
-                      ) : (
-                        <FaRegStar
-                          className="h-6 w-6 fade-in"
-                          onClick={handleLink}
-                        />
-                      )}
-                    </div>
-                    <Options
-                      id={playingPlaylistUrl}
-                      music={playlist[currentIndex]}
-                    />
+                      </>
+                    )}
                   </div>
 
                   {playlist[currentIndex].artists[0]?.name ? (
@@ -487,10 +565,10 @@ function AudioPLayerComp() {
                 />
                 <div className="flex text-sm justify-between py-2 px-1">
                   <span className="text-zinc-400 transition-all duration-300 font-semibold">
-                    {formatDuration((progress as "--:--") || 0)}
+                    {formatDuration(progress || 0)}
                   </span>
                   <span className="text-zinc-400 transition-all duration-300 font-semibold">
-                    {formatDuration((duration as "--:--") || "--:--")}
+                    {formatDuration(duration || 0)}
                   </span>
                 </div>
               </div>
@@ -564,7 +642,7 @@ function AudioPLayerComp() {
                   {playlist.length > 1 ? (
                     <Link to={`/suggested/`}>
                       <DrawerClose>
-                        <IoIosList className="h-6 w-6" />
+                        <IoIosList className="h-6 w-6 text-zinc-300" />
                       </DrawerClose>
                     </Link>
                   ) : (

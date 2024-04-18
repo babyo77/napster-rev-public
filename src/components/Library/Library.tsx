@@ -387,13 +387,13 @@ function LibraryComp() {
               )}
               {isSaved && isSaved.length == 0 && id?.startsWith("custom") && (
                 <div className="" onClick={handleSave}>
-                  <IoMdAdd className="h-8 w-8  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
+                  <IoMdAdd className="h-8 w-8 animate-fade-left  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
                 </div>
               )}
 
               {playingPlaylistUrl == id && (
                 <div className="" onClick={handleFocus}>
-                  <RiFocus3Line className="h-8 w-8 fade-in mb-2  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
+                  <RiFocus3Line className="h-8 w-8  mb-2 animate-fade-left backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
                 </div>
               )}
 
@@ -430,12 +430,12 @@ function LibraryComp() {
                 }
                 alt="Image"
                 loading="lazy"
-                className="object-cover rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
               />
             </div>
 
             <div className=" absolute bottom-[1.5vh]  px-4 left-0  right-0">
-              <h1 className="text-center  font-semibold py-[1vh] truncate text-2xl capitalize">
+              <h1 className="text-center animate-fade-down  font-semibold py-[1vh] truncate text-2xl capitalize">
                 {(pDetails && pDetails[0]?.title) || "Mixes"}
               </h1>
               <div className="flex space-x-4 py-1 px-2 justify-center  items-center w-full">
@@ -443,7 +443,7 @@ function LibraryComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -452,7 +452,7 @@ function LibraryComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

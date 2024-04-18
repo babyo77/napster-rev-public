@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import { ThemeProvider } from "./components/theme-provider.tsx";
@@ -17,26 +17,22 @@ import ArtistPage from "./Artists/ArtistPage.tsx";
 import ListenNow from "./components/ListenNow/ListenNow.tsx";
 import LikedSong from "./LikedSongs/likedSongs.tsx";
 import Suggested from "./Suggested/Suggested.tsx";
+const Docs = lazy(() => import("./Landing Page/Docs.tsx"));
+import { ReactLenis } from "@studio-freight/react-lenis";
+import Box from "./components/Tune Box/box.tsx";
+import TuneBox from "./components/Tune Box/tunebox.tsx";
+import Offline from "./Offline/offline.tsx";
+// import Test from "./text.tsx";
+import SavedEdits from "./Saved Edits/SavedEdits.tsx";
+import ErrorElement from "./error.tsx";
+import Loader from "./components/Loaders/Loader.tsx";
 
 const client = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Check />,
-    errorElement: (
-      <div className="flex text-center px-7 h-screen justify-center items-center">
-        <p>
-          Something went wrong restart app to fix <br /> {""}
-          <a
-            target="_blank"
-            href="https://www.instagram.com/babyo7_/"
-            className="underline underline-offset-4 text-red-500"
-          >
-            need help?
-          </a>
-        </p>
-      </div>
-    ),
+    errorElement: <ErrorElement />,
     children: [
       {
         path: "",
@@ -72,12 +68,24 @@ const router = createBrowserRouter([
         element: <LikedSong />,
       },
       {
+        path: "/edits/:id",
+        element: <SavedEdits />,
+      },
+      {
         path: "/suggested",
         element: <Suggested />,
       },
       {
+        path: "/tunebox/:id",
+        element: <TuneBox />,
+      },
+      {
         path: "/suggested/:id",
         element: <Suggested />,
+      },
+      {
+        path: "/offline/",
+        element: <Offline />,
       },
       {
         path: "*",
@@ -85,13 +93,35 @@ const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: "/docs/",
+    element: <Docs />,
+  },
+  // {
+  //   path: "/test/",
+  //   element: <Test />,
+  // },
+  {
+    path: "/box/:id",
+    element: <Box />,
+  },
 ]);
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Provider store={store}>
       <QueryClientProvider client={client}>
         <ThemeProvider>
-          <RouterProvider router={router} />
+          <ReactLenis root>
+            <Suspense
+              fallback={
+                <div className=" h-dvh flex items-center justify-center">
+                  <Loader color="white" />
+                </div>
+              }
+            >
+              <RouterProvider router={router} />
+            </Suspense>
+          </ReactLenis>
         </ThemeProvider>
       </QueryClientProvider>
     </Provider>

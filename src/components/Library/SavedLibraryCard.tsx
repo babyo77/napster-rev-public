@@ -39,7 +39,7 @@ function SavedLibraryCard({
   );
 
   return (
-    <div className="flex space-x-2.5 items-center justify-between">
+    <div className="flex animate-fade-right space-x-2.5 items-center justify-between">
       {p ? (
         <>
           {isLoading && <SkeletonP />}
@@ -92,7 +92,7 @@ function SavedLibraryCard({
                       effect="blur"
                       src={data.image || "/favicon.jpeg"}
                       alt="Image"
-                      className="rounded-lg object-cover w-[100%] h-[100%]"
+                      className="rounded-md object-cover w-[100%] h-[100%]"
                     />
                   </AspectRatio>
                 </div>

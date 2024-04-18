@@ -138,3 +138,33 @@ input[type="range"]::-ms-thumb {
   background: transparent;
   display: none;
 }
+
+.animated-button {
+  transition: all 0.3s ease-in-out;
+
+  /* Animation definition */
+  animation: increaseSizeAndShake 2.3s infinite;
+}
+
+@keyframes increaseSizeAndShake {
+  0%,
+  10%,
+  65%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  30%,
+  40% {
+    transform: rotate(-1deg) scale(1.05);
+  }
+  35%,
+  45% {
+    transform: rotate(1deg) scale(1.05);
+  }
+}
+*:focus {
+  outline: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}

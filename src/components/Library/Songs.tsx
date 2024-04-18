@@ -24,6 +24,7 @@ import {
 import { Link } from "react-router-dom";
 import SongsOptions from "./SongsOptions";
 import axios from "axios";
+import { SuggestionSearchApi } from "@/API/api";
 
 function Songs({
   title,
@@ -73,6 +74,28 @@ function Songs({
     (state: RootState) => state.musicReducer.playlist
   );
 
+  const queue = useSelector((state: RootState) => state.musicReducer.queue);
+
+  const getSuggestedSongs = async () => {
+    const r = await axios.get(
+      `${SuggestionSearchApi}${
+        data[0].youtubeId.startsWith("http") ? data[0].title : data[0].youtubeId
+      }`
+    );
+    return data[0].youtubeId.startsWith("http")
+      ? [data[0], ...r.data]
+      : (r.data as playlistSongs[]);
+  };
+  const { data: isSingle } = useQuery<playlistSongs[]>(
+    ["songsSuggestion", link],
+    getSuggestedSongs,
+    {
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      staleTime: 2 * 6000,
+    }
+  );
+
   const handlePlay = useCallback(async () => {
     if (data && data.length > 0) {
       if (liked) {
@@ -81,7 +104,17 @@ function Songs({
       dispatch(isLoop(false));
       dispatch(setPlayingPlaylistUrl(p));
       dispatch(setCurrentArtistId(artistId));
-      dispatch(setPlaylist(data));
+      if (data.length > 1) {
+        dispatch(setPlaylist(data));
+      } else {
+        if (isSingle && isSingle.length > 0) {
+          console.log(isSingle);
+
+          dispatch(setPlaylist(isSingle));
+        } else {
+          dispatch(setPlaylist(data));
+        }
+      }
       dispatch(SetPlaylistOrAlbum(where));
       dispatch(setCurrentIndex(id));
     } else if (p == "suggested") {
@@ -96,10 +129,23 @@ function Songs({
       dispatch(setCurrentIndex(id));
     }
     if (!isPlaying) dispatch(play(true));
-  }, [dispatch, id, p, isPlaying, artistId, liked, where, playlist, data]);
+  }, [
+    dispatch,
+    id,
+    p,
+    isPlaying,
+    artistId,
+    liked,
+    where,
+    playlist,
+    data,
+    isSingle,
+  ]);
 
   const image = async () => {
-    const response = await axios.get(cover, { responseType: "arraybuffer" });
+    const response = await axios.get(cover, {
+      responseType: "arraybuffer",
+    });
     const blob = new Blob([response.data], {
       type: response.headers["content-type"],
     });
@@ -111,14 +157,18 @@ function Songs({
     refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
+
   return (
-    <div id={audio} className="flex fade-in py-2 space-x-2 items-center">
+    <div
+      id={audio}
+      className="flex animate-fade-right  py-2 space-x-2 items-center"
+    >
       {!album ? (
-        <div className="overflow-hidden h-12 w-12 space-y-2">
-          <AspectRatio ratio={1 / 1}>
+        <div className="overflow-hidden  h-12 w-12 space-y-2">
+          <AspectRatio ratio={1 / 1} className=" rounded-md overflow-hidden">
             <LazyLoadImage
               onClick={handlePlay}
-              src={c || ""}
+              src={c ? c : "/cache.jpg"}
               width="100%"
               height="100%"
               effect="blur"
@@ -139,7 +189,7 @@ function Songs({
         <p
           onClick={handlePlay}
           className={`w-[60dvw]   ${
-            playlist[currentIndex]?.youtubeId == audio && "text-red-500"
+            queue[currentIndex]?.youtubeId == audio && "text-red-500"
           }  truncate capitalize`}
         >
           {title.replace("______________________________________", "untitled")}
@@ -155,12 +205,14 @@ function Songs({
             {artist}
           </p>
         )}
-        <div className="h-[.05rem] w-full bg-zinc-300/10 mt-1.5"></div>
+        <div className="h-[.05rem] w-full  bg-zinc-300/10 mt-1.5"></div>
       </div>
       <SongsOptions
         key={audio + cover + title}
         id={p}
         reload={reload}
+        tunebox={query == "tuneboxSongsDetails" && true}
+        edits={query == "editSongsDetails" && true}
         like={query == "likedSongsDetails" && true}
         music={{
           for: forId,
@@ -176,7 +228,10 @@ function Songs({
           ],
         }}
         library={
-          (query == "likedSongsDetails" && true) || (query == "custom" && true)
+          (query == "likedSongsDetails" && true) ||
+          (query == "editSongsDetails" && true) ||
+          (query == "tuneboxSongsDetails" && true) ||
+          (query == "custom" && true)
         }
       />
     </div>

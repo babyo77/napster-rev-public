@@ -1,67 +1,78 @@
-import { QRCodeSVG } from "qrcode.react";
-import { Carousel, CarouselContent, CarouselItem } from "./ui/carousel";
-import React, { SyntheticEvent } from "react";
-import Autoplay from "embla-carousel-autoplay";
-import { AspectRatio } from "./ui/aspect-ratio";
+import { FaXTwitter } from "react-icons/fa6";
+import { FiGithub } from "react-icons/fi";
+import { Button } from "./ui/button";
+import { SiDocsdotrs, SiGithubsponsors } from "react-icons/si";
+import Download from "@/Landing Page/Download";
+import { useNavigate } from "react-router-dom";
+function Desktop() {
+  const navigate = useNavigate();
 
-function Desktop({ desktop, iPad }: { desktop: boolean; iPad: boolean }) {
-  const plugin = React.useRef(
-    Autoplay({ delay: 4000, stopOnInteraction: true })
-  );
-
+  const handleNavigate = () => {
+    navigate("/docs/");
+  };
   return (
     <>
-      <div className="absolute fade-in inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]">
-        <div className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,#C9EBFF,transparent)]"></div>
-      </div>
-      <div className="flex z-10   justify-center flex-col h-screen text-center items-center py-10">
-        <Carousel
-          plugins={[plugin.current]}
-          className="rounded-xl"
-          onMouseEnter={plugin.current.stop}
-          onMouseLeave={plugin.current.reset}
-        >
-          <CarouselContent className="rounded-xl">
-            <CarouselItem className="rounded-xl flex justify-center items-center">
-              <AspectRatio
-                ratio={9 / 10}
-                className=" bg-transparent rounded-xl"
-              >
-                <video
-                  src="/assets/demo.mp4"
-                  muted
-                  autoPlay
-                  onClick={(e: SyntheticEvent<HTMLVideoElement>) =>
-                    e.currentTarget.play()
-                  }
-                  className="rounded-xl object-fit h-[100%] w-[100%] "
-                />
-              </AspectRatio>
-            </CarouselItem>
-            <CarouselItem className="rounded-xl flex flex-col  justify-center items-center">
-              <span className="font-semibold text-zinc-700">
-                Not available for {desktop && "Desktop"} {iPad && "iPad"} Now
-              </span>
-              <h1 className="font-bold text-5xl mt-4 mb-4 text-zinc-700">
-                Scan this QR
-              </h1>
-              <span className="font-semibold text-zinc-700">on Phone</span>
-              <div className="  bg-black/20 h-96 w-96  mt-5 object-center flex justify-center items-center overflow-hidden rounded-3xl">
-                <QRCodeSVG
-                  value={window.location.origin}
-                  className="h-96 w-96 p-4 rounded-[1.7rem]"
-                />
-              </div>
-            </CarouselItem>
-          </CarouselContent>
-        </Carousel>
+      <div className=" fade-in">
+        <header className=" px-11 max-md:px-5 py-4 bg-transparent fixed w-full backdrop-blur-xl justify-between flex">
+          <h1 className=" font-semibold text-2xl max-md:text-xl animate-fade-right">
+            Napster
+          </h1>
+          <ul className=" flex text-lg animate-fade-left text-zinc-200  items-center space-x-3">
+            <a
+              href="https://github.com/babyo77/napsterDrx-Public"
+              target="_blank"
+            >
+              <FiGithub className=" hover:text-white duration-300 transition-all cursor-pointer" />
+            </a>
+            <a href="https://twitter.com/tanmay11117" target="_blank">
+              <FaXTwitter className="hover:text-white duration-300 transition-all cursor-pointer" />
+            </a>
+          </ul>
+        </header>
 
-        <div className="flex justify-center flex-col items-center mt-[2vw]">
-          <h1 className="font-bold text-zinc-500">NapsterDrx.</h1>
-          <span className="font-semibold text-zinc-500 text-xs mt-1">
-            Love from NapsterDrx.
-          </span>
+        <div className=" bg-[#09090B] font-semibold w-full min-h-screen flex  justify-center items-center px-9 max-lg:text-4xl max-md:text-4xl text-7xl space-y-7  text-center max-md:px-4 animate-fade-up overflow-hidden fixed -z-10 space-x-3 max-md:space-x-0">
+          <div className=" bg-white backdrop-blur-xl -z-10 blur-[50px] h-[27vw] w-[27vw] rounded-full opacity-5 border-none shadow-none absolute"></div>
+          <div className="flex flex-col max-md:text-center max-md:items-center text-start justify-start items-start space-y-7 max-md:space-y-2.5 max-md:pt-[9dvh] pb-[11dvh]">
+            <div>
+              <p className="">Enjoy Music Without Interruptions</p>
+            </div>
+            <div className="flex space-x-2 ml-1 max-md:ml-0">
+              <Download />
+
+              <Button
+                onClick={handleNavigate}
+                className=" text-2xl py-6  max-md:text-base rounded-lg space-x-1"
+              >
+                <SiDocsdotrs />
+                <p>Docs</p>
+              </Button>
+            </div>
+          </div>
+          <div className=" relative max-md:hidden  w-[50dvw]  h-dvh  flex overflow-scroll space-x-4 px-[11dvw] justify-center items-center ">
+            <img
+              src="/ui/home.webp"
+              className="h-[80vh] rounded-xl absolute  top-16  animate-fade-up left-10 border "
+            />
+            <img
+              src="/ui/lyrics.webp"
+              className="h-[80vh] rounded-xl absolute  top-16  animate-fade-up right-10  border"
+            />
+            <img
+              src="/ui/share.webp"
+              className="h-[80vh] rounded-xl absolute animate-fade-up  border top-16 "
+            />
+          </div>
         </div>
+        <footer className=" hidden animate-fade-up fixed text-zinc-400 hover:text-white transition-all duration-300  bottom-0 max-md:flex justify-center items-center w-full py-2.5 text-xs space-x-1">
+          <SiGithubsponsors />
+          <a
+            className=" font-semibold"
+            href="https://www.instagram.com/babyo7_/"
+            target="_blank"
+          >
+            From Babyo7_
+          </a>
+        </footer>
       </div>
     </>
   );

@@ -12,12 +12,12 @@ function Header({ title, l }: { title?: string; l?: boolean }) {
   return (
     <>
       <nav className="p-5 pt-11 px-5 fade-in flex justify-between items-center">
-        <h1 className="  font-bold tracking-tight text-3xl ">
+        <h1 className="animate-fade-right  font-bold tracking-tight text-3xl ">
           {title || "NapsterDrx."}
         </h1>
         {!window.matchMedia("(display-mode: standalone)").matches &&
           title == "Home" && (
-            <p className="-mr-[45vw]" onClick={handlePwa}>
+            <p className="-mr-[45vw] animate-fade-left" onClick={handlePwa}>
               Install
             </p>
           )}

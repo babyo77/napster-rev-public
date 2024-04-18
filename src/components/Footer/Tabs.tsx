@@ -1,20 +1,45 @@
-import { IoIosRadio } from "react-icons/io";
 import { IoSearch } from "react-icons/io5";
 import { Player } from "./Player";
 import { NavLink } from "react-router-dom";
 import { GoHomeFill } from "react-icons/go";
 import { BiLibrary } from "react-icons/bi";
-// import { MdOutlineGridView } from "react-icons/md";
-import React from "react";
+import { useLocation } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "react-query";
+import { useDispatch } from "react-redux";
+import { setReelsIndex } from "@/Store/Player";
+import { BsSoundwave } from "react-icons/bs";
 function TabsComp() {
+  const [online, setOnline] = useState<boolean>();
+  const q = useQueryClient();
+  useEffect(() => {
+    const online = navigator.onLine;
+    setOnline(online);
+  }, []);
+  const handleClick = useCallback(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const handleLoadMore = useCallback(async () => {
+    if (q.getQueryData(["reels"]) && location.pathname == "/share-play") {
+      await q.fetchQuery(["reels"]);
+      dispatch(setReelsIndex(0));
+    }
+  }, [q, dispatch, location]);
   return (
-    <div className="fixed fade-in w-screen right-0 left-0 bottom-0 flex flex-col justify-center items-center">
+    <div className="fixed  fade-in w-screen right-0 left-0 bottom-0 flex flex-col justify-center items-center">
       <Player />
-      <nav className="py-3 pb-7 pt-5 backdrop-blur-md bg-neutral-900 w-full">
+      <nav
+        className={`py-3 pb-7  animate-fade-up backdrop-blur-md ${
+          location.pathname !== "/share-play" ? "bg-neutral-900 pt-5" : "pt-0"
+        }  w-full transition-all duration-500`}
+      >
         <ul className="flex items-center text-zinc-500 space-x-14 justify-center">
           <li>
             <NavLink
-              to={""}
+              onClick={handleClick}
+              to={online ? "" : "/offline/"}
               className={({ isActive }) =>
                 `${isActive && "text-zinc-300"} flex flex-col  items-center`
               }
@@ -36,18 +61,19 @@ function TabsComp() {
           </li> */}
           <li>
             <NavLink
-              to={"/share-play"}
+              onClick={handleLoadMore}
+              to={online ? "/share-play" : "/offline/"}
               className={({ isActive }) =>
                 `${isActive && "text-zinc-300"} flex flex-col mb-1 items-center`
               }
             >
-              <IoIosRadio className="h-7 w-7" />
-              <span className="text-xs ">Share Play</span>
+              <BsSoundwave className="h-8 w-8" />
+              <span className="text-xs px-[3dvw] ">Tunes</span>
             </NavLink>
           </li>
           <li>
             <NavLink
-              to={`/library/`}
+              to={online ? `/library/` : "/offline/"}
               className={({ isActive }) =>
                 `${isActive && "text-zinc-300"} flex flex-col mb-1 items-center`
               }
@@ -59,7 +85,7 @@ function TabsComp() {
 
           <li>
             <NavLink
-              to={"/search"}
+              to={online ? "/search" : "/offline/"}
               className={({ isActive }) =>
                 `${isActive && "text-zinc-300"} flex flex-col mb-1 items-center`
               }

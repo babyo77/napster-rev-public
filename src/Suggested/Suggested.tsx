@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import React, { useCallback, useState } from "react";
 import { setPlaylist } from "@/Store/Player";
+import { RiFocus3Line } from "react-icons/ri";
 
 function SuggestedComp() {
   const dispatch = useDispatch();
@@ -60,6 +61,18 @@ function SuggestedComp() {
   }, []);
   const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor));
 
+  const currentIndex = useSelector(
+    (state: RootState) => state.musicReducer.currentIndex
+  );
+
+  const playlist = useSelector(
+    (state: RootState) => state.musicReducer.playlist
+  );
+
+  const handleFocus = useCallback(() => {
+    const toFocus = document.getElementById(playlist[currentIndex].youtubeId);
+    toFocus?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [currentIndex, playlist]);
   return (
     <DndContext
       collisionDetection={closestCorners}
@@ -70,12 +83,20 @@ function SuggestedComp() {
         <>
           <div className="flex w-full z-10 fixed h-[3rem]  ">
             <GoBack />
+
+            <div
+              className="absolute top-4 z-10 right-3 animate-fade-left flex-col space-y-0.5"
+              onClick={handleFocus}
+            >
+              <RiFocus3Line className="h-8 w-8 fade-in mb-2  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
+            </div>
+
             <div
               onClick={handleEdit}
-              className="absolute top-4 z-10 right-3 flex-col space-y-0.5"
+              className="absolute top-3 z-10 right-14 flex-col space-y-0.5"
             >
               <div className="w-fit">
-                <p className="fade-in mb-2 text-zinc-100  backdrop-blur-md bg-black/30 rounded-full p-1.5 px-2 w-fit">
+                <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/10 rounded-xl p-1.5 px-2 w-fit">
                   {editQue ? "Cancel" : "Edit"}
                 </p>
               </div>

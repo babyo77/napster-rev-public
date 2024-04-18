@@ -25,6 +25,7 @@ import { useQuery } from "react-query";
 import Loader from "../Loaders/Loader";
 import { LiaDownloadSolid } from "react-icons/lia";
 import { downloadApi } from "@/API/api";
+import ShareLyrics from "./Share";
 
 function Options({ music, id }: { id?: string; music: playlistSongs }) {
   const handleAdd = useCallback(
@@ -101,7 +102,9 @@ function Options({ music, id }: { id?: string; music: playlistSongs }) {
     const link = document.createElement("a");
     link.style.display = "none";
     link.target = "_blank";
-    link.href = `${downloadApi}${music.youtubeId}&file=${music.title}`;
+    link.href = music.youtubeId.startsWith("http")
+      ? `${music.youtubeId}&file=${music.title}`
+      : `${downloadApi}${music.youtubeId}&file=${music.title}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -129,6 +132,13 @@ function Options({ music, id }: { id?: string; music: playlistSongs }) {
           >
             <p className="text-base">Add to a Playlist...</p>
           </DropdownMenuSubTrigger>
+
+          <div className="h-[.05rem] w-full bg-zinc-300/10 "></div>
+          <div className="flex items-center justify-between space-x-2 pl-2 pb-1 pr-0.5">
+            <p className="text-base">Share Song</p>
+            <ShareLyrics size className="h-3 w-3" />
+          </div>
+
           <DropdownMenuPortal>
             <DropdownMenuSubContent className="bg-transparent w-fit border-none rounded-lg backdrop-blur-2xl  mr-2">
               {isLoading && (
