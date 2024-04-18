@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Napster is a Clone of Apple music PWA app With many Features. [Demo](https://napster-drx.vercel.app), [Documentation](https://napster-drx.vercel.app/docs)
+Napster is Music PWA app With many Features. [Demo](https://napster-drx.vercel.app), [Documentation](https://napster-drx.vercel.app/docs)
 
 ## Features
 
