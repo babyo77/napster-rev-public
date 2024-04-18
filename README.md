@@ -6,7 +6,6 @@
 
 Napster is a Clone of Apple music PWA app With many Features. [Demo](https://napster-drx.vercel.app), [Documentation](https://napster-drx.vercel.app/docs)
 
-
 ### Features
 
 - Supports offline Playback
@@ -22,5 +21,4 @@ Napster is a Clone of Apple music PWA app With many Features. [Demo](https://nap
 
 ### UI
 
-<img src="/public/ui/lyrics.PNG" alt="Lyrics" width="200" height="400"> <img src="/public/ui/home.PNG" alt="Home" width="200" height="400"> <img src="/public/ui/share.webp" alt="Share" width="200" height="400"> <img src="/public/ui/options.PNG" alt="Options" width="200" height="400"> <img src="/public/ui/lib.PNG" alt="Library" width="200" height="400"> <img src="/public/ui/player.PNG" alt="Player" width="200" height="400">
-
+<img src="/public/ui/lyrics.PNG" alt="Lyrics" width="200" height="400"> <img src="/public/ui/home.PNG" alt="Home" width="200" height="400"> <img src="/public/ui/share.webp" alt="Share" width="200" height="400"> <img src="/public/ui/options.PNG" alt="Options" width="200" height="400"> 
