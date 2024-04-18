@@ -21,4 +21,4 @@ Napster is a Clone of Apple music PWA app With many Features. [Demo](https://nap
 
 ### UI
 
-<img src="/public/ui/lyrics.PNG" alt="Lyrics" width="200" height="400"> <img src="/public/ui/home.PNG" alt="Home" width="200" height="400"> <img src="/public/ui/share.webp" alt="Share" width="200" height="400"> 
+<img src="/public/ui/lyrics.PNG" alt="Lyrics" width="200" height="400"> <img src="/public/ui/home.PNG" alt="Home" width="200" height="400"> <img src="/public/ui/share.webp" alt="Share" width="200" height="400"> <img src="/public/ui/options.PNG" alt="Options" width="200" height="400"> 
