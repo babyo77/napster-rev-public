@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Napster is Music PWA app. [Demo](https://napster-drx.vercel.app), [Documentation](https://napster-drx.vercel.app/docs), [Docker Image](https://hub.docker.com/r/tanmayo7/napster)
+Napster is Music PWA app. [Demo](https://napster-drx.vercel.app), [Documentation](https://napster-drx.vercel.app/docs), [Docker](https://hub.docker.com/r/tanmayo7/napster)
 
 ## Features
 
