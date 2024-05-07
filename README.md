@@ -19,6 +19,10 @@ Napster is a Music PWA app. [Demo](https://napster-drx.vercel.app), [Documentati
 - Express
 - Appwrite
 
+## Future Updates
+
+- Will covert this to social media like snapchat(snap) and more....
+
 ## UI
 
 <img src="/public/ui/lyrics.PNG" alt="Lyrics" width="200" height="400"> <img src="/public/ui/home.PNG" alt="Home" width="200" height="400"> <img src="/public/ui/share.webp" alt="Share" width="200" height="400"> <img src="/public/ui/options.PNG" alt="Options" width="200" height="400"> 
