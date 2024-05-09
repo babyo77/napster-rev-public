@@ -9,6 +9,7 @@ import axios from "axios";
 import SkeletonP from "./SkeletonP";
 import { getPlaylistDetails } from "@/API/api";
 import { ALBUM_COLLECTION_ID } from "@/appwrite/appwriteConfig";
+import useImage from "@/hooks/useImage";
 function SavedAlbumCard({
   author,
   link,
@@ -41,6 +42,8 @@ function SavedAlbumCard({
     }
   );
 
+  const c = useImage(Image || "");
+
   return (
     <div className="flex space-x-2.5 animate-fade-right items-center justify-between">
       {isLoading && <SkeletonP />}
@@ -50,20 +53,23 @@ function SavedAlbumCard({
             to={`/album/${link}`}
             className="flex space-x-2.5 items-center justify-between"
           >
-            <div className="overflow-hidden h-14  w-14 space-y-2">
+            <div className="overflow-hidden h-14 rounded-md w-14 space-y-2">
               <AspectRatio ratio={1 / 1}>
                 <LazyLoadImage
                   height="100%"
                   width="100%"
                   effect="blur"
-                  src={Image}
+                  src={c || ""}
                   alt="Image"
+                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
+                    (e.currentTarget.src = "/cache.jpg")
+                  }
                   className="rounded-md object-cover w-[100%] h-[100%]"
                 />
               </AspectRatio>
             </div>
             <div className="flex flex-col   text-start">
-              <p className="w-[59vw] text-lg font-semibold fade-in truncate">
+              <p className="w-[59vw] text-lg font-medium fade-in truncate">
                 {album}
               </p>
 

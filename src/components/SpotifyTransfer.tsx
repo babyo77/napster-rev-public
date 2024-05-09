@@ -19,6 +19,7 @@ import {
   DrawerHeader,
   DrawerTrigger,
 } from "./ui/drawer";
+import { BiImport } from "react-icons/bi";
 
 function SpotifyTransfer({
   close,
@@ -74,16 +75,19 @@ function SpotifyTransfer({
     <Drawer>
       <DrawerTrigger className=" w-full animate-fade-up">
         <p
-          className={` ${className} animate-fade-up rounded-xl  bg-green-600 py-2.5 mt-3  w-full text-base`}
+          className={` ${
+            className ? " justify-center bg-neutral-900" : "px-4"
+          } animate-fade-up border rounded-xl flex items-center space-x-1 bg-neutral-900 py-2.5 mt-3  w-full text-base`}
         >
-          Import from Spotify
+          <BiImport className="h-5 w-5" />
+          <span>Import from Spotify</span>
         </p>
       </DrawerTrigger>
       <DrawerContent className="w-full border-none flex items-center flex-col justify-center h-dvh rounded-none">
         <div className="h-dvh items-center border-none px-5 justify-center flex flex-col w-full  rounded-2xl">
           <DrawerHeader>
             {!data && !track && !isLoading && (
-              <DialogTitle className=" text-2xl animate-fade-down font-semibold -mb-1">
+              <DialogTitle className=" text-2xl tracking-tighter leading-tight animate-fade-down font-semibold -mb-1">
                 Paste Spotify Link
               </DialogTitle>
             )}
@@ -108,7 +112,7 @@ function SpotifyTransfer({
                     <Button
                       type="submit"
                       variant={"secondary"}
-                      className=" w-full py-5 animate-fade-up  rounded-xl"
+                      className=" w-full py-5 border bg-neutral-900 animate-fade-up  rounded-xl"
                     >
                       Import
                     </Button>
@@ -117,12 +121,12 @@ function SpotifyTransfer({
 
                 <DrawerClose
                   ref={ref}
-                  className="w-full rounded-xl border-none mt-2 bg-none  p-0"
+                  className="w-full rounded-xl border mt-2 bg-none  p-0"
                 >
                   <Button
                     asChild
                     variant={"secondary"}
-                    className=" w-full py-5 animate-fade-up rounded-xl"
+                    className=" w-full py-5 bg-neutral-900 animate-fade-up rounded-xl"
                   >
                     <p>Close</p>
                   </Button>

@@ -1,6 +1,6 @@
 import ProgressBar from "@ramonak/react-progress-bar";
 import { Alert, AlertDescription } from "./components/ui/alert";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { playlistSongs, spotifyTransfer } from "./Interface";
 import {
   ADD_TO_LIBRARY,
@@ -15,21 +15,30 @@ import { SearchOneTrackApi } from "./API/api";
 import axios from "axios";
 import { setSpotifyTrack } from "./Store/Player";
 import { useQueryClient } from "react-query";
+import { Permission, Role } from "appwrite";
+import { RootState } from "./Store/Store";
 
 export default function TransferHeader({ data }: { data: spotifyTransfer }) {
   const query = useQueryClient();
   const dispatch = useDispatch();
   const [progress, setProgress] = useState<number>(0);
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   useEffect(() => {
-    if (data && data.tracks.length > 0) {
-      db.createDocument(DATABASE_ID, PLAYLIST_COLLECTION_ID, ID.unique(), {
-        name: data.creator,
-        creator: data.name,
-        link: "custom" + v4(),
-        image: data.image,
-        for: localStorage.getItem("uid"),
-      }).then(async (m) => {
+    if (data && data.tracks.length > 0 && uid) {
+      db.createDocument(
+        DATABASE_ID,
+        PLAYLIST_COLLECTION_ID,
+        ID.unique(),
+        {
+          name: data.creator,
+          creator: data.name,
+          link: "custom" + v4(),
+          image: data.image,
+          for: uid,
+        },
+        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+      ).then(async (m) => {
         let i = 0;
         const processTrack = async () => {
           if (i < data.tracks.length) {
@@ -38,20 +47,26 @@ export default function TransferHeader({ data }: { data: spotifyTransfer }) {
                 `${SearchOneTrackApi}${data.tracks[i].track}`
               );
               const track = res.data as playlistSongs;
-              await db.createDocument(
-                DATABASE_ID,
-                ADD_TO_LIBRARY,
-                ID.unique(),
-                {
-                  index: i,
-                  for: localStorage.getItem("uid"),
-                  youtubeId: track.youtubeId,
-                  artists: [track.artists[0].id, track.artists[0].name],
-                  title: track.title,
-                  thumbnailUrl: track.thumbnailUrl,
-                  playlistId: m.$id,
-                }
-              );
+              if (uid) {
+                await db.createDocument(
+                  DATABASE_ID,
+                  ADD_TO_LIBRARY,
+                  ID.unique(),
+                  {
+                    index: i,
+                    for: uid,
+                    youtubeId: track.youtubeId,
+                    artists: [track.artists[0].id, track.artists[0].name],
+                    title: track.title,
+                    thumbnailUrl: track.thumbnailUrl,
+                    playlistId: m.$id,
+                  },
+                  [
+                    Permission.update(Role.user(uid)),
+                    Permission.delete(Role.user(uid)),
+                  ]
+                );
+              }
             } catch (error) {
               console.log(error);
             }
@@ -63,19 +78,19 @@ export default function TransferHeader({ data }: { data: spotifyTransfer }) {
             setProgress(i + 1);
             i++;
 
-            setTimeout(processTrack, 111);
+            setTimeout(processTrack, 0);
           }
         };
 
         processTrack();
       });
     }
-  }, [query, data, dispatch]);
+  }, [query, data, dispatch, uid]);
 
   return (
     <>
       <div className=" fixed w-full px-2.5 z-40 animate-fade-down">
-        <Alert className=" fade-in bg-zinc-900 top-3.5 border-none">
+        <Alert className=" fade-in bg-zinc-900 top-3.5 border">
           <AlertDescription>
             <div className="flex w-full flex-col space-y-1.5 items-start">
               <p className="text-zinc-300   font-semibold text-xs animate-fade-right">

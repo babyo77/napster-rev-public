@@ -1,4 +1,8 @@
-import { GetArtistDetails, GetPlaylistHundredSongsApi } from "@/API/api";
+import {
+  GetArtistDetails,
+  GetImage,
+  GetPlaylistHundredSongsApi,
+} from "@/API/api";
 import { ArtistDetails, favArtist, playlistSongs } from "@/Interface";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
@@ -10,7 +14,7 @@ import Loader from "@/components/Loaders/Loader";
 import GoBack from "@/components/Goback";
 import React, { useCallback, useEffect, useState } from "react";
 import { DATABASE_ID, FAV_ARTIST, db } from "@/appwrite/appwriteConfig";
-import { ID, Query } from "appwrite";
+import { ID, Permission, Query, Role } from "appwrite";
 import { FaRegStar } from "react-icons/fa";
 import {
   SetPlaylistOrAlbum,
@@ -28,6 +32,7 @@ import Share from "@/HandleShare/Share";
 import { IoPlay } from "react-icons/io5";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
+import { LuDot } from "react-icons/lu";
 
 function ArtistPageComp() {
   const dispatch = useDispatch();
@@ -37,11 +42,12 @@ function ArtistPageComp() {
     const list = await axios.get(`${GetArtistDetails}${id}`);
     return list.data as ArtistDetails;
   };
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   const loadIsFav = async () => {
     const r = await db.listDocuments(DATABASE_ID, FAV_ARTIST, [
-      Query.equal("for", [localStorage.getItem("uid") || "default"]),
-      Query.equal("artistId", [id || "none"]),
+      Query.equal("for", [uid || ""]),
+      Query.equal("artistId", [id || ""]),
     ]);
     const p = r.documents as unknown as favArtist[];
     if (p.length == 0) {
@@ -61,33 +67,6 @@ function ArtistPageComp() {
     }
   );
 
-  const addToFav = async () => {
-    setIsFavArtist(true);
-    await db
-      .createDocument(DATABASE_ID, FAV_ARTIST, ID.unique(), {
-        artistId: id,
-        name: data?.name,
-        thumbnailUrl: data?.thumbnails[0].url.replace(
-          "w540-h225",
-          "w1080-h1080"
-        ),
-        for: localStorage.getItem("uid"),
-      })
-      .catch(() => setIsFavArtist(true));
-    refetchFav();
-  };
-
-  const removeFromFav = async () => {
-    if (isFav) {
-      setIsFavArtist(false);
-
-      await db
-        .deleteDocument(DATABASE_ID, FAV_ARTIST, isFav[0].$id)
-        .catch(() => setIsFavArtist(false));
-      refetchFav();
-    }
-  };
-
   const { data, isLoading, isError, refetch, isRefetching } =
     useQuery<ArtistDetails>(["artist", id], getArtistDetails, {
       retry: 5,
@@ -98,6 +77,42 @@ function ArtistPageComp() {
         d == null && refetch();
       },
     });
+
+  const addToFav = useCallback(async () => {
+    setIsFavArtist(true);
+
+    if (uid) {
+      await db
+        .createDocument(
+          DATABASE_ID,
+          FAV_ARTIST,
+          ID.unique(),
+          {
+            artistId: id,
+            name: data?.name,
+            thumbnailUrl: data?.thumbnails[0].url.replace(
+              "w540-h225",
+              "w1080-h1080"
+            ),
+            for: uid,
+          },
+          [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+        )
+        .catch(() => setIsFavArtist(false));
+      refetchFav();
+    }
+  }, [data, id, refetchFav, uid]);
+
+  const removeFromFav = useCallback(async () => {
+    if (isFav) {
+      setIsFavArtist(false);
+
+      await db
+        .deleteDocument(DATABASE_ID, FAV_ARTIST, isFav[0].$id)
+        .catch(() => setIsFavArtist(true));
+      refetchFav();
+    }
+  }, [refetchFav, isFav]);
 
   const getPlaylist = async () => {
     const list = await axios.get(
@@ -175,7 +190,7 @@ function ArtistPageComp() {
       {data && (
         <div className="flex w-full h-[23rem] justify-center pt-[19vw] relative ">
           <GoBack />
-          <div className="absolute top-4 z-10 right-3">
+          <div className="absolute animate-fade-left top-4 z-10 right-3">
             {isFavArtist ? (
               <FaStar
                 onClick={removeFromFav}
@@ -195,7 +210,8 @@ function ArtistPageComp() {
               width="100%"
               height="100%"
               src={
-                data.thumbnails[0]?.url.replace("w540-h225", "w1080-h1080") ||
+                GetImage +
+                  data.thumbnails[0]?.url.replace("w540-h225", "w1080-h1080") ||
                 "/favicon.jpeg"
               }
               alt="Image"
@@ -204,21 +220,33 @@ function ArtistPageComp() {
             />
           </div>
 
-          <div className=" absolute flex bottom-2 px-4  left-0 items-center justify-between right-0">
-            <h1 className="text-center animate-fade-right  font-semibold py-2 text-3xl capitalize">
-              {data?.name}
-            </h1>
-            <div className="flex space-x-4 py-1">
-              <Button
-                type="button"
-                onClick={handleShufflePlay}
-                variant={"secondary"}
-                className="px-2.5 flex animate-fade-left justify-center items-center   text-white shadow-none bg-red-600 backdrop-blur-lg
-                  rounded-full "
-              >
-                <IoPlay className="h-4 w-4" />
-              </Button>
+          <div className=" absolute flex bottom-2 px-4 left-0 items-center justify-between right-0">
+            <div className=" flex items-center max-w-[80dvw] truncate  font-medium">
+              <h1 className="text-center tracking-tighter leading-tight text-zinc-100 truncate font-semibold  py-2 text-xl ">
+                {data?.name}
+              </h1>
+              {data.subscribers && (
+                <>
+                  <LuDot className="h-10 truncate w-10 mt-2 -mx-2" />
+                  <p className="text-xl font-semibold tracking-tighter leading-tight text-zinc-100 mt-1">
+                    {data?.subscribers}
+                  </p>
+                </>
+              )}
             </div>
+            {data.songsPlaylistId && data.songsPlaylistId.length > 0 && (
+              <div className="flex space-x-4 py-1">
+                <Button
+                  type="button"
+                  onClick={handleShufflePlay}
+                  variant={"secondary"}
+                  className="px-2.5 flex justify-center items-centertext-white shadow-none bg-red-600 backdrop-blur-lg
+                rounded-full "
+                >
+                  <IoPlay className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -226,7 +254,7 @@ function ArtistPageComp() {
       {data && data.albums.length > 0 && (
         <div className="flex flex-col">
           <div className="flex  px-3 py-2 pt-3 ">
-            <h1 className="text-start font-semibold animate-fade-right    text-xl">
+            <h1 className="text-start text-zinc-200  leading-tight font-semibold animate-fade-right    text-xl">
               Albums
             </h1>
           </div>
@@ -250,7 +278,7 @@ function ArtistPageComp() {
       {data && data.singles.length > 0 && (
         <div className="flex flex-col">
           <div className="flex  px-3 py-2 pt-3 ">
-            <h1 className="text-start animate-fade-right font-semibold text-xl">
+            <h1 className="text-start text-zinc-200  leading-tight animate-fade-right font-semibold text-xl">
               Singles
             </h1>
           </div>
@@ -276,7 +304,7 @@ function ArtistPageComp() {
       {data && data.suggestedArtists.length > 0 && (
         <div className="flex flex-col">
           <div className="flex  px-3 py-2 pt-3 ">
-            <h1 className="text-start font-semibold animate-fade-right text-xl">
+            <h1 className="text-start text-zinc-200  leading-tight font-semibold animate-fade-right text-xl">
               Fans also like
             </h1>
           </div>

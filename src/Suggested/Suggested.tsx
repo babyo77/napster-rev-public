@@ -69,6 +69,11 @@ function SuggestedComp() {
     (state: RootState) => state.musicReducer.playlist
   );
 
+  const [Add, setAdd] = useState<boolean>(false);
+  const handleAdd = useCallback(() => {
+    setAdd((prev) => !prev);
+    setEditQue(true);
+  }, []);
   const handleFocus = useCallback(() => {
     const toFocus = document.getElementById(playlist[currentIndex].youtubeId);
     toFocus?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -90,17 +95,30 @@ function SuggestedComp() {
             >
               <RiFocus3Line className="h-8 w-8 fade-in mb-2  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
             </div>
-
-            <div
-              onClick={handleEdit}
-              className="absolute top-3 z-10 right-14 flex-col space-y-0.5"
-            >
-              <div className="w-fit">
-                <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/10 rounded-xl p-1.5 px-2 w-fit">
-                  {editQue ? "Cancel" : "Edit"}
-                </p>
+            {!editQue && (
+              <div
+                onClick={handleEdit}
+                className="absolute top-3 z-10 right-24 flex-col space-y-0.5"
+              >
+                <div onClick={handleAdd} className="w-fit -mr-2">
+                  <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/0 rounded-xl p-1.5 px-2 w-fit">
+                    {Add ? "Cancel" : "Add"}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
+            {!Add && (
+              <div
+                onClick={handleEdit}
+                className="absolute top-3 z-10 right-14 flex-col space-y-0.5"
+              >
+                <div className="w-fit -mr-2">
+                  <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/0 rounded-xl p-1.5 px-2 w-fit">
+                    {editQue ? "Cancel" : "Edit"}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className=" absolute bottom-5  px-4 left-0  right-0">
               <h1 className="text-center  font-semibold py-2 text-2xl capitalize"></h1>
@@ -124,6 +142,8 @@ function SuggestedComp() {
                     }))}
                     editQue={editQue}
                     p={"suggested"}
+                    handleAdd={Add}
+                    music={d}
                     where="suggested"
                     artistId={d.artists[0]?.id}
                     audio={d.youtubeId}

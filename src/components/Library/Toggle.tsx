@@ -9,6 +9,7 @@ export function ToggleLibrary() {
   const PlaylistRef = useRef<HTMLButtonElement>(null);
   const AlbumsRef = useRef<HTMLButtonElement>(null);
   const ArtistsRef = useRef<HTMLButtonElement>(null);
+  const ProfileRef = useRef<HTMLButtonElement>(null);
   const currentToggle = useSelector(
     (state: RootState) => state.musicReducer.currentToggle
   );
@@ -23,6 +24,9 @@ export function ToggleLibrary() {
   const savedArtists = useSelector(
     (state: RootState) => state.musicReducer.savedArtists
   );
+  const savedProfiles = useSelector(
+    (state: RootState) => state.musicReducer.savedProfile
+  );
 
   useEffect(() => {
     if (currentToggle === "Artists") {
@@ -31,6 +35,8 @@ export function ToggleLibrary() {
       AlbumsRef.current?.click();
     } else if (currentToggle === "Playlists") {
       PlaylistRef.current?.click();
+    } else if (currentToggle === "Profiles") {
+      ProfileRef.current?.click();
     }
   }, [currentToggle]);
 
@@ -72,6 +78,18 @@ export function ToggleLibrary() {
           onClick={() => handleToggle(ArtistsRef)}
         >
           Artists
+        </ToggleGroupItem>
+      )}
+      {savedProfiles.length > 0 && (
+        <ToggleGroupItem
+          ref={ProfileRef}
+          className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          variant={"outline"}
+          value="Profiles"
+          aria-label="Profiles"
+          onClick={() => handleToggle(ProfileRef)}
+        >
+          Profiles
         </ToggleGroupItem>
       )}
     </ToggleGroup>

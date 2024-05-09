@@ -1,24 +1,24 @@
 import React, { useCallback, useState } from "react";
 import { AspectRatio } from "../ui/aspect-ratio";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import { GetImage, GetTrack, sendNotificationApi } from "@/API/api";
+import { GetTrack, sendNotificationApi } from "@/API/api";
 import { playlistSongs } from "@/Interface";
 import { FiSend } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 import { DATABASE_ID, ID, TUNEBOX, db } from "@/appwrite/appwriteConfig";
-import { useQuery } from "react-query";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import { SetSentQue, setLimit } from "@/Store/Player";
 import Loader from "../Loaders/Loader";
+import useImage from "@/hooks/useImage";
 
 function TuneSongComp({
   item,
   audioRef,
   notifyId,
 }: {
-  notifyId: string | undefined | null;
+  notifyId: [] | undefined | null;
   item: playlistSongs;
   audioRef: React.RefObject<HTMLAudioElement>;
 }) {
@@ -45,7 +45,9 @@ function TuneSongComp({
         })
           .then(async () => {
             if (notifyId) {
-              await axios.get(`${sendNotificationApi}${notifyId}`);
+              notifyId.forEach(async (id) => {
+                await axios.get(`${sendNotificationApi}${id}`);
+              });
             }
             setSent(true);
             setSend(true);
@@ -59,21 +61,7 @@ function TuneSongComp({
     }
   }, [id, item, limit, dispatch, sentQue, notifyId]);
 
-  const image = async () => {
-    const response = await axios.get(GetImage + item.thumbnailUrl, {
-      responseType: "arraybuffer",
-    });
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
-    return URL.createObjectURL(blob);
-  };
-
-  const { data: c } = useQuery(["image", item.thumbnailUrl], image, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
+  const c = useImage(item?.thumbnailUrl);
 
   const [loader, setLoader] = useState<boolean>(false);
 
@@ -93,9 +81,9 @@ function TuneSongComp({
     }
   }, [item, audioRef]);
   return (
-    <div className="flex animate-fade-right py-1 px-[35dvw]  max-md:px-5 w-[100dvw] justify-between items-center">
+    <div className="flex animate-fade-right py-1 px-[35.3dvw] leading-tight max-md:px-5 w-[100dvw] justify-between items-center">
       <div onClick={handlePlay} className="  flex space-x-2">
-        <div className="h-14 w-14 space-y-2">
+        <div className="h-12 w-12 space-y-2">
           <AspectRatio ratio={1 / 1}>
             <LazyLoadImage
               src={c ? c : "/cache.jpg"}
@@ -105,7 +93,7 @@ function TuneSongComp({
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-                (e.currentTarget.src = "/liked.webp")
+                (e.currentTarget.src = "/cache.jpg")
               }
               className="rounded-md relative object-cover h-[100%] w-[100%]"
             />

@@ -7,7 +7,7 @@ import {
   db,
   ID,
 } from "@/appwrite/appwriteConfig";
-import { Query } from "appwrite";
+import { Permission, Query, Role } from "appwrite";
 import {
   Form,
   FormControl,
@@ -25,7 +25,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Loader from "../Loaders/Loader";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setCurrentToggle, setSavedPlaylist } from "@/Store/Player";
 import { savedPlaylist } from "@/Interface";
 import { useNavigate } from "react-router-dom";
@@ -39,6 +39,7 @@ import {
   DrawerTrigger,
 } from "../ui/drawer";
 import { SpotifyTransfer } from "../SpotifyTransfer";
+import { RootState } from "@/Store/Store";
 
 const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
   clone,
@@ -58,6 +59,8 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
       creator: "",
     },
   });
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+
   useEffect(() => {
     clone && id && form.setValue("link", id);
     !clone && form.setValue("link", `custom${v4()}`);
@@ -66,40 +69,40 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
     setIsSubmit(true);
 
     try {
-      const payload: savedPlaylist = {
-        name: "new playlist",
-        creator: data.creator,
-        link: data.link,
-        for: localStorage.getItem("uid") || "default",
-      };
+      if (uid) {
+        const payload: savedPlaylist = {
+          name: "new playlist",
+          creator: data.creator,
+          link: data.link,
+          for: uid || "default",
+        };
 
-      db.createDocument(
-        DATABASE_ID,
-        PLAYLIST_COLLECTION_ID,
-        ID.unique(),
-        payload
-      )
-        .then(async () => {
-          form.reset();
-          const r = await db.listDocuments(
-            DATABASE_ID,
-            PLAYLIST_COLLECTION_ID,
-            [
-              Query.orderDesc("$createdAt"),
-              Query.equal("for", [
-                localStorage.getItem("uid") || "default",
-                "default",
-              ]),
-            ]
-          );
-          const p = r.documents as unknown as savedPlaylist[];
-          dispatch(setCurrentToggle("Playlists"));
-          dispatch(setSavedPlaylist(p)), close.current?.click();
-          clone && n("/library/");
-        })
-        .catch((error) => {
-          throw new Error(error);
-        });
+        db.createDocument(
+          DATABASE_ID,
+          PLAYLIST_COLLECTION_ID,
+          ID.unique(),
+          payload,
+          [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+        )
+          .then(async () => {
+            form.reset();
+            const r = await db.listDocuments(
+              DATABASE_ID,
+              PLAYLIST_COLLECTION_ID,
+              [
+                Query.orderDesc("$createdAt"),
+                Query.equal("for", [uid || "default", "default"]),
+              ]
+            );
+            const p = r.documents as unknown as savedPlaylist[];
+            dispatch(setCurrentToggle("Playlists"));
+            dispatch(setSavedPlaylist(p)), close.current?.click();
+            clone && n("/library/");
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+      }
     } catch (error) {
       setIsSubmit(false);
       setError(true);
@@ -128,7 +131,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
       <DrawerContent className="h-[100dvh] rounded-none px-5">
         <div className="h-dvh items-center border-none justify-center flex flex-col w-full  rounded-2xl">
           <DrawerHeader>
-            <DrawerTitle className="text-xl animate-fade-down  font-semibold">
+            <DrawerTitle className="text-xl tracking-tighter leading-tight animate-fade-down  font-semibold">
               {clone ? "Save this playlist" : "Create your own playlist"}
             </DrawerTitle>
           </DrawerHeader>
@@ -169,7 +172,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
                   <FormItem>
                     <FormControl>
                       <Input
-                        className=" py-5 animate-fade-up"
+                        className=" py-5 animate-fade-up rounded-lg"
                         placeholder="Give a name..."
                         {...field}
                       ></Input>
@@ -183,7 +186,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
                 type="submit"
                 variant={"secondary"}
                 disabled={isSubmit || error}
-                className=" py-5 w-full animate-fade-up rounded-xl"
+                className=" py-5 w-full animate-fade-up border bg-neutral-900 rounded-xl"
               >
                 {isSubmit ? (
                   <Loader size="20" loading={true} />
@@ -196,14 +199,14 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
             </form>
           </Form>
 
-          <DrawerClose className="w-full mt-3 ">
+          <DrawerClose className="w-full mt-3.5">
             <Button
               ref={close}
               asChild
               onClick={handleReset}
               variant={"secondary"}
               disabled={isSubmit || error}
-              className=" text-zinc-100 py-5 animate-fade-up -mt-1.5 w-full rounded-xl"
+              className=" text-zinc-100 py-5 border bg-neutral-900 animate-fade-up -mt-1.5 w-full rounded-xl"
             >
               <p>Close</p>
             </Button>

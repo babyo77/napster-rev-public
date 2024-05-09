@@ -113,6 +113,7 @@ function ShareLyrics({
   return (
     <Drawer>
       <DrawerTrigger
+        disabled={!window.matchMedia("(display-mode:standalone)").matches}
         className={`m-0 p-1.5 flex  justify-center items-center ${
           className ? "" : "bg-zinc-900"
         }   rounded-full `}

@@ -20,64 +20,97 @@ import {
   PLAYLIST_COLLECTION_ID,
   db,
 } from "@/appwrite/appwriteConfig";
-import { Query } from "appwrite";
+import { Permission, Query, Role } from "appwrite";
 import { useQuery } from "react-query";
 import Loader from "../Loaders/Loader";
 import { LiaDownloadSolid } from "react-icons/lia";
 import { downloadApi } from "@/API/api";
 import ShareLyrics from "./Share";
+import { RootState } from "@/Store/Store";
+import { useSelector } from "react-redux";
+import { useToast } from "../ui/use-toast";
+import { DropdownMenuTriggerProps } from "@radix-ui/react-dropdown-menu";
 
-function Options({ music, id }: { id?: string; music: playlistSongs }) {
+interface option extends DropdownMenuTriggerProps {
+  id?: string;
+  music: playlistSongs;
+}
+function Options({ music, id, ...props }: option) {
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+  const { toast } = useToast();
+
   const handleAdd = useCallback(
     async (playlistId: string, show?: boolean) => {
-      const r = await db.listDocuments(DATABASE_ID, ADD_TO_LIBRARY, [
-        Query.orderDesc("$createdAt"),
-        Query.equal("for", [localStorage.getItem("uid") || "default"]),
-        Query.equal("youtubeId", [music.youtubeId]),
-        Query.equal("playlistId", [playlistId]),
-        Query.limit(999),
-      ]);
+      if (uid) {
+        const r = await db.listDocuments(DATABASE_ID, ADD_TO_LIBRARY, [
+          Query.orderDesc("$createdAt"),
+          Query.equal("for", [uid]),
+          Query.equal("youtubeId", [music.youtubeId]),
+          Query.equal("playlistId", [playlistId]),
+          Query.limit(999),
+        ]);
 
-      if (r.total > 0) {
-        return;
-      }
-      if (localStorage.getItem("uid")) {
-        db.createDocument(DATABASE_ID, ADD_TO_LIBRARY, ID.unique(), {
-          for: localStorage.getItem("uid"),
-          youtubeId: music.youtubeId,
-          artists: [music.artists[0].id, music.artists[0].name],
-          title: music.title,
-          thumbnailUrl: music.thumbnailUrl,
-          playlistId: playlistId,
-          index: r.total + 1,
-        }).then(() => {
-          if (show) return;
-        });
+        if (r.total > 0) {
+          return;
+        }
+        if (uid) {
+          db.createDocument(
+            DATABASE_ID,
+            ADD_TO_LIBRARY,
+            ID.unique(),
+            {
+              for: uid,
+              youtubeId: music.youtubeId,
+              artists: [music.artists[0].id, music.artists[0].name],
+              title: music.title,
+              thumbnailUrl: music.thumbnailUrl,
+              playlistId: playlistId,
+              index: r.total + 1,
+            },
+            [
+              Permission.update(Role.user(uid)),
+              Permission.delete(Role.user(uid)),
+            ]
+          ).then(() => {
+            toast({
+              title: "Added to playlist",
+            });
+            if (show) return;
+          });
+        }
       }
     },
-    [music]
+    [music, uid, toast]
   );
 
   const handleLibrary = useCallback(async () => {
-    if (localStorage.getItem("uid")) {
-      db.createDocument(DATABASE_ID, PLAYLIST_COLLECTION_ID, ID.unique(), {
-        name: music.title,
-        creator: music.artists[0].name || "unknown",
-        link: "custom" + uuidv4(),
-        image: music.thumbnailUrl,
-        for: localStorage.getItem("uid"),
-      }).then((d) => {
+    if (uid) {
+      db.createDocument(
+        DATABASE_ID,
+        PLAYLIST_COLLECTION_ID,
+        ID.unique(),
+        {
+          name: music.title,
+          creator: music.artists[0].name || "unknown",
+          link: "custom" + uuidv4(),
+          image: music.thumbnailUrl,
+          for: uid,
+        },
+        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+      ).then((d) => {
         handleAdd(d.$id);
-        alert("Added to new Library");
+        toast({
+          title: "Added to new Library",
+        });
       });
     }
-  }, [music, handleAdd]);
+  }, [music, handleAdd, uid, toast]);
   const loadSavedPlaylist = async () => {
     const r = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
       Query.orderDesc("$createdAt"),
       Query.notEqual("$id", [id?.replace("custom", "") || ""]),
       Query.startsWith("link", "custom"),
-      Query.equal("for", [localStorage.getItem("uid") || "default"]),
+      Query.equal("for", [uid || "default"]),
       Query.limit(999),
     ]);
     const p = r.documents as unknown as savedPlaylist[];
@@ -112,7 +145,10 @@ function Options({ music, id }: { id?: string; music: playlistSongs }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="m-0 p-1.5 flex  justify-center items-center bg-zinc-900 rounded-full">
+      <DropdownMenuTrigger
+        className="m-0 p-1.5 flex  justify-center items-center bg-zinc-900 rounded-full"
+        {...props}
+      >
         <BiDotsHorizontalRounded className="h-6 w-6 text-white" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-transparent  border-none rounded-lg backdrop-blur-2xl mx-4  ">

@@ -27,7 +27,13 @@ import React, {
 import ShareLyrics from "./Share";
 // import { prominent } from "color.js";
 
-function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
+function LyricsComp({
+  closeRef,
+  music,
+}: {
+  closeRef: RefObject<HTMLButtonElement>;
+  music: HTMLAudioElement | undefined;
+}) {
   const currentIndex = useSelector(
     (state: RootState) => state.musicReducer.currentIndex
   );
@@ -40,7 +46,6 @@ function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
   const progress = useSelector(
     (state: RootState) => state.musicReducer.progress
   );
-  const music = useSelector((state: RootState) => state.musicReducer.music);
   const duration = useSelector(
     (state: RootState) => state.musicReducer.duration
   );
@@ -153,18 +158,18 @@ function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
           className="h-7 w-7 m-0 p-0"
         >
           <g
-            fill-rule="nonzero"
+            fillRule="nonzero"
             stroke="none"
-            stroke-width="1"
-            stroke-linecap="butt"
-            stroke-linejoin="miter"
-            stroke-miterlimit="10"
-            stroke-dasharray=""
-            stroke-dashoffset="0"
-            font-family="none"
-            font-weight="none"
-            font-size="none"
-            text-anchor="none"
+            strokeWidth="1"
+            strokeLinecap="butt"
+            strokeLinejoin="miter"
+            strokeMiterlimit="10"
+            strokeDasharray=""
+            strokeDashoffset="0"
+            fontFamily="none"
+            fontWeight="none"
+            fontSize="none"
+            textAnchor="none"
             style={{ mixBlendMode: "normal" }}
             className={`${
               lyrics && lyrics.length > 0
@@ -195,7 +200,7 @@ function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
               />
             </div>
             <div className="flex flex-col justify-center">
-              <p className="text-xl truncate w-[45vw] fade-in">
+              <p className="text-xl truncate w-[47vw] fade-in">
                 {playlist[currentIndex].title}
               </p>
 
@@ -207,7 +212,7 @@ function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
                   onClick={() => closeRef.current?.click()}
                   className="p-0 m-0"
                 >
-                  <p className="text-sm fade-in text-start truncate w-[37vw]  text-red-500">
+                  <p className="text-sm fade-in text-start truncate w-[37vw]  text-zinc-400">
                     {playlist[currentIndex].artists[0]?.name}
                   </p>
                 </DrawerClose>
@@ -221,7 +226,7 @@ function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
             </div>
           </div>
         </div>
-        <div className="flex relative overflow-scroll pb-3 flex-col px-5 space-y-3">
+        <div className="flex relative overflow-scroll  flex-col px-5 space-y-3">
           {isLoading ? (
             <div className="flex h-[77dvh] justify-center items-center">
               <Loader loading={true} />
@@ -231,7 +236,7 @@ function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
               {lyrics ? (
                 <div
                   ref={lyricsRef}
-                  className=" transition-all h-[88dvh]  break-words duration-300 fade-in "
+                  className=" transition-all h-[92dvh]  tracking-tight break-words duration-300 fade-in "
                 >
                   {lyrics.map((line, index) => (
                     <p
@@ -244,18 +249,18 @@ function LyricsComp({ closeRef }: { closeRef: RefObject<HTMLButtonElement> }) {
                             (index === lyrics.length - 1 ||
                               (lyrics[index + 1]?.time || 0) > progress) &&
                             "none") ||
-                          "blur(1.1px)",
+                          "blur(0.7px)",
                         fontSize: "1.875rem",
                         marginBottom:
                           (line.time <= progress &&
                             (index === lyrics.length - 1 ||
                               (lyrics[index + 1]?.time || 0) > progress) &&
-                            "2rem") ||
-                          "2rem",
+                            "1.5rem") ||
+                          "1.5rem",
 
                         transitionProperty: "all",
                         transitionDuration: "800ms",
-                        fontWeight: "bold",
+                        fontWeight: 700,
                         opacity:
                           line.time <= progress &&
                           (index === lyrics.length - 1 ||

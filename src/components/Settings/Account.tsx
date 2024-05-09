@@ -10,25 +10,25 @@ import {
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import React, { useCallback, useRef, useState } from "react";
-import { DATABASE_ID, NEW_USER, db } from "@/appwrite/appwriteConfig";
+import authService, {
+  DATABASE_ID,
+  NEW_USER,
+  db,
+} from "@/appwrite/appwriteConfig";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
-import { Models, Query } from "appwrite";
+import { Models, Permission, Query, Role } from "appwrite";
 import { useQuery, useQueryClient } from "react-query";
 import Loader from "../Loaders/Loader";
 import { DialogTitle } from "../ui/dialog";
 import axios from "axios";
 import { getUserApi } from "@/API/api";
 import { LazyLoadImage } from "react-lazy-load-image-component";
-import { Avatar } from "../ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
-import { IoMdInformationCircleOutline } from "react-icons/io";
+import { Avatar, AvatarImage } from "../ui/avatar";
 import { setUser } from "@/Store/Player";
+import { RiLinkM } from "react-icons/ri";
+import { AvatarFallback } from "@radix-ui/react-avatar";
+import { IoSyncOutline } from "react-icons/io5";
 
 interface user extends Models.Document {
   user: string;
@@ -44,15 +44,25 @@ interface verify {
   playlists: string[];
 }
 
-function Account({ tunebox }: { tunebox?: boolean }) {
+function AccountComp({
+  tunebox,
+  className,
+  image,
+}: {
+  image?: string;
+  tunebox?: boolean;
+  className?: string;
+}) {
   function ScreenSizeCheck() {
     const isIPhone = /iPhone/i.test(navigator.userAgent);
     return isIPhone;
   }
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
   const q = useQueryClient();
+  const [sync, setSync] = useState<boolean>(false);
   const getUser = useCallback(async () => {
     if (uid) {
+      setSync(true);
       const result = await db.listDocuments(DATABASE_ID, NEW_USER, [
         Query.equal("user", [uid]),
       ]);
@@ -65,9 +75,10 @@ function Account({ tunebox }: { tunebox?: boolean }) {
           {
             user: uid,
             ios: ScreenSizeCheck(),
-          }
+          },
+          [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
         );
-
+        setSync(false);
         return newUserResult;
       } else {
         if (
@@ -78,6 +89,7 @@ function Account({ tunebox }: { tunebox?: boolean }) {
             `${getUserApi}${result.documents[0].spotifyId}`
           );
           const code: verify = res.data;
+
           await db.updateDocument(
             DATABASE_ID,
             NEW_USER,
@@ -87,11 +99,17 @@ function Account({ tunebox }: { tunebox?: boolean }) {
               name: code.name,
             }
           );
+          await authService.updateName(code.name).catch(() => {
+            setSync(false);
+          });
         }
+        setSync(false);
         q.refetchQueries("dpImage");
         return result.documents[0] as user;
       }
     } else {
+      setSync(false);
+
       return null;
     }
   }, [uid, q]);
@@ -100,9 +118,8 @@ function Account({ tunebox }: { tunebox?: boolean }) {
     ["user", uid],
     getUser,
     {
-      refetchOnMount: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 60000,
       onSuccess(data) {
         data == undefined && refetch();
       },
@@ -168,11 +185,26 @@ function Account({ tunebox }: { tunebox?: boolean }) {
     }
   };
 
+  const handleShare = useCallback(() => {
+    navigator.share({
+      url: `${window.location.origin}/user/${uid}`,
+    });
+  }, [uid]);
+
   return (
     <Drawer>
       <DrawerTrigger className=" w-full animate-fade-up">
-        <p className="rounded-xl py-2.5 animate-fade-up bg-neutral-900 flex justify-center text-base">
-          {tunebox ? "Setup Account to Continue " : "Account"}
+        <p
+          className={`rounded-xl border py-2 animate-fade-up bg-neutral-900 flex  text-base ${className} space-x-2 items-center flex`}
+        >
+          <Avatar className="t h-7  w-7 p-0 m-0 -mr-0.5">
+            <AvatarImage
+              className="rounded-full object-cover h-[100%] w-[100%]"
+              src={image ? image : "/cache.jpg"}
+            ></AvatarImage>
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <span>{tunebox ? "Setup Account to Continue " : "Account"}</span>
         </p>
       </DrawerTrigger>
       <DrawerContent className="w-full border-none flex items-center flex-col justify-center h-dvh rounded-none">
@@ -180,30 +212,38 @@ function Account({ tunebox }: { tunebox?: boolean }) {
           <div className=" min-h-20 w-full flex flex-col justify-center items-center">
             {isLoading && <Loader />}
 
-            {data && data.image.length > 0 && data.name.length > 0 && (
-              <>
-                <Avatar className="w-40 h-40 animate-fade-down ">
-                  <LazyLoadImage
-                    effect="blur"
-                    src={data.image}
-                    className=" rounded-full object-cover"
-                  />
-                </Avatar>
-                <h1 className=" font-semibold break-all text-center animate-fade-up text-4xl mt-2">
-                  {data.name}
-                </h1>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className=" animate-fade-up ">
-                    <DropdownMenuLabel className="mt-2 text-xl text-zinc-400">
-                      <IoMdInformationCircleOutline />
-                    </DropdownMenuLabel>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className=" -mt-3.5 flex text-sm  justify-center items-center rounded-xl bg-transparent py-2 font-normal text-zinc-300 border-none">
-                    <p>Automatic sync enabled</p>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
+            {data &&
+              data.image &&
+              data.image.trim() !== "" &&
+              data.name &&
+              data.name.trim() !== "" && (
+                <>
+                  <Avatar className="w-40 h-40 animate-fade-down ">
+                    <LazyLoadImage
+                      effect="blur"
+                      src={data?.image}
+                      className=" rounded-full object-cover h-[100%] w-[100%]"
+                    />
+                  </Avatar>
+                  <h1 className=" font-semibold break-all text-center animate-fade-up text-4xl mt-2">
+                    {data.name}
+                  </h1>
+                  <div className=" absolute top-7 px-4 text-xl flex w-full justify-between items-center">
+                    <div
+                      onClick={() => refetch()}
+                      className={`${
+                        sync ? "animate-spin" : ""
+                      }  transition-all duration-500 text-zinc-400`}
+                    >
+                      <IoSyncOutline />
+                    </div>
+
+                    <div className="  text-zinc-400">
+                      <RiLinkM onClick={handleShare} />
+                    </div>
+                  </div>
+                </>
+              )}
             {data &&
               !verify &&
               data.image.length == 0 &&
@@ -226,7 +266,7 @@ function Account({ tunebox }: { tunebox?: boolean }) {
                     <Button
                       type="submit"
                       variant={"secondary"}
-                      className=" w-full py-5 animate-fade-up  rounded-xl"
+                      className=" w-full py-5 animate-fade-up border bg-neutral-900 rounded-xl"
                     >
                       Continue
                     </Button>
@@ -236,7 +276,7 @@ function Account({ tunebox }: { tunebox?: boolean }) {
                     <Button
                       asChild
                       variant={"secondary"}
-                      className=" w-full py-5 animate-fade-up rounded-xl"
+                      className=" w-full py-5 animate-fade-up border bg-neutral-900 rounded-xl"
                     >
                       <p>Close</p>
                     </Button>
@@ -256,19 +296,13 @@ function Account({ tunebox }: { tunebox?: boolean }) {
                     <li>Tap "Create Playlist" and name it "Napster".</li>
 
                     <li>Tap "Save" or "Create".</li>
-
-                    <li>
-                      Look for the option to sort your playlists. Choose "Sort
-                      by Latest" or any option that ensures the "Napster"
-                      playlist is at the top.
-                    </li>
                   </ul>
                 </div>
                 <Button
                   onClick={handleVerify}
                   variant={"secondary"}
                   asChild
-                  className=" animate=fade-up w-full py-5 mt-3 text-lg animate-fade-up rounded-xl"
+                  className=" animate=fade-up w-full border bg-neutral-900 py-5 mt-3 text-lg animate-fade-up rounded-xl"
                 >
                   <p>Verify</p>
                 </Button>
@@ -276,7 +310,7 @@ function Account({ tunebox }: { tunebox?: boolean }) {
                   onClick={() => (refetch(), setVerify(""))}
                   variant={"secondary"}
                   asChild
-                  className=" w-full py-5 mt-1.5 text-lg animate-fade-up rounded-xl"
+                  className=" w-full py-5 mt-1.5 text-lg border bg-neutral-900 animate-fade-up rounded-xl"
                 >
                   <p>Cancel</p>
                 </Button>
@@ -285,16 +319,20 @@ function Account({ tunebox }: { tunebox?: boolean }) {
             {loading && <Loader />}
           </div>
         </div>
-        {data && data.image.length > 0 && data.name.length > 0 && (
-          <DrawerFooter className=" text-red-500">
-            <p onClick={handleRemove} className="animate-fade-up">
-              Remove
-            </p>
-          </DrawerFooter>
-        )}
+        {data &&
+          data.image &&
+          data.image.length > 0 &&
+          data.name &&
+          data.name.length > 0 && (
+            <DrawerFooter className=" text-red-500">
+              <p onClick={handleRemove} className="animate-fade-up">
+                Remove
+              </p>
+            </DrawerFooter>
+          )}
       </DrawerContent>
     </Drawer>
   );
 }
-
+const Account = React.memo(AccountComp);
 export { Account };

@@ -8,13 +8,18 @@ import { SearchPlaylist, savedPlaylist } from "@/Interface";
 import axios from "axios";
 import SkeletonP from "./SkeletonP";
 import { SearchPlaylistApi } from "@/API/api";
+import { useSelector } from "react-redux";
+import { RootState } from "@/Store/Store";
+import useImage from "@/hooks/useImage";
 function SavedLibraryCard({
   author,
   link,
   f,
   id,
   data,
+  className,
 }: {
+  className?: boolean;
   data: savedPlaylist;
   id: string;
   author?: string;
@@ -38,6 +43,9 @@ function SavedLibraryCard({
     }
   );
 
+  const c = useImage((p && p[0]?.thumbnailUrl) || data?.image || "");
+  const c1 = useImage(data?.image || "");
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
   return (
     <div className="flex animate-fade-right space-x-2.5 items-center justify-between">
       {p ? (
@@ -49,24 +57,31 @@ function SavedLibraryCard({
             }`}
             className="flex space-x-2.5 items-center justify-between"
           >
-            <div className="overflow-hidden h-14  w-14 space-y-2">
-              <AspectRatio ratio={1 / 1}>
+            <div
+              className={`overflow-hidden  space-y-2 ${
+                className ? "h-14 w-14" : "h-14 w-14 "
+              } rounded-md`}
+            >
+              <AspectRatio ratio={1 / 1} className=" rounded-md">
                 <LazyLoadImage
                   height="100%"
                   width="100%"
                   effect="blur"
-                  src={
-                    p[0]?.thumbnailUrl ||
-                    data.image ||
-                    "https://i.pinimg.com/564x/e0/ad/78/e0ad78737e2dc7c31b4190aafaa870bf.jpg"
-                  }
+                  src={c}
                   alt="Image"
-                  className="rounded-lg object-cover w-[100%] h-[100%]"
+                  onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
+                    (e.currentTarget.src = "/cache.jpg")
+                  }
+                  className="rounded-md object-cover object-center w-[100%] h-[100%]"
                 />
               </AspectRatio>
             </div>
             <div className="flex flex-col   text-start">
-              <p className="w-[59vw]  text-lg font-semibold fade-in truncate">
+              <p
+                className={` ${
+                  className ? "text-lg w-[70vw]" : "text-lg w-[59vw]"
+                } font-medium fade-in truncate`}
+              >
                 {author || data.creator || "NapsterDrx."}
               </p>
               <p className="-mt-0.5  text-xs w-[50vw] text-zinc-400 truncate">
@@ -74,7 +89,7 @@ function SavedLibraryCard({
               </p>
             </div>
           </Link>
-          <EditInfo id={id} f={f} />
+          {uid == f && <EditInfo id={id} f={f} />}
         </>
       ) : (
         <>
@@ -84,15 +99,18 @@ function SavedLibraryCard({
                 to={`/library/${"custom" + data.$id}`}
                 className="flex space-x-2.5 items-center justify-between"
               >
-                <div className="overflow-hidden h-14  w-14 space-y-2">
+                <div className="overflow-hidden h-14 rounded-sm w-14 space-y-2">
                   <AspectRatio ratio={1 / 1}>
                     <LazyLoadImage
                       height="100%"
                       width="100%"
                       effect="blur"
-                      src={data.image || "/favicon.jpeg"}
+                      src={c1 || ""}
                       alt="Image"
-                      className="rounded-md object-cover w-[100%] h-[100%]"
+                      onError={(
+                        e: React.SyntheticEvent<HTMLImageElement, Event>
+                      ) => (e.currentTarget.src = "/cache.jpg")}
+                      className="rounded-sm object-cover w-[100%] h-[100%]"
                     />
                   </AspectRatio>
                 </div>
@@ -105,7 +123,7 @@ function SavedLibraryCard({
                   </p>
                 </div>
               </Link>
-              <EditInfo id={data.$id || ""} f={f} />
+              {uid == f && <EditInfo id={data.$id || ""} f={f} />}
             </>
           )}
         </>

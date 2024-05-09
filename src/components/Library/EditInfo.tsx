@@ -31,9 +31,7 @@ const EditInfo: React.FC<{ id: string; f: string; collection?: string }> = ({
       collection || PLAYLIST_COLLECTION_ID,
       id
     ).then(async () => {
-      if (!collection) {
-        await q.refetchQueries<savedPlaylist[]>("savedPlaylist");
-      }
+      await q.refetchQueries<savedPlaylist[]>("savedPlaylist");
       closeRef.current?.click();
       await q.refetchQueries<savedPlaylist[]>("savedAlbums");
     });

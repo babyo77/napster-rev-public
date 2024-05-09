@@ -52,10 +52,12 @@ function AlbumPageComp() {
     (state: RootState) => state.musicReducer.playlist
   );
 
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+
   const loadSavedPlaylist = async () => {
     const r = await db.listDocuments(DATABASE_ID, ALBUM_COLLECTION_ID, [
-      Query.equal("for", [localStorage.getItem("uid") || "default", "default"]),
-      Query.equal("link", [id || "none"]),
+      Query.equal("for", [uid || ""]),
+      Query.equal("link", [id || ""]),
     ]);
     const p = r.documents as unknown as savedPlaylist[];
     return p;
@@ -216,7 +218,7 @@ function AlbumPageComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none animate-fade-right bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 shadow-none border bg-neutral-900 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -225,7 +227,7 @@ function AlbumPageComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none animate-fade-left bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6 shadow-none border bg-neutral-900 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

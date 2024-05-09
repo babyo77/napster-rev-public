@@ -2,7 +2,7 @@ import Songs from "./Songs";
 import { Button } from "../ui/button";
 import { FaPlay } from "react-icons/fa6";
 import { IoIosArrowBack, IoMdAdd } from "react-icons/io";
-import { NavLink, useParams, useSearchParams } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import { useQuery } from "react-query";
 import axios from "axios";
 import { SearchPlaylist, playlistSongs, savedPlaylist } from "@/Interface";
@@ -38,7 +38,7 @@ import {
   PLAYLIST_COLLECTION_ID,
   db,
 } from "@/appwrite/appwriteConfig";
-import { Query } from "appwrite";
+import { Permission, Query, Role } from "appwrite";
 import { EditCustomPlaylist } from "./EditCustomPlaylist";
 import PlaylistShare from "./playlistShare";
 import Share from "@/HandleShare/Share";
@@ -49,8 +49,6 @@ function LibraryComp() {
 
   const dispatch = useDispatch();
   const { id } = useParams();
-  const [search] = useSearchParams(location.search);
-  const c = search.get("c");
 
   const currentIndex = useSelector(
     (state: RootState) => state.musicReducer.currentIndex
@@ -75,11 +73,11 @@ function LibraryComp() {
 
       setIsSaved(p);
 
-      if (p.length > 0) return p;
+      if (p?.length > 0) return p;
       const q = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
         Query.equal("for", [uid || ""]),
         Query.equal("$id", [
-          uid.substring(uid.length - 4) + id.replace("custom", "") || "none",
+          uid.substring(uid?.length - 4) + id.replace("custom", "") || "none",
         ]),
       ]);
       const pp = q.documents as unknown as savedPlaylist[];
@@ -113,11 +111,11 @@ function LibraryComp() {
       const r = await db.listDocuments(DATABASE_ID, ADD_TO_LIBRARY, [
         Query.orderDesc("$createdAt"),
         Query.equal("playlistId", [
-          id.replace("custom", "").replace(uid.substring(uid.length - 4), ""),
+          id.replace("custom", "").replace(uid.substring(uid?.length - 4), ""),
         ]),
         Query.limit(150),
       ]);
-      const lastId = r.documents[r.documents.length - 1].$id;
+      const lastId = r.documents[r.documents?.length - 1].$id;
 
       setOffset(lastId);
 
@@ -198,7 +196,7 @@ function LibraryComp() {
     staleTime: 60 * 60000,
     onSuccess(data) {
       if (id && id.startsWith("custom")) return;
-      data.length == 0 && refetch();
+      data?.length == 0 && refetch();
     },
   });
 
@@ -241,7 +239,7 @@ function LibraryComp() {
       dispatch(setCurrentIndex(0));
       dispatch(setPlayingPlaylistUrl(id || ""));
       dispatch(SetPlaylistOrAlbum("library"));
-      if (data.length == 1) {
+      if (data?.length == 1) {
         dispatch(isLoop(true));
       } else {
         dispatch(isLoop(false));
@@ -257,7 +255,7 @@ function LibraryComp() {
       dispatch(setCurrentIndex(0));
       dispatch(setPlayingPlaylistUrl(id || ""));
       dispatch(SetPlaylistOrAlbum("library"));
-      if (data.length == 1) {
+      if (data?.length == 1) {
         dispatch(isLoop(true));
       } else {
         dispatch(isLoop(false));
@@ -281,7 +279,7 @@ function LibraryComp() {
           Query.equal("playlistId", [id.replace("custom", "")]),
           Query.cursorAfter(offset),
         ]).then((r) => {
-          const lastId = r.documents[r.documents.length - 1].$id;
+          const lastId = r.documents[r.documents?.length - 1].$id;
 
           setOffset(lastId);
 
@@ -299,7 +297,7 @@ function LibraryComp() {
             thumbnailUrl: doc.thumbnailUrl,
           }));
 
-          setData((prev) => prev?.concat(modified));
+          setData((prev) => prev && [...prev, ...modified]);
         });
       }
     }
@@ -319,14 +317,15 @@ function LibraryComp() {
       await db.createDocument(
         DATABASE_ID,
         PLAYLIST_COLLECTION_ID,
-        uid.substring(uid.length - 4) + isSaved[0].$id,
+        uid.substring(uid?.length - 4) + isSaved[0].$id,
         {
           name: isSaved[0].name,
           creator: isSaved[0].creator,
           link: isSaved[0].link,
           for: uid,
           image: isSaved[0].image,
-        }
+        },
+        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
       );
       isSavedRefetch();
     }
@@ -373,19 +372,19 @@ function LibraryComp() {
                         "w120-h120",
                         "w1080-h1080"
                       )) ||
-                    "https://i.pinimg.com/564x/38/2f/fe/382ffec40fdab343c9989b2373425a90.jpg"
+                    "/cache.jpg"
                   }
                   id={id.replace("custom", "")}
                   name={(pDetails && pDetails[0]?.title) || ""}
                   creator={(pDetails && pDetails[0]?.name) || ""}
                 />
               )}
-              {isSaved && isSaved.length == 0 && !id?.startsWith("custom") && (
+              {isSaved && isSaved?.length == 0 && !id?.startsWith("custom") && (
                 <div className="">
                   <AddLibrary clone={true} id={id} />
                 </div>
               )}
-              {isSaved && isSaved.length == 0 && id?.startsWith("custom") && (
+              {isSaved && isSaved?.length == 0 && id?.startsWith("custom") && (
                 <div className="" onClick={handleSave}>
                   <IoMdAdd className="h-8 w-8 animate-fade-left  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
                 </div>
@@ -401,7 +400,6 @@ function LibraryComp() {
                 <div>
                   <PlaylistShare
                     cover={
-                      c ||
                       (playlistThumbnail &&
                         playlistThumbnail[0]?.thumbnailUrl) ||
                       "https://i.pinimg.com/564x/38/2f/fe/382ffec40fdab343c9989b2373425a90.jpg"
@@ -420,7 +418,6 @@ function LibraryComp() {
                 width="100%"
                 height="100%"
                 src={
-                  c ||
                   (playlistThumbnail &&
                     playlistThumbnail[0]?.thumbnailUrl.replace(
                       "w120-h120",
@@ -443,7 +440,7 @@ function LibraryComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 animate-fade-down  shadow-none rounded-lg px-[13dvw] border bg-neutral-900"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -452,7 +449,7 @@ function LibraryComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down   shadow-none rounded-lg px-[12dvw]  border bg-neutral-900"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle
@@ -462,22 +459,22 @@ function LibraryComp() {
           </div>
           <div className="py-3 -mt-[2vh] pb-[8.5rem]">
             {data.map((d, i) => (
-              <div key={d.youtubeId + i} ref={ref}>
+              <div key={d.youtubeId ? d.youtubeId + i : i} ref={ref}>
                 <Songs
                   data={data}
                   reload={refetch}
                   p={id || ""}
                   forId={d.for}
                   where={"library"}
-                  artistId={d.artists[0]?.id}
+                  artistId={d.artists ? d?.artists[0]?.id : "unknown"}
                   audio={d.youtubeId}
-                  key={d.youtubeId + i}
+                  key={d.youtubeId ? d.youtubeId + i : ""}
                   id={i}
                   query={(id?.startsWith("custom") && "custom") || ""}
                   delId={d.$id}
-                  title={d.title}
-                  artist={d.artists[0]?.name}
-                  cover={d.thumbnailUrl}
+                  title={d?.title || "unknown"}
+                  artist={d.artists ? d?.artists[0]?.name : "unknown"}
+                  cover={d?.thumbnailUrl || "/cache.jpg"}
                 />
               </div>
             ))}

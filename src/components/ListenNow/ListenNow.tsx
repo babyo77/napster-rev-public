@@ -1,24 +1,14 @@
 import * as React from "react";
 import "react-lazy-load-image-component/src/effects/blur.css";
-import {
-  DATABASE_ID,
-  LISTEN_NOW_COLLECTION_ID,
-  db,
-} from "@/appwrite/appwriteConfig";
 import { useNavigate } from "react-router-dom";
 
-import { homePagePlaylist, playlistSongs } from "@/Interface";
+import { playlistSongs } from "@/Interface";
 import { useQuery } from "react-query";
-import Artist from "./Artist";
-import Charts from "./Charts";
-import NewCharts from "./neewChart";
-import { Query } from "appwrite";
+
 import axios from "axios";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import Header from "../Header/Header";
-import NapsterSuggested from "./NapsterSuggested";
 import { SuggestionSearchApi, streamApi } from "@/API/api";
-import Loader from "../Loaders/Loader";
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
@@ -26,11 +16,11 @@ import { SetFeed } from "@/Store/Player";
 import { useInView } from "react-intersection-observer";
 import ReactPullToRefresh from "react-simple-pull-to-refresh";
 import FeedSong from "./FeedSongs";
+import { Skeleton } from "../ui/skeleton";
+import { AspectRatio } from "../ui/aspect-ratio";
 
 export function ListenNowComp() {
-  const checked = useSelector(
-    (state: RootState) => state.musicReducer.feedMode
-  );
+  const feed = useSelector((state: RootState) => state.musicReducer.Feed);
 
   const music = useSelector((state: RootState) => state.musicReducer.Feed);
 
@@ -48,59 +38,6 @@ export function ListenNowComp() {
     retry: 0,
     refetchOnWindowFocus: false,
   });
-
-  const getChart = async () => {
-    const q = await db.listDocuments(DATABASE_ID, LISTEN_NOW_COLLECTION_ID, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("type", ["playlist"]),
-    ]);
-    const data: homePagePlaylist[] =
-      q.documents as unknown as homePagePlaylist[];
-    return data;
-  };
-
-  const getArtist = async () => {
-    const q = await db.listDocuments(DATABASE_ID, LISTEN_NOW_COLLECTION_ID, [
-      Query.orderDesc("$createdAt"),
-      Query.notEqual("type", ["playlist"]),
-      Query.notEqual("type", ["napster"]),
-    ]);
-    const data: homePagePlaylist[] =
-      q.documents as unknown as homePagePlaylist[];
-    return data;
-  };
-
-  const getSuggested = async () => {
-    const q = await db.listDocuments(DATABASE_ID, LISTEN_NOW_COLLECTION_ID, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("type", ["napster"]),
-    ]);
-    const data: homePagePlaylist[] =
-      q.documents as unknown as homePagePlaylist[];
-    return data;
-  };
-
-  const { data: chart } = useQuery<homePagePlaylist[]>("chart", getChart, {
-    refetchOnMount: false,
-    staleTime: 5 * 60000,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: artist } = useQuery<homePagePlaylist[]>("artist", getArtist, {
-    refetchOnMount: false,
-    staleTime: 5 * 60000,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: suggested } = useQuery<homePagePlaylist[]>(
-    "suggested",
-    getSuggested,
-    {
-      refetchOnMount: false,
-      staleTime: 5 * 60000,
-      refetchOnWindowFocus: false,
-    }
-  );
 
   const handleReport = () => {
     if (!report) {
@@ -131,54 +68,72 @@ export function ListenNowComp() {
     (state: RootState) => state.musicReducer.playlist
   );
 
-  const query = async () => {
+  const query = async (empty?: boolean) => {
     const currentIndex = Math.floor(Math.random() * playlist.length);
     const q = await axios.get(
       `${SuggestionSearchApi}${
-        playlist[currentIndex].youtubeId.startsWith("https")
-          ? "sem" +
-            playlist[currentIndex].title +
-            " " +
-            playlist[currentIndex].artists[0].name
-          : playlist[currentIndex].youtubeId
+        playlist.length > 0 && !empty
+          ? playlist[currentIndex].youtubeId.startsWith("https")
+            ? "sem" +
+              playlist[currentIndex].title +
+              " " +
+              playlist[currentIndex].artists[0].name
+            : playlist[currentIndex].youtubeId
+          : "rnd"
       }`
     );
-    dispatch(SetFeed(q.data));
-    return q.data as playlistSongs[];
+    if (q.data.length > 0) {
+      localStorage.setItem("feed", JSON.stringify(q.data.slice(0, 17)));
+      dispatch(SetFeed(q.data.slice(0, 17)));
+    } else {
+      query(true);
+    }
+    return q.data.slice(0, 17) as playlistSongs[];
   };
 
-  const { refetch: refetchFeed, isLoading } = useQuery<playlistSongs[]>(
+  const { refetch: refetchFeed } = useQuery<playlistSongs[]>(
     ["Feed"],
+    //@ts-expect-error:ignore
     query,
     {
+      enabled: false,
       refetchOnWindowFocus: false,
       staleTime: 60 * 60000,
       refetchOnMount: false,
-
-      onError() {
-        refetchFeed();
-      },
-      onSuccess(data) {
-        data.length == 0 && refetchFeed();
-        data[0].youtubeId == null && refetchFeed();
-      },
     }
   );
 
+  React.useEffect(() => {
+    const savedFeed = localStorage.getItem("feed");
+    if (savedFeed) {
+      const parsed = JSON.parse(savedFeed);
+      dispatch(SetFeed(parsed));
+    } else {
+      refetchFeed();
+    }
+  }, [dispatch, refetchFeed]);
   const { ref, inView } = useInView({
-    threshold: 0,
-    rootMargin: "500px",
+    threshold: 0.2,
   });
 
+  const [fetch, setFetch] = React.useState<boolean>(true);
   React.useEffect(() => {
-    if (inView && music && music.length > 0) {
+    if (inView && music && music.length > 0 && fetch) {
+      setFetch(false);
       axios
-        .get(`${SuggestionSearchApi}${music[music.length - 1].youtubeId}`)
+        .get(
+          `${SuggestionSearchApi}${
+            music[Math.floor(Math.random() * music.length)].youtubeId
+          }`
+        )
         .then((q) => {
-          dispatch(SetFeed(music.concat(q.data.slice(1, 7))));
+          const next = [...music, ...q.data];
+          const uniqueArray = [...new Set(next)];
+          dispatch(SetFeed(uniqueArray));
+          setFetch(true);
         });
     }
-  }, [inView, music, dispatch]);
+  }, [inView, music, dispatch, fetch]);
   const handleRefresh = React.useCallback(async () => {
     await refetchFeed();
   }, [refetchFeed]);
@@ -191,7 +146,7 @@ export function ListenNowComp() {
             <AlertTitle>Playback Server is Down !</AlertTitle>
             <AlertDescription>
               <p>
-                Restart the app to connect to another server, or wait until it's
+                Restart app to connect to another server, or wait until it's
                 back online.{" "}
                 <span onClick={handleReport}>
                   {report ? "@check again" : "@send report"}
@@ -207,7 +162,7 @@ export function ListenNowComp() {
             <AlertTitle>Playback Server is Down !</AlertTitle>
             <AlertDescription>
               <p>
-                Restart the app to connect to another server, or wait until it's
+                Restart app to connect to another server, or wait until it's
                 back online.{" "}
                 <span onClick={handleReport}>
                   {report ? "@check again" : "@send report"}
@@ -219,62 +174,45 @@ export function ListenNowComp() {
       )}
       <Header title="Home" />
 
-      {!chart && !artist && !suggested && !checked && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex   items-center space-x-2">
-          <Loader />
-        </div>
-      )}
-      {isLoading && checked && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex   items-center space-x-2">
-          <Loader />
+      {feed.length == 0 && (
+        <div className="px-4 pb-40 space-y-[5rem] animate-fade-up">
+          <AspectRatio ratio={4 / 5}>
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-[100%] rounded-xl" />
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-52 rounded-lg" />
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-44 rounded-lg" />
+          </AspectRatio>
+
+          <AspectRatio ratio={4 / 5}>
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-[100%] rounded-xl" />
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-52 rounded-lg" />
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-44 rounded-lg" />
+          </AspectRatio>
         </div>
       )}
 
-      {checked && music && (
+      {feed && (
         <ReactPullToRefresh
           pullingContent={""}
           onRefresh={handleRefresh}
           className="px-4"
         >
           <>
-            {music
-              .filter(
-                (r, i, s) =>
-                  i === s.findIndex((t) => t.youtubeId == r.youtubeId)
-              )
-              .map((r, i) => (
-                <div key={r.youtubeId + i} ref={ref}>
-                  <FeedSong
-                    fromSearch={true}
-                    artistId={r.artists[0]?.id || ""}
-                    audio={r.youtubeId}
-                    artistName={r.artists[0].name}
-                    id={r.youtubeId}
-                    title={r.title}
-                    artist={r.artists}
-                    cover={r.thumbnailUrl}
-                  />
-                </div>
-              ))}
+            {music.map((r, i) => (
+              <div key={r.youtubeId + i} ref={ref}>
+                <FeedSong
+                  fromSearch={true}
+                  artistId={r?.artists[0]?.id || ""}
+                  audio={r.youtubeId}
+                  artistName={r?.artists[0]?.name || "unknown"}
+                  id={r.youtubeId}
+                  title={r?.title || "unknown"}
+                  artist={r?.artists}
+                  cover={r.thumbnailUrl}
+                />
+              </div>
+            ))}
           </>
         </ReactPullToRefresh>
-      )}
-      {!checked && (
-        <div className="h-[80dvh] pb-28 overflow-scroll">
-          {suggested && suggested.length > 0 && (
-            <NapsterSuggested data={suggested} />
-          )}
-          {chart && artist && suggested && (
-            <>
-              <div className="">
-                <Artist data={artist} />
-                <Charts data={chart} />
-
-                <NewCharts data={chart} />
-              </div>
-            </>
-          )}
-        </div>
       )}
     </>
   );

@@ -131,6 +131,7 @@ input[type="range"]::-ms-thumb {
 }
 
 * {
+  overscroll-behavior-y: contain;
   scrollbar-width: none;
 }
 *::-webkit-scrollbar {

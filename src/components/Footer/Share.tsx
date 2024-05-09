@@ -34,6 +34,7 @@ function ShareLyrics({
   );
 
   const loadImage = useCallback(async (src: string) => {
+    setRound(false);
     return new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -44,6 +45,7 @@ function ShareLyrics({
   }, []);
 
   const getImageData = useCallback((image: HTMLImageElement) => {
+    setRound(false);
     const canvas = document.createElement("canvas");
     canvas.width = image.width;
     canvas.height = image.height;

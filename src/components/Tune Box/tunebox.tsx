@@ -15,7 +15,7 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import { RootState } from "@/Store/Store";
 import { DATABASE_ID, TUNEBOX, db } from "@/appwrite/appwriteConfig";
-import { Query } from "appwrite";
+import { Permission, Query, Role } from "appwrite";
 import { likedSongs, playlistSongs } from "@/Interface";
 import Loader from "@/components/Loaders/Loader";
 import GoBack from "@/components/Goback";
@@ -37,16 +37,14 @@ function TuneBoxComp() {
   });
   const dispatch = useDispatch();
   const { id } = useParams();
-
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
-
   const [offset, setOffset] = useState<string>();
   const [pDetails, setPDetails] = useState<playlistSongs[]>();
 
   const getPlaylistDetails = async () => {
     const r = await db.listDocuments(DATABASE_ID, TUNEBOX, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [id || localStorage.getItem("uid") || ""]),
+      Query.equal("for", [id || uid || ""]),
       Query.limit(150),
     ]);
 
@@ -95,21 +93,33 @@ function TuneBoxComp() {
         Query.equal("for", uid),
         Query.limit(1),
       ]);
-      if (res.documents.length > 0) {
+      if (
+        res.documents.length > 0 &&
+        !res.documents[0].notify.includes(token)
+      ) {
+        const tkn = [...res.documents[0].notify, token].filter((r) => r !== "");
+
         await db.updateDocument(
           DATABASE_ID,
           "65da232e478bcf5bbbad",
           res.documents[0].$id,
           {
-            notify: token,
+            notify: tkn,
           }
         );
         setNotification(true);
       } else {
-        await db.createDocument(DATABASE_ID, "65da232e478bcf5bbbad", uid, {
-          for: uid,
-          notify: token,
-        });
+        await db.createDocument(
+          DATABASE_ID,
+          "65da232e478bcf5bbbad",
+          uid,
+          {
+            for: uid,
+
+            notify: [token],
+          },
+          [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+        );
         setNotification(true);
       }
     }
@@ -176,11 +186,11 @@ function TuneBoxComp() {
   }, [dispatch, isPlaying, id, pDetails]);
 
   useEffect(() => {
-    if (inView) {
+    if (inView && uid) {
       if (id && pDetails && offset) {
         db.listDocuments(DATABASE_ID, TUNEBOX, [
           Query.orderDesc("$createdAt"),
-          Query.equal("for", [id || localStorage.getItem("uid") || ""]),
+          Query.equal("for", [id || uid]),
           Query.cursorAfter(offset),
         ]).then((r) => {
           const lastId = r.documents[r.documents.length - 1].$id;
@@ -200,12 +210,12 @@ function TuneBoxComp() {
             title: doc.title,
             thumbnailUrl: doc.thumbnailUrl,
           }));
-          setPDetails((prev) => prev?.concat(modified));
+          setPDetails((prev) => prev && [...prev, ...modified]);
           return modified as unknown as likedSongs[];
         });
       }
     }
-  }, [inView, id, pDetails, offset]);
+  }, [inView, id, pDetails, offset, uid]);
 
   const handleShare = () => {
     navigator.share({
@@ -239,14 +249,14 @@ function TuneBoxComp() {
               <Button
                 onClick={handleShare}
                 variant={"secondary"}
-                className=" rounded-xl animate-fade-up text-xl space-x-1 py-6 font-normal p-6"
+                className=" rounded-xl border bg-neutral-900 animate-fade-up text-xl space-x-1 py-6 font-normal p-6"
               >
                 <FiShare />
 
                 <p>Share</p>
               </Button>
             ) : (
-              <Account tunebox />
+              <Account tunebox className=" justify-center" />
             )}
           </div>
           <NavLink to={"/library/"}>
@@ -300,7 +310,7 @@ function TuneBoxComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6  animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -309,7 +319,7 @@ function TuneBoxComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6 animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

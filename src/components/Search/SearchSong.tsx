@@ -18,6 +18,7 @@ import axios from "axios";
 import { SuggestionSearchApi } from "@/API/api";
 import { useQuery } from "react-query";
 import SongsOptions from "../Library/SongsOptions";
+import useImage from "@/hooks/useImage";
 function SearchSong({
   title,
   artist,
@@ -52,6 +53,7 @@ function SearchSong({
       refetchOnWindowFocus: false,
     }
   );
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   const handlePlay = useCallback(async () => {
     if (!fromSearch) {
@@ -62,7 +64,7 @@ function SearchSong({
           thumbnailUrl: cover,
           artists: [artistId, artistName],
           type: "music",
-          for: localStorage.getItem("uid"),
+          for: uid,
         });
       } catch (error) {
         console.log(error);
@@ -96,6 +98,7 @@ function SearchSong({
     data,
     fromSearch,
     artistName,
+    uid,
   ]);
 
   const currentIndex = useSelector(
@@ -105,19 +108,7 @@ function SearchSong({
     (state: RootState) => state.musicReducer.playlist
   );
 
-  const image = async () => {
-    const response = await axios.get(cover, { responseType: "arraybuffer" });
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
-    return URL.createObjectURL(blob);
-  };
-
-  const { data: c } = useQuery(["image", cover], image, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
+  const c = useImage(cover);
   return (
     <div className="flex animate-fade-right py-2 space-x-2 items-center">
       <div className="overflow-hidden h-14 w-14 space-y-2">
@@ -131,7 +122,7 @@ function SearchSong({
             alt="Image"
             loading="lazy"
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-              (e.currentTarget.src = "/liked.webp")
+              (e.currentTarget.src = "/cache.jpg")
             }
             className="rounded-md object-cover h-[100%] w-[100%]"
           />

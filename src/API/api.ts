@@ -1,13 +1,20 @@
 const mainApi = import.meta.env.VITE_API_URL;
 const isIPhone = /iPhone/i.test(navigator.userAgent);
 
-const STREAM = ["STREAMING ENDPOINT"];
-
-const DOWNLOAD = ["DOWNLOAD ENDPOINT"];
+const STREAM = [
+  "https://exotic-cloe-babyo77.koyeb.app/?url=",
+  "https://unconscious-elianora-babyo7.koyeb.app/?url=",
+  "https://architectural-consuela-krsna.koyeb.app/?url=",
+];
+const DOWNLOAD = [
+  "https://exotic-cloe-babyo77.koyeb.app/download?url=",
+  "https://unconscious-elianora-babyo7.koyeb.app/download?url=",
+  "https://architectural-consuela-krsna.koyeb.app/download/?url=",
+];
 
 const streamApi = isIPhone
   ? STREAM[Math.floor(Math.random() * STREAM.length)]
-  : "ANDROID STREAMING ENDPOINT";
+  : "https://economic-glynda-groot.koyeb.app?url=";
 
 const downloadApi = DOWNLOAD[Math.floor(Math.random() * STREAM.length)];
 
@@ -39,21 +46,24 @@ const GetAlbumSongs = `${mainApi}/gas/`;
 
 const GetLyrics = `${mainApi}/lrc/`;
 
-const GetImage = `${mainApi}/image/?img=`;
+const GetImage = `${"https://image-proxy-psi.vercel.app"}/image/?img=`;
 
 const TransferFromSpotifyApi = `${mainApi}/get/?id=`;
 
 const SearchOneTrackApi = `${mainApi}/one/?t=`;
 
-const SharePlayApi = `YOUR SOCKET URL`;
+const SharePlayApi = "https://napster-share-play.onrender.com/";
+
+const getSpotifyProfile = `${mainApi}/spotifyProfile/`;
 
 const getUserApi = `${mainApi}/user/`;
 
-const ReelsApi = `${mainApi}/reels/`;
+const ReelsApi = `${"https://reels-phi.vercel.app"}/reels/`;
 
 const sendNotificationApi = `${mainApi}/notify/`;
 
 export {
+  getSpotifyProfile,
   sendNotificationApi,
   ReelsApi,
   getUserApi,

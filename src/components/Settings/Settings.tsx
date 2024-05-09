@@ -8,57 +8,61 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { SpotifyTransfer } from "../SpotifyTransfer";
-import { useCallback, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { Token } from "../Token";
-// import { SponsorsComp } from "../Sponsors";
 import { DialogClose } from "../ui/dialog";
 import { RootState } from "@/Store/Store";
 import { useDispatch, useSelector } from "react-redux";
 import { Account } from "./Account";
-import { DATABASE_ID, NEW_USER, db } from "@/appwrite/appwriteConfig";
+import authService, {
+  DATABASE_ID,
+  NEW_USER,
+  db,
+} from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
 import { useQuery } from "react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { getUserApi } from "@/API/api";
+import { getSpotifyProfile } from "@/API/api";
 import axios from "axios";
 import { setUser } from "@/Store/Player";
+import { PiUserSwitch } from "react-icons/pi";
+import { IoHelpBuoySharp } from "react-icons/io5";
+import { RiUserFollowLine } from "react-icons/ri";
+import { MdOutlineDownloading } from "react-icons/md";
+import { SponsorsComp } from "../Sponsors";
+import { useNavigate } from "react-router-dom";
 
-function Settings() {
+function SettingsComp() {
   const close = useRef<HTMLButtonElement>(null);
-  const handleReset = useCallback(() => {
-    const reset = confirm(
-      "Save Your Token Before Logout. Are you sure you want to logout?"
-    );
-    if (reset) localStorage.clear(), location.reload();
-  }, []);
-  const handleLoad = useCallback(() => {
-    const uid = localStorage.getItem("uid");
-    if (uid) {
-      const l = prompt("Enter Shared Token");
-      if (l && l?.trim() != "") {
-        db.listDocuments(DATABASE_ID, NEW_USER, [
-          Query.equal("user", [uid]),
-        ]).then((result) => {
-          if (result.documents[0]) {
-            localStorage.setItem("uid", l);
-            location.reload();
-          } else {
-            alert("User not found with requested Uid!");
-          }
-        });
+
+  const handleSwitch = useCallback(async () => {
+    const id = prompt("Enter your token");
+    if (id) {
+      const pass = prompt("Enter your password");
+      if (id && pass) {
+        try {
+          await authService.login(`${id}@napster.com`, pass);
+          localStorage.setItem("uid", id);
+          localStorage.setItem("pp", pass);
+          window.location.reload();
+        } catch (error) {
+          //@ts-expect-error:ignore
+          alert(error.message.replace("email", "token"));
+        }
       }
     }
   }, []);
+  const navigate = useNavigate();
   const handleLoadPlaylist = useCallback(() => {
     const l = prompt("Enter Shared Playlist Link");
     if (l && l?.trim() != "") {
       if (l.startsWith(window.location.origin)) {
-        window.location.href = l;
+        navigate(l.replace(window.location.origin, ""));
       } else {
         alert("invalid link");
       }
     }
-  }, []);
+  }, [navigate]);
 
   const track = useSelector(
     (state: RootState) => state.musicReducer.spotifyTrack
@@ -75,24 +79,16 @@ function Settings() {
         result.documents[0].name.length > 0
       ) {
         const res = await axios.get(
-          `${getUserApi}${result.documents[0].spotifyId}`
+          `${getSpotifyProfile}${result.documents[0].spotifyId}`
         );
         const code = res.data;
-        await db.updateDocument(
-          DATABASE_ID,
-          NEW_USER,
-          result.documents[0].$id,
-          {
-            image: code.image,
-            name: code.name,
-          }
-        );
-      }
-      if (result.documents[0].spotifyId) {
-        dispatch(setUser(true));
-      }
 
-      return result.documents[0];
+        if (result.documents[0].spotifyId) {
+          dispatch(setUser(true));
+        }
+
+        return code;
+      }
     }
   };
 
@@ -104,9 +100,12 @@ function Settings() {
   return (
     <Drawer>
       <DrawerTrigger>
-        {imSrc && imSrc.image.length > 0 ? (
+        {imSrc && imSrc[0].image.length > 0 ? (
           <Avatar className="animate-fade-left h-9 w-9 p-0 m-0 -mr-0.5">
-            <AvatarImage src={imSrc.image}></AvatarImage>
+            <AvatarImage
+              className="rounded-full object-cover h-[100%] w-[100%]"
+              src={imSrc[0].image}
+            ></AvatarImage>
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
         ) : (
@@ -116,53 +115,41 @@ function Settings() {
       <DrawerContent className="px-5 h-dvh rounded-none">
         <DrawerHeader className="animate-fade-up">
           <DrawerTitle className="text-zinc-400 animate-fade-up font-bold">
-            Napster Settings
+            Settings
           </DrawerTitle>
         </DrawerHeader>
-        <Account />
-        <div className="animate-fade-up">
-          <p
-            onClick={handleLoad}
-            className=" rounded-xl py-2.5 mt-3 animate-fade-up bg-neutral-900 flex justify-center  text-base"
-          >
-            Load From Token
-          </p>
-        </div>
+        <Account className="text-start px-4" image={imSrc && imSrc[0].image} />
         {/iPhone/i.test(navigator.userAgent) && (
           <div className="animate-fade-up">
             <p
               onClick={handleLoadPlaylist}
-              className=" rounded-xl py-2.5 mt-3 animate-fade-up bg-neutral-900 flex justify-center  text-base"
+              className=" rounded-xl border py-2.5 mt-3 animate-fade-up bg-neutral-900 flex text-start   px-4  text-base items-center space-x-1"
             >
-              Load Playlist
+              <MdOutlineDownloading className="h-6 w-6" />
+              <span>Load Playlist</span>
             </p>
           </div>
         )}
-
-        {/* <p
-          onClick={() => window.open("https://tanmayo7.vercel.app")}
-          className=" rounded-xl py-2.5 mt-3 bg-neutral-900 flex justify-center text-base "
-        >
-          More by babyo7_
-        </p> */}
-        {/* <SponsorsComp /> */}
+        <SponsorsComp />
         {!track && <SpotifyTransfer close={close} />}
         <div className="animate-fade-up">
           <p
             onClick={() =>
               (window.location.href = "mailto:yfw111realone@gmail.com")
             }
-            className=" animate-fade-up rounded-xl py-2.5 mt-3 bg-neutral-900 flex justify-center text-base "
+            className=" animate-fade-up border rounded-xl py-2.5 mt-3 bg-neutral-900 flex px-4 text-base items-center space-x-1"
           >
-            Feedback & Suggestion
+            <IoHelpBuoySharp className="h-5 w-5" />
+            <span>Feedback & Suggestion</span>
           </p>
         </div>
         <div className="animate-fade-up">
           <p
-            onClick={() => window.open("https://ngl-drx.vercel.app/")}
-            className=" animate-fade-up rounded-xl py-2.5 mt-3 bg-neutral-900 flex justify-center text-base "
+            onClick={() => window.open("https://instagram.com/babyo7_")}
+            className=" animate-fade-up border rounded-xl py-2.5 mt-3 bg-neutral-900 flex px-4 text-base items-center space-x-1"
           >
-            Contact
+            <RiUserFollowLine className="h-5 w-5" />
+            <span>Follow me</span>
           </p>
         </div>
         <DialogClose ref={close}></DialogClose>
@@ -171,15 +158,16 @@ function Settings() {
             <Token />
             <div className="w-full">
               <p
-                onClick={handleReset}
-                className=" font-semibold rounded-xl animate-fade-up  py-2.5 mt-3 flex justify-center bg-red-500 text-base "
+                onClick={handleSwitch}
+                className=" font-medium border rounded-xl animate-fade-up  py-2.5 mt-3 flex justify-center bg-neutral-900 text-base items-center space-x-1"
               >
-                Log out
+                <PiUserSwitch className="h-5 w-5" />
+                <span>Switch Account</span>
               </p>
             </div>
           </div>
           <span className="text-xs text-zinc-300 animate-fade-up">
-            Version - 1.2.7 beta
+            Version - 1.2.11 beta
           </span>
         </DrawerFooter>
       </DrawerContent>
@@ -187,4 +175,5 @@ function Settings() {
   );
 }
 
+const Settings = React.memo(SettingsComp);
 export default Settings;

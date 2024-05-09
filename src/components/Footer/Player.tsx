@@ -4,7 +4,7 @@ import AudioPLayer from "./AudioPLayer";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import { FaPause } from "react-icons/fa6";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { play, setCurrentIndex, setIsIphone } from "@/Store/Player";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { LazyLoadImage } from "react-lazy-load-image-component";
@@ -16,7 +16,7 @@ export function Player() {
   const isLoading = useSelector(
     (state: RootState) => state.musicReducer.isLoading
   );
-  const music = useSelector((state: RootState) => state.musicReducer.music);
+  const [music, setPlayer] = useState<HTMLAudioElement>();
   const isPlaying = useSelector(
     (state: RootState) => state.musicReducer.isPlaying
   );
@@ -32,12 +32,19 @@ export function Player() {
     (state: RootState) => state.musicReducer.isIphone
   );
   const handlePlay = useCallback(() => {
-    if (isPlaying) {
-      music?.pause();
-      dispatch(play(false));
-    } else {
-      music?.play();
-      dispatch(play(true));
+    try {
+      if (isPlaying && music) {
+        music.pause();
+        dispatch(play(false));
+      } else {
+        if (music) {
+          music.play();
+          dispatch(play(true));
+        }
+      }
+    } catch (error) {
+      //@ts-expect-error:error
+      alert(error.message);
     }
   }, [dispatch, isPlaying, music]);
 
@@ -56,12 +63,12 @@ export function Player() {
       <div
         className={`  ${
           location.pathname !== "/share-play"
-            ? "flex items-center rounded-2xl shadow-md z-10 -mb-3   w-[95vw] ml-0.5 fade-in  backdrop-blur-md space-x-5 py-2 bg-zinc-800/70"
+            ? "flex items-center rounded-2xl shadow-md z-10 -mb-3   w-[95vw] ml-0.5 fade-in  backdrop-blur-md justify-between py-2 bg-zinc-800/70"
             : ""
         } `}
       >
         {isPlaylist && isPlaylist.length > 0 ? (
-          <AudioPLayer />
+          <AudioPLayer setPlay={setPlayer} />
         ) : (
           <>
             {location.pathname !== "/share-play" && (

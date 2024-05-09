@@ -13,12 +13,12 @@ import { FaPause } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  SetStopPlaying,
   play,
   setDurationLyrics,
   setIsIphone,
   setIsLoading,
   setNextPrev,
-  setPlayer,
   setProgressLyrics,
 } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
@@ -36,21 +36,26 @@ import {
   db,
 } from "@/appwrite/appwriteConfig";
 import { useQuery } from "react-query";
-import { Query } from "appwrite";
+import { Permission, Query, Role } from "appwrite";
 import { useSwipeable } from "react-swipeable";
 import { IoIosList } from "react-icons/io";
 import { AiFillStar } from "react-icons/ai";
 import Options from "./Options";
 import Lyrics from "./Lyrics";
-import axios from "axios";
-function AudioPLayerComp() {
+import socket from "@/socket";
+import useImage from "@/hooks/useImage";
+function AudioPLayerComp({
+  setPlay,
+}: {
+  setPlay: React.Dispatch<React.SetStateAction<HTMLAudioElement | undefined>>;
+}) {
   const [next, setNext] = useState<boolean>();
   const [prev, setPrev] = useState<boolean>();
   const [playEffect, setPlayEffect] = useState<boolean>();
   const dispatch = useDispatch();
   const [duration, setDuration] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
-  const music = useSelector((state: RootState) => state.musicReducer.music);
+  const [music, setPlayer] = useState<HTMLAudioElement>();
   const [liked, SetLiked] = useState<boolean>();
   const PlaylistOrAlbum = useSelector(
     (state: RootState) => state.musicReducer.PlaylistOrAlbum
@@ -79,7 +84,7 @@ function AudioPLayerComp() {
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
   const isLikedCheck = async () => {
     const r = await db.listDocuments(DATABASE_ID, LIKE_SONG, [
-      Query.equal("for", [localStorage.getItem("uid") || "default"]),
+      Query.equal("for", [uid || "default"]),
       Query.equal("youtubeId", [playlist[currentIndex].youtubeId]),
     ]);
     if (r.documents.length == 0) {
@@ -91,7 +96,7 @@ function AudioPLayerComp() {
   };
 
   const { data: isLiked, refetch } = useQuery(
-    ["likedSongs", playlist[currentIndex].youtubeId],
+    ["likedSongs", playlist[currentIndex]?.youtubeId],
     isLikedCheck,
     {
       refetchOnMount: false,
@@ -101,34 +106,40 @@ function AudioPLayerComp() {
   );
 
   const handleLink = useCallback(() => {
-    SetLiked(true);
-    db.createDocument(DATABASE_ID, LIKE_SONG, ID.unique(), {
-      youtubeId: playlist[currentIndex].youtubeId,
-      title: playlist[currentIndex].title,
-      artists: [
-        playlist[currentIndex].artists[0]?.id || currentArtistId || "unknown",
-        playlist[currentIndex].artists[0]?.name || "unknown",
-      ],
-      thumbnailUrl: playlist[currentIndex].thumbnailUrl,
-      for: localStorage.getItem("uid") || "default",
-    })
-      .then(() => {
-        refetch();
-      })
-      .catch(() => {
-        SetLiked(false);
-      });
-  }, [currentIndex, playlist, currentArtistId, refetch]);
+    if (uid) {
+      SetLiked(true);
+      db.createDocument(
+        DATABASE_ID,
+        LIKE_SONG,
+        ID.unique(),
+        {
+          youtubeId: playlist[currentIndex].youtubeId,
+          title: playlist[currentIndex].title,
+          artists: [
+            playlist[currentIndex].artists[0]?.id ||
+              currentArtistId ||
+              "unknown",
+            playlist[currentIndex].artists[0]?.name || "unknown",
+          ],
+          thumbnailUrl: playlist[currentIndex].thumbnailUrl,
+          for: uid,
+        },
+        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+      )
+        .then(() => {
+          refetch();
+        })
+        .catch(() => {
+          SetLiked(false);
+        });
+    }
+  }, [currentIndex, playlist, currentArtistId, refetch, uid]);
 
   const RemoveLike = useCallback(async () => {
     SetLiked(false);
     if (isLiked) {
       try {
-        await db.deleteDocument(
-          DATABASE_ID,
-          LIKE_SONG,
-          isLiked[0].$id || "default"
-        );
+        await db.deleteDocument(DATABASE_ID, LIKE_SONG, isLiked[0].$id || "");
       } catch (error) {
         console.error(error);
         SetLiked(true);
@@ -137,21 +148,24 @@ function AudioPLayerComp() {
   }, [isLiked]);
 
   const handlePlay = useCallback(() => {
-    setPlayEffect(true);
-    const t = setTimeout(() => {
-      setPlayEffect(false);
-    }, 200);
-    if (isPlaying) {
-      music?.pause();
-      dispatch(play(false));
-    } else {
-      music?.play();
-      dispatch(play(true));
+    if (music) {
+      setPlayEffect(true);
+      const t = setTimeout(() => {
+        setPlayEffect(false);
+      }, 200);
+      if (isPlaying) {
+        music.pause();
+        dispatch(play(false));
+      } else {
+        music.play();
+        dispatch(play(true));
+      }
+      return () => clearTimeout(t);
     }
-    return () => clearTimeout(t);
   }, [isPlaying, music, dispatch]);
 
   const handleNext = useCallback(() => {
+    setDuration(0);
     setNext(true);
     const t = setTimeout(() => {
       setNext(false);
@@ -167,7 +181,19 @@ function AudioPLayerComp() {
     return () => clearTimeout(t);
   }, [dispatch, playlist.length, isLooped, isStandalone]);
 
+  const stopPlaying = useSelector(
+    (state: RootState) => state.musicReducer.stopPlaying
+  );
+
+  useEffect(() => {
+    if (stopPlaying && music) {
+      music.pause();
+      dispatch(SetStopPlaying(false));
+    }
+  }, [stopPlaying, music, dispatch]);
+
   const handlePrev = useCallback(() => {
+    setDuration(0);
     setPrev(true);
     const t = setTimeout(() => {
       setPrev(false);
@@ -185,169 +211,253 @@ function AudioPLayerComp() {
   });
 
   const saveLastPlayed = useCallback(() => {
+    const divId = localStorage.getItem("$d_id_");
+    if (divId) {
+      localStorage.setItem(divId, JSON.stringify(playlist));
+      localStorage.setItem("$cu_idx", String(currentIndex));
+      localStorage.setItem("_nv_nav", String(PlaylistOrAlbum));
+    }
     if (uid) {
-      db.createDocument(DATABASE_ID, LAST_PLAYED, uid, {
-        user: uid,
-        playlisturl: playingPlaylistUrl,
-        navigator: PlaylistOrAlbum,
-        curentsongid: playlist[currentIndex].youtubeId,
-        index: currentIndex,
-      }).catch(() => {
-        db.updateDocument(DATABASE_ID, LAST_PLAYED, uid, {
+      db.createDocument(
+        DATABASE_ID,
+        LAST_PLAYED,
+        uid,
+        {
           user: uid,
           playlisturl: playingPlaylistUrl,
           navigator: PlaylistOrAlbum,
           curentsongid: playlist[currentIndex].youtubeId,
           index: currentIndex,
-        });
+        },
+        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+      ).catch(() => {
+        db.updateDocument(
+          DATABASE_ID,
+          LAST_PLAYED,
+          uid,
+          {
+            user: uid,
+            playlisturl: playingPlaylistUrl,
+            navigator: PlaylistOrAlbum,
+            curentsongid: playlist[currentIndex].youtubeId,
+            index: currentIndex,
+          },
+          [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+        );
       });
     }
   }, [playlist, currentIndex, PlaylistOrAlbum, uid, playingPlaylistUrl]);
 
-  // const updateSeek = useCallback(async () => {
-  //   if (uid && music) {
-  //     await db.updateDocument(DATABASE_ID, LAST_PLAYED, uid, {
-  //       seek: music.currentTime,
-  //     });
-  //   }
-  // }, [uid, music]);
+  const playingInsights = useCallback(() => {
+    if (uid && playlist[currentIndex].youtubeId) {
+      db.createDocument(
+        DATABASE_ID,
+        MOST_PLAYED,
+        ID.unique(),
+        {
+          user: uid,
+          sname: playlist[currentIndex]?.title || "unknown",
+          sid: playlist[currentIndex]?.youtubeId,
+          sartist: playlist[currentIndex]?.artists[0]?.name || "unknown",
+        },
+        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+      );
+    }
+  }, [playlist, currentIndex, uid]);
+  const updateSeek = useCallback(async () => {
+    if (music) {
+      if (Math.floor(music.currentTime) === 30) {
+        playingInsights();
+      }
+      // await db.updateDocument(DATABASE_ID, LAST_PLAYED, uid, {
+      //   seek: music.currentTime,
+      // });
+    }
+  }, [music, playingInsights]);
 
-  // useEffect(() => {
-  //   if (isPlaying) {
-  //     const seek = setInterval(async () => {
-  //       updateSeek();
-  //     }, 5000);
-  //     return () => clearInterval(seek);
-  //   }
-  // }, [updateSeek, isPlaying]);
+  useEffect(() => {
+    if (isPlaying) {
+      const seek = setInterval(async () => {
+        updateSeek();
+      }, 1000);
+      return () => clearInterval(seek);
+    }
+  }, [updateSeek, isPlaying]);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    socket.connect();
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  useEffect(() => {
+    function handleNew() {
+      socket.emit("message", { id: uid, ...playlist[currentIndex] });
+      socket.emit("duration", { id: uid, duration: duration });
+      socket.emit("progress", { id: uid, duration: progress });
+    }
+    socket.on("new", handleNew);
+
+    return () => {
+      socket.off("new", handleNew);
+    };
+  }, [playlist, currentIndex, uid, duration, progress]);
   const [online, setOnline] = useState<boolean>();
   useEffect(() => {
     const online = navigator.onLine;
     setOnline(online);
   }, []);
+  const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => {
-    if (audioRef.current) {
-      dispatch(setIsLoading(true));
+    try {
+      if (audioRef.current) {
+        const sound: HTMLAudioElement = audioRef.current;
+        setPlayer(sound);
+        sound.src = `${
+          online && !playlist[currentIndex]?.youtubeId.startsWith("http")
+            ? streamApi
+            : ""
+        }${playlist[currentIndex]?.youtubeId}`;
+        const handlePlay = () => {
+          socket.emit("message", { id: uid, ...playlist[currentIndex] });
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: playlist[currentIndex].title,
+            artist: playlist[currentIndex].artists[0]?.name,
+            album: "",
+            artwork: [
+              {
+                src: playlist[currentIndex].thumbnailUrl.replace(
+                  "w120-h120",
+                  "w1080-h1080"
+                ),
+              },
+            ],
+          });
 
-      const sound: HTMLAudioElement | null = audioRef.current;
-      sound.src = `${
-        online && !playlist[currentIndex]?.youtubeId.startsWith("http")
-          ? streamApi
-          : ""
-      }${playlist[currentIndex]?.youtubeId}`;
-      const handlePlay = () => {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: playlist[currentIndex].title,
-          artist: playlist[currentIndex].artists[0]?.name,
-          album: "",
-          artwork: [
-            {
-              src: playlist[currentIndex].thumbnailUrl.replace(
-                "w120-h120",
-                "w1080-h1080"
-              ),
-            },
-          ],
-        });
-
-        navigator.mediaSession.setActionHandler("play", () => sound.play());
-        navigator.mediaSession.setActionHandler("pause", () => sound.pause());
-        navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-        navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
-        navigator.mediaSession.setActionHandler("seekto", handleSeek);
-        if (isLooped) {
-          sound.loop = true;
-        }
-        dispatch(play(true));
-        dispatch(setDurationLyrics(sound.duration));
-        if (online) {
-          saveLastPlayed();
-        }
-      };
-
-      const handlePause = () => {
-        dispatch(play(false));
-      };
-
-      const handleError = () => {
-        setDuration(0);
-        setProgress(0);
-        dispatch(setIsLoading(false));
-        sound.pause();
-        dispatch(play(false));
-      };
-
-      const handleSeek = (seek: MediaSessionActionDetails) => {
-        if (sound.currentTime !== seek.seekTime) {
-          sound.currentTime = seek.seekTime ?? 0;
-          if (sound.paused) {
-            sound.play();
+          navigator.mediaSession.setActionHandler("play", () => sound.play());
+          navigator.mediaSession.setActionHandler("pause", () => sound.pause());
+          navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+          navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
+          navigator.mediaSession.setActionHandler("seekto", handleSeek);
+          if (isLooped) {
+            sound.loop = true;
           }
-        }
-      };
+          dispatch(play(true));
 
-      const handleLoad = () => {
-        navigator.mediaSession.metadata = new MediaMetadata({
-          title: playlist[currentIndex].title,
-          artist: playlist[currentIndex].artists[0]?.name,
-          album: "",
-          artwork: [
-            {
-              src: playlist[currentIndex].thumbnailUrl.replace(
-                "w120-h120",
-                "w1080-h1080"
-              ),
-            },
-          ],
-        });
+          dispatch(setDurationLyrics(sound.duration));
+          if (online) {
+            try {
+              saveLastPlayed();
+            } catch (error) {
+              console.log(error);
+            }
+          }
+        };
 
-        navigator.mediaSession.setActionHandler("play", () => sound.play());
-        navigator.mediaSession.setActionHandler("pause", () => sound.pause());
-        navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-        navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
-        navigator.mediaSession.setActionHandler("seekto", handleSeek);
-        dispatch(setIsLoading(false));
-        setDuration(sound.duration);
-        setProgress(sound.currentTime);
-        dispatch(setDurationLyrics(sound.duration));
-        refetch();
-      };
+        const handlePause = () => {
+          dispatch(play(false));
+        };
 
-      const handleTimeUpdate = () => {
-        const time = sound.currentTime;
-        setProgress(time);
-        dispatch(setProgressLyrics(time));
-      };
+        const handleError = () => {
+          setDuration(0);
+          setProgress(0);
+          dispatch(setIsLoading(false));
+          sound.pause();
+          dispatch(play(false));
+        };
 
-      sound.setAttribute("playsinline", "true");
-      sound.addEventListener("play", handlePlay);
-      sound.addEventListener("pause", handlePause);
-      sound.addEventListener("loadedmetadata", handleLoad);
-      sound.addEventListener("error", handleError);
-      sound.addEventListener("timeupdate", handleTimeUpdate);
-      sound.addEventListener("ended", handleNext);
-      sound.play();
-      dispatch(setPlayer(sound));
+        const handleSeek = (seek: MediaSessionActionDetails) => {
+          if (sound.currentTime !== seek.seekTime) {
+            sound.currentTime = seek.seekTime ?? 0;
+            if (sound.paused) {
+              sound.play();
+            }
+          }
+        };
 
-      return () => {
-        sound.load();
-        sound.pause();
+        const handleLoad = () => {
+          dispatch(setIsLoading(false));
 
-        sound.removeEventListener("play", handlePlay);
-        sound.removeEventListener("pause", handlePause);
-        sound.removeEventListener("loadedmetadata", handleLoad);
-        sound.removeEventListener("timeupdate", handleTimeUpdate);
-        sound.removeEventListener("error", handleError);
-        sound.removeEventListener("ended", handleNext);
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: playlist[currentIndex]?.title || "unknown",
+            artist: playlist[currentIndex]?.artists[0]?.name || "unknown",
+            album: "",
+            artwork: [
+              {
+                src:
+                  playlist[currentIndex]?.thumbnailUrl.replace(
+                    "w120-h120",
+                    "w1080-h1080"
+                  ) || "/cache.jpg",
+              },
+            ],
+          });
 
-        navigator.mediaSession.setActionHandler("play", null);
-        navigator.mediaSession.setActionHandler("pause", null);
-        navigator.mediaSession.setActionHandler("nexttrack", null);
-        navigator.mediaSession.setActionHandler("previoustrack", null);
-        navigator.mediaSession.setActionHandler("seekto", null);
-      };
+          navigator.mediaSession.setActionHandler("play", () => sound.play());
+          navigator.mediaSession.setActionHandler("pause", () => sound.pause());
+          navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+          navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
+          navigator.mediaSession.setActionHandler("seekto", handleSeek);
+          setDuration(sound.duration);
+          socket.emit("duration", { id: uid, duration: sound.duration });
+          setProgress(sound.currentTime);
+          dispatch(setDurationLyrics(sound.duration));
+          refetch();
+        };
+
+        const handleTimeUpdate = () => {
+          const time = sound.currentTime;
+          setProgress(time);
+          socket.emit("progress", { id: uid, progress: time });
+          dispatch(setProgressLyrics(time));
+        };
+        const loading = () => {
+          dispatch(setIsLoading(true));
+        };
+        sound.setAttribute("playsinline", "true");
+        sound.addEventListener("loadstart", loading);
+        sound.addEventListener("play", handlePlay);
+        sound.addEventListener("pause", handlePause);
+        sound.addEventListener("loadedmetadata", handleLoad);
+        sound.addEventListener("error", handleError);
+        sound.addEventListener("timeupdate", handleTimeUpdate);
+        sound.addEventListener("ended", handleNext);
+        sound.play();
+        const preloadAudio = new Audio();
+        preloadAudio.src = playlist[currentIndex + 1]
+          ? `${
+              online &&
+              !playlist[currentIndex + 1]?.youtubeId.startsWith("http")
+                ? streamApi
+                : ""
+            }${playlist[currentIndex + 1]?.youtubeId}`
+          : "";
+
+        preloadAudio.load();
+        return () => {
+          sound.pause();
+          sound.src = "";
+
+          preloadAudio.src = "";
+          sound.removeEventListener("loadstart", loading);
+          sound.removeEventListener("play", handlePlay);
+          sound.removeEventListener("pause", handlePause);
+          sound.removeEventListener("loadedmetadata", handleLoad);
+          sound.removeEventListener("timeupdate", handleTimeUpdate);
+          sound.removeEventListener("error", handleError);
+          sound.removeEventListener("ended", handleNext);
+
+          navigator.mediaSession.setActionHandler("play", null);
+          navigator.mediaSession.setActionHandler("pause", null);
+          navigator.mediaSession.setActionHandler("nexttrack", null);
+          navigator.mediaSession.setActionHandler("previoustrack", null);
+          navigator.mediaSession.setActionHandler("seekto", null);
+        };
+      }
+    } catch (error) {
+      console.log("audio player error " + error);
+      //@ts-expect-error:error
+      alert(error.message);
     }
   }, [
     dispatch,
@@ -358,24 +468,16 @@ function AudioPLayerComp() {
     refetch,
     isLooped,
     online,
+    uid,
+    setPlay,
     saveLastPlayed,
   ]);
 
-  const playingInsights = useCallback(() => {
-    db.createDocument(DATABASE_ID, MOST_PLAYED, ID.unique(), {
-      user: localStorage.getItem("uid"),
-      sname: playlist[currentIndex].title,
-      sid: playlist[currentIndex].youtubeId,
-      sartist: playlist[currentIndex].artists[0].name,
-    });
-  }, [playlist, currentIndex]);
-
   useEffect(() => {
-    if (Math.floor(progress) == 30 && online) {
-      playingInsights();
+    if (music) {
+      setPlay(music);
     }
-  }, [progress, playingInsights, online]);
-
+  }, [setPlay, music]);
   const handleLoop = useCallback(async () => {
     if (music && isPlaying) {
       if (music.loop) {
@@ -406,33 +508,15 @@ function AudioPLayerComp() {
     return `${formattedMinutes}:${formattedSeconds}`;
   }, []);
 
-  const image = async () => {
-    const response = await axios.get(
-      playlist[currentIndex]?.thumbnailUrl.replace("w120-h120", "w1080-h1080"),
-      {
-        responseType: "arraybuffer",
-      }
-    );
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
-    return URL.createObjectURL(blob);
-  };
-
-  const { data: c } = useQuery(
-    ["image", playlist[currentIndex]?.thumbnailUrl],
-    image,
-    {
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-    }
+  const c = useImage(
+    playlist[currentIndex]?.thumbnailUrl.replace("w120-h120", "w1080-h1080")
   );
   const location = useLocation();
 
   return (
     <>
-      <audio src="" preload="true" hidden ref={audioRef}></audio>
+      <audio src="" ref={audioRef} hidden preload="true"></audio>
+
       {isStandalone ? (
         <p
           className={`w-[68dvw] ${
@@ -447,12 +531,12 @@ function AudioPLayerComp() {
             {location.pathname == "/share-play" ? (
               <></>
             ) : (
-              <div className="items-center  flex space-x-2 w-[68dvw]   px-2.5">
+              <div className="items-center leading-tight  flex space-x-1.5 w-[74dvw]   px-2.5">
                 <div className=" h-11 w-11 overflow-hidden rounded-xl">
                   <LazyLoadImage
                     height="100%"
                     width="100%"
-                    src={c || playlist[currentIndex]?.thumbnailUrl}
+                    src={c ? c : "/cache.jpg"}
                     onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
                       (e.currentTarget.src = "/newfavicon.jpg")
                     }
@@ -462,7 +546,7 @@ function AudioPLayerComp() {
                   />
                 </div>
                 <div className="flex flex-col text-start">
-                  <p className=" text-sm truncate animate-fade-up w-[50vw] ">
+                  <p className=" text-sm truncate font-medium animate-fade-up w-[54vw] ">
                     {playlist[currentIndex]?.title}
                   </p>
                   <p className=" text-xs w-[30vw] animate-fade-up truncate">
@@ -480,17 +564,17 @@ function AudioPLayerComp() {
                   {...swipeHandler}
                   className={`overflow-hidden flex justify-center items-center 
                    
-                     rounded-2xl mx-1 `}
+                     rounded-lg mx-1 `}
                 >
-                  <div className="flex  justify-center items-center  h-[44dvh]">
+                  <div className="flex  justify-center items-center rounded-lg  h-[44dvh]">
                     <LazyLoadImage
-                      src={c || playlist[currentIndex]?.thumbnailUrl}
+                      src={c ? c : "/cache.jpg"}
                       onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
                         (e.currentTarget.src = "/newfavicon.jpg")
                       }
                       alt="Image"
                       visibleByDefault
-                      className={`object-fit shadow-lg transition-all duration-500 rounded-2xl ${
+                      className={`object-fit shadow-lg transition-all duration-500 rounded-lg ${
                         music && !music.paused
                           ? "w-[90vw] h-[44dvh]"
                           : "w-[75vw] h-[35dvh]"
@@ -501,7 +585,7 @@ function AudioPLayerComp() {
                 <div className=" absolute bottom-[35.5vh] w-full text-start px-2 ">
                   <div className="flex items-center  w-fit space-x-3">
                     <h1
-                      className={`text-3xl truncate transition-all duration-300  ${
+                      className={`text-2xl leading-tight truncate transition-all duration-300  ${
                         online ? "w-[63vw] " : "w-[87vw]"
                       } font-semibold`}
                     >
@@ -538,7 +622,7 @@ function AudioPLayerComp() {
                       }`}
                     >
                       <DrawerClose className="text-start">
-                        <p className="text-base truncate transition-all duration-300 w-[70vw] text-red-500">
+                        <p className="text-base truncate leading-tight transition-all duration-300 w-[70vw] text-zinc-400">
                           {" "}
                           {playlist[currentIndex].artists[0]?.name}
                         </p>
@@ -634,7 +718,7 @@ function AudioPLayerComp() {
                     onClick={handleLoop}
                   />
 
-                  <Lyrics closeRef={closeRef} />
+                  <Lyrics music={music && music} closeRef={closeRef} />
                   <DrawerClose
                     ref={closeRef}
                     className="w-0 h-0 p-0 m-0 hidden"

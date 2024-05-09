@@ -25,6 +25,7 @@ import { Link } from "react-router-dom";
 import SongsOptions from "./SongsOptions";
 import axios from "axios";
 import { SuggestionSearchApi } from "@/API/api";
+import useImage from "@/hooks/useImage";
 
 function Songs({
   title,
@@ -107,13 +108,7 @@ function Songs({
       if (data.length > 1) {
         dispatch(setPlaylist(data));
       } else {
-        if (isSingle && isSingle.length > 0) {
-          console.log(isSingle);
-
-          dispatch(setPlaylist(isSingle));
-        } else {
-          dispatch(setPlaylist(data));
-        }
+        dispatch(setPlaylist(isSingle || data));
       }
       dispatch(SetPlaylistOrAlbum(where));
       dispatch(setCurrentIndex(id));
@@ -142,21 +137,7 @@ function Songs({
     isSingle,
   ]);
 
-  const image = async () => {
-    const response = await axios.get(cover, {
-      responseType: "arraybuffer",
-    });
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
-    return URL.createObjectURL(blob);
-  };
-
-  const { data: c } = useQuery(["image", cover], image, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
+  const c = useImage(cover);
 
   return (
     <div
@@ -175,7 +156,7 @@ function Songs({
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-                (e.currentTarget.src = "/liked.webp")
+                (e.currentTarget.src = "/cache.jpg")
               }
               className="rounded-md object-cover h-[100%] w-[100%]"
             />
@@ -194,7 +175,7 @@ function Songs({
         >
           {title.replace("______________________________________", "untitled")}
         </p>
-        {link ? (
+        {link && artistId !== "unknown" ? (
           <Link to={`/artist/${artistId}`} className="w-[40vw]">
             <p className="-mt-0.5 h-[1rem] capitalize text-xs  text-zinc-400 w-[40dvw]  truncate">
               {artist}

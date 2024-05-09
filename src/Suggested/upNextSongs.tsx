@@ -14,16 +14,15 @@ import {
   setPlaylist,
 } from "@/Store/Player";
 import { playlistSongs } from "@/Interface";
-import { useQuery, useQueryClient } from "react-query";
+import { useQueryClient } from "react-query";
 import { Link } from "react-router-dom";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { FaPause } from "react-icons/fa";
-import { IoPlay } from "react-icons/io5";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MdDragHandle } from "react-icons/md";
 import { RxCross2 } from "react-icons/rx";
-import axios from "axios";
+import useImage from "@/hooks/useImage";
+import Options from "@/components/Footer/Options";
 function UpNextSongs({
   title,
   artist,
@@ -39,8 +38,12 @@ function UpNextSongs({
   album,
   playlist,
   editQue,
+  music,
+  handleAdd,
 }: {
   editQue: boolean;
+  handleAdd: boolean;
+  music: playlistSongs;
   forId?: string;
   playlist: playlistSongs[];
   album?: boolean;
@@ -66,17 +69,6 @@ function UpNextSongs({
   );
 
   const queue = useSelector((state: RootState) => state.musicReducer.queue);
-  const music = useSelector((state: RootState) => state.musicReducer.music);
-
-  const handlePlayer = useCallback(() => {
-    if (isPlaying) {
-      music?.pause();
-      dispatch(play(false));
-    } else {
-      music?.play();
-      dispatch(play(true));
-    }
-  }, [isPlaying, music, dispatch]);
 
   const handlePlay = useCallback(async () => {
     const data = q.getQueryData<playlistSongs[]>([
@@ -128,19 +120,7 @@ function UpNextSongs({
     dispatch(setPlaylist(playlist));
   }, [id, playlist, dispatch]);
 
-  const image = async () => {
-    const response = await axios.get(cover, { responseType: "arraybuffer" });
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
-    return URL.createObjectURL(blob);
-  };
-
-  const { data: c } = useQuery(["image", cover], image, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
+  const c = useImage(cover);
   return (
     <div
       {...attributes}
@@ -157,14 +137,14 @@ function UpNextSongs({
         >
           <AspectRatio ratio={1 / 1}>
             <LazyLoadImage
-              src={c || cover}
+              src={c || ""}
               width="100%"
               height="100%"
               effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-                (e.currentTarget.src = "/liked.webp")
+                (e.currentTarget.src = "/cache.jpg")
               }
               className="rounded-md object-cover h-[100%] w-[100%]"
             />
@@ -200,29 +180,36 @@ function UpNextSongs({
       </div>
       <div>
         {queue[currentIndex]?.youtubeId == audio ? (
-          <div>
+          <div className=" transition-all duration-500">
             {isPlaying ? (
-              <FaPause
-                className={` h-5 w-5 transition-all duration-300`}
-                onClick={handlePlayer}
+              <img
+                src="/bars.gif"
+                className="h-5 w-5 transition-all duration-500"
+                alt="paused"
               />
             ) : (
-              <IoPlay
-                className={` h-6 w-6 transition-all duration-300 `}
-                onClick={handlePlayer}
+              <img
+                src="/bars.svg"
+                className="h-5 w-5 transition-all duration-500"
+                alt="playing"
               />
             )}
           </div>
         ) : (
           <>
+            {handleAdd && <Options className="bg-none" music={music} />}
             {editQue ? (
               <div onClick={handleDelete}>
                 <RxCross2 className="h-6 w-6 text-zinc-500" />
               </div>
             ) : (
-              <div ref={setNodeRef} {...listeners}>
-                <MdDragHandle className=" touch-none h-6 w-6" />
-              </div>
+              <>
+                {!handleAdd && (
+                  <div ref={setNodeRef} {...listeners}>
+                    <MdDragHandle className=" touch-none h-6 w-6" />
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

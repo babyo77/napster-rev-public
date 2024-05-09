@@ -7,6 +7,7 @@ import {
   setSavedAlbums,
   setSavedArtists,
   setSavedPlaylist,
+  setSavedProfile,
 } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
 import SkeletonP from "./SkeletonP";
@@ -14,11 +15,12 @@ import {
   ALBUM_COLLECTION_ID,
   DATABASE_ID,
   FAV_ARTIST,
+  FAV_PROFILES,
   PLAYLIST_COLLECTION_ID,
   db,
 } from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
-import { savedPlaylist, suggestedArtists } from "@/Interface";
+import { savedPlaylist, savedProfile, suggestedArtists } from "@/Interface";
 import { useQuery } from "react-query";
 import { Link } from "react-router-dom";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
@@ -31,6 +33,7 @@ import { GiPin } from "react-icons/gi";
 import Lottie from "lottie-react";
 import likeData from "../../assets/like.json";
 import editsData from "../../assets/edits.json";
+import { SavedProfile } from "./Savedprofile";
 
 function SavedLibraryComp() {
   const dispatch = useDispatch();
@@ -46,11 +49,16 @@ function SavedLibraryComp() {
   const savedArtists = useSelector(
     (state: RootState) => state.musicReducer.savedArtists
   );
+  const savedProfiles = useSelector(
+    (state: RootState) => state.musicReducer.savedProfile
+  );
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+
   const loadSavedPlaylist = async () => {
     const r = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [localStorage.getItem("uid") || "default"]),
-      Query.limit(999),
+      Query.equal("for", [uid || ""]),
+      Query.limit(70),
     ]);
     const p = r.documents as unknown as savedPlaylist[];
     return p;
@@ -62,8 +70,8 @@ function SavedLibraryComp() {
   const loadSavedAlbums = async () => {
     const r = await db.listDocuments(DATABASE_ID, ALBUM_COLLECTION_ID, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [localStorage.getItem("uid") || "default"]),
-      Query.limit(999),
+      Query.equal("for", [uid || ""]),
+      Query.limit(70),
     ]);
     const p = r.documents as unknown as savedPlaylist[];
     return p;
@@ -75,13 +83,26 @@ function SavedLibraryComp() {
   const loadSavedArtists = async () => {
     const r = await db.listDocuments(DATABASE_ID, FAV_ARTIST, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [localStorage.getItem("uid") || "default"]),
-      Query.limit(999),
+      Query.equal("for", [uid || ""]),
+      Query.limit(70),
     ]);
     const p = r.documents as unknown as suggestedArtists[];
     return p;
   };
   const { data: SavedArtists } = useQuery("savedArtists", loadSavedArtists, {
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
+  });
+  const loadSavedProfiles = async () => {
+    const r = await db.listDocuments(DATABASE_ID, FAV_PROFILES, [
+      Query.orderDesc("$createdAt"),
+      Query.equal("for", [uid || ""]),
+      Query.limit(70),
+    ]);
+    const p = r.documents as unknown as savedProfile[];
+    return p;
+  };
+  const { data: SavedProfiles } = useQuery("savedProfiles", loadSavedProfiles, {
     refetchOnWindowFocus: false,
     keepPreviousData: true,
   });
@@ -96,9 +117,12 @@ function SavedLibraryComp() {
       if (SavedArtists) {
         dispatch(setSavedArtists(SavedArtists));
       }
+      if (SavedProfiles) {
+        dispatch(setSavedProfile(SavedProfiles));
+      }
       dispatch(setSavedPlaylist([...data]));
     }
-  }, [dispatch, data, SavedAlbums, SavedArtists]);
+  }, [dispatch, data, SavedAlbums, SavedArtists, SavedProfiles]);
 
   return (
     <>
@@ -107,7 +131,7 @@ function SavedLibraryComp() {
       <div className="  h-[80dvh] pb-36 overflow-scroll ">
         {currentToggle === "Playlists" && (
           <>
-            <Link to={`/liked/${localStorage.getItem("uid")}`}>
+            <Link to={`/liked/${uid}`}>
               <div className="flex space-x-2 px-5 mb-3 animate-fade-right items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="overflow-hidden h-14  w-14 ">
@@ -120,7 +144,7 @@ function SavedLibraryComp() {
                     </AspectRatio>
                   </div>
                   <div className="flex flex-col  text-xl text-start">
-                    <p className="w-[59vw] fade-in font-semibold text-lg truncate">
+                    <p className="w-[59vw] fade-in font-medium text-lg truncate">
                       Liked Songs
                     </p>
                     <div className="flex -mt-0.5 text-zinc-400 items-center space-x-1">
@@ -133,7 +157,7 @@ function SavedLibraryComp() {
                 <GrNext className="h-5  w-5" />
               </div>
             </Link>
-            <Link to={`/edits/${localStorage.getItem("uid")}`}>
+            <Link to={`/edits/${uid}`}>
               <div className="flex space-x-2 px-5 mb-3 animate-fade-right items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="overflow-hidden h-14  w-14 ">
@@ -146,7 +170,7 @@ function SavedLibraryComp() {
                     </AspectRatio>
                   </div>
                   <div className="flex flex-col  text-xl text-start">
-                    <p className="w-[59vw] fade-in font-semibold text-lg truncate">
+                    <p className="w-[59vw] fade-in font-medium text-lg truncate">
                       Liked Tunes
                     </p>
                     <div className="flex -mt-0.5 text-zinc-400 items-center space-x-1">
@@ -159,10 +183,10 @@ function SavedLibraryComp() {
                 <GrNext className="h-5  w-5" />
               </div>
             </Link>
-            <Link to={`/tunebox/${localStorage.getItem("uid")}`}>
+            <Link to={`/tunebox/${uid}`}>
               <div className="flex space-x-2 px-5 mb-3 animate-fade-right items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="overflow-hidden h-14  w-14 ">
+                  <div className="overflow-hidden h-14  w-14 rounded-md ">
                     <AspectRatio ratio={1 / 1}>
                       <LazyLoadImage
                         height="100%"
@@ -175,7 +199,7 @@ function SavedLibraryComp() {
                     </AspectRatio>
                   </div>
                   <div className="flex flex-col  text-xl text-start">
-                    <p className="w-[59vw] fade-in font-semibold text-lg truncate">
+                    <p className="w-[59vw] fade-in font-medium text-lg truncate">
                       Tune Box
                     </p>
                     <div className="flex -mt-0.5 text-zinc-400 items-center space-x-1">
@@ -233,6 +257,10 @@ function SavedLibraryComp() {
                   name={saved.name}
                   thumbnailUrl={saved.thumbnailUrl}
                 />
+              ))}
+            {currentToggle === "Profiles" &&
+              savedProfiles.map((saved, id) => (
+                <SavedProfile key={saved.$id + id} pid={saved.pid} />
               ))}
           </div>
         </div>

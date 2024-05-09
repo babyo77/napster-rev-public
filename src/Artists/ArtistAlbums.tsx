@@ -19,13 +19,13 @@ const ArtistAlbums: React.FC<albums> = ({
               effect="blur"
               src={thumbnailUrl}
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-                (e.currentTarget.src = "/liked.webp")
+                (e.currentTarget.src = "/cache.jpg")
               }
               alt="Image"
               className="rounded-lg animate-fade-right object-cover h-[100%] w-[100%]"
             />
           </div>
-          <h1 className=" truncate pt-2 animate-fade-right w-[7rem] overflow-hidden">
+          <h1 className=" truncate pt-2 animate-fade-right w-[8.1rem] overflow-hidden">
             {title}
           </h1>
         </div>

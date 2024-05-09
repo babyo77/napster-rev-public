@@ -15,7 +15,7 @@ import { playlistSongs, savedPlaylist } from "@/Interface";
 import { useDispatch, useSelector } from "react-redux";
 import { setNextQueue, setPlaylist } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
-import { IoAddSharp } from "react-icons/io5";
+import { IoAddSharp, IoShareOutline } from "react-icons/io5";
 import { v4 as uuidv4 } from "uuid";
 import {
   ADD_TO_LIBRARY,
@@ -27,7 +27,7 @@ import {
   TUNEBOX,
   db,
 } from "@/appwrite/appwriteConfig";
-import { Query } from "appwrite";
+import { Permission, Query, Role } from "appwrite";
 import {
   QueryObserverResult,
   RefetchOptions,
@@ -38,6 +38,7 @@ import Loader from "../Loaders/Loader";
 import { LiaDownloadSolid } from "react-icons/lia";
 import { downloadApi } from "@/API/api";
 import { BiDotsHorizontalRounded } from "react-icons/bi";
+import { useToast } from "../ui/use-toast";
 
 function SongsOptions({
   library,
@@ -71,64 +72,86 @@ function SongsOptions({
   const nextQueue = useSelector(
     (state: RootState) => state.musicReducer.nextQueue
   );
+  const { toast } = useToast();
   const handleQueue = useCallback(() => {
     const newPlaylist = [...playlist];
     newPlaylist.splice(currentIndex + nextQueue, 0, music);
     dispatch(setNextQueue(nextQueue + 1));
     dispatch(setPlaylist(newPlaylist));
-  }, [music, dispatch, playlist, currentIndex, nextQueue]);
+    toast({
+      title: "Added to Queue",
+    });
+  }, [music, dispatch, playlist, currentIndex, nextQueue, toast]);
 
   const handleAdd = useCallback(
     async (playlistId: string, show?: boolean) => {
       const r = await db.listDocuments(DATABASE_ID, ADD_TO_LIBRARY, [
         Query.orderDesc("$createdAt"),
-        Query.equal("for", [localStorage.getItem("uid") || "default"]),
+        Query.equal("for", [uid || "default"]),
         Query.equal("youtubeId", [music.youtubeId]),
         Query.equal("playlistId", [playlistId]),
-        Query.limit(999),
+        Query.limit(500),
       ]);
 
       if (r.total > 0) {
         return;
       }
-      if (localStorage.getItem("uid")) {
-        db.createDocument(DATABASE_ID, ADD_TO_LIBRARY, ID.unique(), {
-          for: localStorage.getItem("uid"),
-          youtubeId: music.youtubeId,
-          artists: [music.artists[0].id, music.artists[0].name],
-          title: music.title,
-          thumbnailUrl: music.thumbnailUrl,
-          playlistId: playlistId,
-          index: r.total + 1,
-        }).then(() => {
+
+      if (uid) {
+        db.createDocument(
+          DATABASE_ID,
+          ADD_TO_LIBRARY,
+          ID.unique(),
+          {
+            for: uid,
+            youtubeId: music.youtubeId,
+            artists: [music.artists[0].id, music.artists[0].name],
+            title: music.title,
+            thumbnailUrl: music.thumbnailUrl,
+            playlistId: playlistId,
+            index: r.total + 1,
+          },
+          [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+        ).then(() => {
+          toast({
+            title: "Added to playlist",
+          });
           if (show) return;
         });
       }
     },
-    [music]
+    [music, uid, toast]
   );
 
   const handleLibrary = useCallback(async () => {
-    if (localStorage.getItem("uid")) {
-      db.createDocument(DATABASE_ID, PLAYLIST_COLLECTION_ID, ID.unique(), {
-        name: music.title,
-        creator: music.artists[0].name || "unknown",
-        link: "custom" + uuidv4(),
-        image: music.thumbnailUrl,
-        for: localStorage.getItem("uid"),
-      }).then((d) => {
+    if (uid) {
+      db.createDocument(
+        DATABASE_ID,
+        PLAYLIST_COLLECTION_ID,
+        ID.unique(),
+        {
+          name: music.title,
+          creator: music.artists[0].name || "unknown",
+          link: "custom" + uuidv4(),
+          image: music.thumbnailUrl,
+          for: uid,
+        },
+        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
+      ).then((d) => {
         handleAdd(d.$id);
-        alert("Added to new Library");
+        toast({
+          title: "Added to new Library",
+        });
       });
     }
-  }, [music, handleAdd]);
+  }, [music, handleAdd, uid, toast]);
   const loadSavedPlaylist = async () => {
     const r = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
       Query.orderDesc("$createdAt"),
       Query.notEqual("$id", [id?.replace("custom", "") || ""]),
       Query.startsWith("link", "custom"),
-      Query.equal("for", [localStorage.getItem("uid") || "default"]),
-      Query.limit(999),
+      Query.equal("for", [uid || "default"]),
+      Query.limit(500),
     ]);
     const p = r.documents as unknown as savedPlaylist[];
     return p;
@@ -160,27 +183,40 @@ function SongsOptions({
     document.body.removeChild(link);
   }, [music.youtubeId, music.title]);
   const handleDelete = useCallback(async () => {
-    const ok = confirm("Are you sure you want to delete");
-    if (ok && reload) {
-      if (edits) {
-        await db.deleteDocument(DATABASE_ID, EDITS, music.$id || "");
-        reload();
-        return;
+    try {
+      const ok = confirm("Are you sure you want to delete");
+      if (ok && reload) {
+        if (edits) {
+          await db.deleteDocument(DATABASE_ID, EDITS, music.$id || "");
+          reload();
+          return;
+        } else if (tunebox) {
+          await db.deleteDocument(DATABASE_ID, TUNEBOX, music.$id || "");
+          reload();
+          return;
+        } else if (like) {
+          await db.deleteDocument(DATABASE_ID, LIKE_SONG, music.$id || "");
+          reload();
+        } else {
+          await db.deleteDocument(DATABASE_ID, ADD_TO_LIBRARY, music.$id || "");
+          reload();
+        }
       }
-      if (tunebox) {
-        await db.deleteDocument(DATABASE_ID, TUNEBOX, music.$id || "");
-        reload();
-        return;
-      }
-      if (like) {
-        await db.deleteDocument(DATABASE_ID, LIKE_SONG, music.$id || "");
-        reload();
-      } else {
-        await db.deleteDocument(DATABASE_ID, ADD_TO_LIBRARY, music.$id || "");
-        reload();
-      }
+    } catch (error) {
+      toast({
+        //@ts-expect-error:message
+        title: error.message,
+      });
     }
-  }, [music, like, reload, edits, tunebox]);
+  }, [music, like, reload, edits, tunebox, toast]);
+  const handleShare = useCallback(() => {
+    navigator.share({
+      url: `${window.location.origin}/track/${music.youtubeId.replace(
+        "https://occasional-clara-babyo777.koyeb.app/?url=https://soundcloud.com/",
+        ""
+      )}`,
+    });
+  }, [music]);
 
   return (
     <DropdownMenu>
@@ -251,6 +287,14 @@ function SongsOptions({
         >
           <p className="text-base">Add to queue</p>
           <PiQueue className="h-5 w-5" />
+        </DropdownMenuItem>
+        <div className="h-[.05rem] w-full bg-zinc-300/10 "></div>
+        <DropdownMenuItem
+          onClick={handleShare}
+          className="flex items-center justify-between space-x-2"
+        >
+          <p className="text-base">Share</p>
+          <IoShareOutline className="h-5 w-5" />
         </DropdownMenuItem>
 
         <div className="h-[.05rem] w-full bg-zinc-300/10 "></div>

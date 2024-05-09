@@ -18,6 +18,7 @@ import axios from "axios";
 import { SuggestionSearchApi } from "@/API/api";
 import { useQuery } from "react-query";
 import SongsOptions from "../Library/SongsOptions";
+import useImage from "@/hooks/useImage";
 
 function FeedSong({
   title,
@@ -56,7 +57,11 @@ function FeedSong({
     }
   );
 
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+
   const handlePlay = useCallback(async () => {
+    if (!id) return;
+
     if (!fromSearch) {
       try {
         db.createDocument(DATABASE_ID, INSIGHTS, ID.unique(), {
@@ -65,7 +70,7 @@ function FeedSong({
           thumbnailUrl: cover,
           artists: [artistId, artistName],
           type: "music",
-          for: localStorage.getItem("uid"),
+          for: uid,
         });
       } catch (error) {
         console.log(error);
@@ -93,6 +98,7 @@ function FeedSong({
     title,
     id,
     artist,
+    uid,
     cover,
     dispatch,
     artistId,
@@ -107,23 +113,7 @@ function FeedSong({
   const playlist = useSelector(
     (state: RootState) => state.musicReducer.playlist
   );
-
-  const image = async () => {
-    const response = await axios.get(cover, {
-      responseType: "arraybuffer",
-    });
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
-
-    return URL.createObjectURL(blob);
-  };
-
-  const { data: c } = useQuery(["image", cover], image, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
+  const c = useImage(cover);
 
   return (
     <div className="flex  animate-fade-up flex-col py-2 space-y-2 ">
@@ -138,13 +128,13 @@ function FeedSong({
             alt="Image"
             loading="lazy"
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-              (e.currentTarget.src = "/liked.webp")
+              (e.currentTarget.src = "/cache.jpg")
             }
             className="rounded-xl object-cover object-center h-[100%] w-[100%]"
           />
         </AspectRatio>
       </div>
-      <div className=" flex justify-between">
+      <div className=" flex justify-between ">
         <div className="flex space-y-0.5 px-1 flex-col  text-start w-[85dvw]">
           <p
             onClick={handlePlay}
@@ -152,12 +142,12 @@ function FeedSong({
               playlist[currentIndex]?.youtubeId == audio &&
               currentIndex == 0 &&
               "text-red-500"
-            }  truncate text-2xl font-semibold`}
+            }  truncate text-2xl leading-tight tracking-tighter font-semibold`}
           >
             {title}
           </p>
           <Link to={`/artist/${artistId}`} className="w-[70dvw]">
-            <p className="  -mt-0.5 text-zinc-400 text-sm w-[70dvw]   truncate">
+            <p className="  -mt-0.5 text-zinc-400 leading-tight text-sm w-[70dvw]   truncate">
               {artist[0]?.name || artistName}
             </p>
           </Link>

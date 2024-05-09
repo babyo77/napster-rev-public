@@ -14,7 +14,11 @@ import {
 } from "@/Store/Player";
 import React, { useCallback, useEffect, useState } from "react";
 import { RootState } from "@/Store/Store";
-import { DATABASE_ID, LIKE_SONG, db } from "@/appwrite/appwriteConfig";
+import authService, {
+  DATABASE_ID,
+  LIKE_SONG,
+  db,
+} from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
 import { likedSongs, playlistSongs } from "@/Interface";
 import Loader from "@/components/Loaders/Loader";
@@ -50,9 +54,10 @@ function LikedSongComp() {
   const [pDetails, setPDetails] = useState<playlistSongs[]>();
 
   const getPlaylistDetails = async () => {
+    const uid = (await authService.getAccount()).$id;
     const r = await db.listDocuments(DATABASE_ID, LIKE_SONG, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [id || localStorage.getItem("uid") || ""]),
+      Query.equal("for", [id || uid]),
       Query.limit(150),
     ]);
 
@@ -129,35 +134,38 @@ function LikedSongComp() {
   }, [currentIndex, playlist]);
 
   useEffect(() => {
-    if (inView) {
-      if (id && pDetails && offset) {
-        db.listDocuments(DATABASE_ID, LIKE_SONG, [
-          Query.orderDesc("$createdAt"),
-          Query.equal("for", [id || localStorage.getItem("uid") || ""]),
-          Query.cursorAfter(offset),
-        ]).then((r) => {
-          const lastId = r.documents[r.documents.length - 1].$id;
+    authService.getAccount().then((account) => {
+      const uid = account.$id;
+      if (inView) {
+        if (id && pDetails && offset) {
+          db.listDocuments(DATABASE_ID, LIKE_SONG, [
+            Query.orderDesc("$createdAt"),
+            Query.equal("for", [id || uid]),
+            Query.cursorAfter(offset),
+          ]).then((r) => {
+            const lastId = r.documents[r.documents.length - 1].$id;
 
-          setOffset(lastId);
+            setOffset(lastId);
 
-          const modified = r.documents.map((doc) => ({
-            $id: doc.$id,
-            for: doc.for,
-            youtubeId: doc.youtubeId,
-            artists: [
-              {
-                id: doc.artists[0],
-                name: doc.artists[1],
-              },
-            ],
-            title: doc.title,
-            thumbnailUrl: doc.thumbnailUrl,
-          }));
-          setPDetails((prev) => prev?.concat(modified));
-          return modified as unknown as likedSongs[];
-        });
+            const modified = r.documents.map((doc) => ({
+              $id: doc.$id,
+              for: doc.for,
+              youtubeId: doc.youtubeId,
+              artists: [
+                {
+                  id: doc.artists[0],
+                  name: doc.artists[1],
+                },
+              ],
+              title: doc.title,
+              thumbnailUrl: doc.thumbnailUrl,
+            }));
+            setPDetails((prev) => prev && [...prev, ...modified]);
+            return modified as unknown as likedSongs[];
+          });
+        }
       }
-    }
+    });
   }, [inView, id, pDetails, offset]);
 
   return (
@@ -173,6 +181,11 @@ function LikedSongComp() {
         </div>
       )}
       {pLoading && pLoading && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <Loader />
+        </div>
+      )}
+      {!pDetails && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <Loader />
         </div>
@@ -209,7 +222,7 @@ function LikedSongComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6  animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -218,7 +231,7 @@ function LikedSongComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6 animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

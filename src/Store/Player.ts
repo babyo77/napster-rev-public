@@ -3,6 +3,7 @@ import {
   playlistSongs,
   suggestedArtists,
   spotifyTransfer,
+  savedProfile,
 } from "@/Interface";
 import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
 import { RootState } from "./Store";
@@ -31,7 +32,7 @@ interface Player {
   isLoop: boolean;
   seek: number;
   uid: string | null;
-  lastPlayed: boolean;
+  stopPlaying: boolean;
   SpotifyProgress: number;
   sharePlayCode: string;
   Feed: playlistSongs[];
@@ -43,6 +44,8 @@ interface Player {
   savedArtists: suggestedArtists[];
   sharePlayConnected: boolean;
   reels: playlistSongs[];
+  savedProfile: savedProfile[];
+  loggedIn: boolean;
   reelsIndex: number;
   limit: number;
   sentQue: string[];
@@ -58,9 +61,10 @@ interface Player {
 
 const initialState: Player = {
   isLikedSong: false,
+  loggedIn: false,
+  stopPlaying: false,
   user: false,
   sharePlayCode: "",
-  lastPlayed: false,
   uid: localStorage.getItem("uid"),
   currentArtistId: "",
   isIphone: false,
@@ -93,6 +97,7 @@ const initialState: Player = {
   search: "",
   limit: 0,
   savedPlaylist: [],
+  savedProfile: [],
   savedAlbums: [],
   savedArtists: [],
   reels: [],
@@ -117,6 +122,9 @@ const MusicPlayer = createSlice({
     SetPlaylistOrAlbum: (state, action: PayloadAction<string>) => {
       state.PlaylistOrAlbum = action.payload;
     },
+    Setuid: (state, action: PayloadAction<string>) => {
+      state.uid = action.payload;
+    },
     SetSentQue: (state, action: PayloadAction<string[]>) => {
       state.sentQue = action.payload;
     },
@@ -126,15 +134,19 @@ const MusicPlayer = createSlice({
     SetFeed: (state, action: PayloadAction<playlistSongs[]>) => {
       state.Feed = action.payload;
     },
+    SetStopPlaying: (state, action: PayloadAction<boolean>) => {
+      state.stopPlaying = action.payload;
+    },
     SetQueue: (state, action: PayloadAction<playlistSongs[]>) => {
       state.queue = action.payload;
     },
     SetReels: (state, action: PayloadAction<playlistSongs[]>) => {
       state.reels = action.payload;
     },
-    SetLastPlayed: (state, action: PayloadAction<boolean>) => {
-      state.lastPlayed = action.payload;
+    SetLoggedIn: (state, action: PayloadAction<boolean>) => {
+      state.loggedIn = action.payload;
     },
+
     SetSeek: (state, action: PayloadAction<number>) => {
       state.seek = action.payload;
     },
@@ -240,6 +252,9 @@ const MusicPlayer = createSlice({
     setSavedPlaylist: (state, action: PayloadAction<savedPlaylist[]>) => {
       state.savedPlaylist = action.payload;
     },
+    setSavedProfile: (state, action: PayloadAction<savedProfile[]>) => {
+      state.savedProfile = action.payload;
+    },
     setSavedAlbums: (state, action: PayloadAction<savedPlaylist[]>) => {
       state.savedAlbums = action.payload;
     },
@@ -265,14 +280,17 @@ export const selectMemoizedLyricsProgress = createSelector(
 
 export const {
   shuffle,
+  Setuid,
   setUser,
   play,
   SetFeedMode,
-  SetLastPlayed,
+
   SetSharePlayConnected,
   SetSeek,
   SetShareLyrics,
+  SetLoggedIn,
   setSavedArtists,
+  SetStopPlaying,
   setSavedAlbums,
   SetSharePlayCode,
   setCurrentToggle,
@@ -293,6 +311,7 @@ export const {
   SetSpotifyProgress,
   setSpotifyTrack,
   setPlaylistUrl,
+  setSavedProfile,
   setSavedPlaylist,
   setIsLikedSong,
   setIsLoading,

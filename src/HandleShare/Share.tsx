@@ -8,7 +8,9 @@ function Share() {
   const handleShare = useCallback(() => {
     if (uid) {
       navigator.share({
-        url: window.location.href.replace(uid.substring(uid.length - 4), ""),
+        url: window.location.href
+          .replace("profile", "user")
+          .replace(uid.substring(uid.length - 4), ""),
       });
     }
   }, [uid]);

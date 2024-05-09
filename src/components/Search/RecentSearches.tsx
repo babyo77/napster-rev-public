@@ -3,6 +3,7 @@ import SearchSong from "./SearchSong";
 import { ArtistSearch } from "./artistSearch";
 import { AlbumSearchComp } from "./albumSearch";
 import { PlaylistSearchComp } from "./playlistSearch";
+import { ProfileSearch } from "./Profile";
 
 function RecentSearchesComp({ r }: { r: likedSongs }) {
   if (r.type === "music") {
@@ -25,6 +26,17 @@ function RecentSearchesComp({ r }: { r: likedSongs }) {
   if (r.type === "artist") {
     return (
       <ArtistSearch
+        fromSearch={true}
+        key={r.title + r.youtubeId}
+        name={r.title}
+        artistId={r.youtubeId}
+        thumbnailUrl={r.thumbnailUrl}
+      />
+    );
+  }
+  if (r.type === "profile") {
+    return (
+      <ProfileSearch
         fromSearch={true}
         key={r.title + r.youtubeId}
         name={r.title}

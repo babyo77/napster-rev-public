@@ -49,10 +49,12 @@ function SavedEditsComp() {
   const [offset, setOffset] = useState<string>();
   const [pDetails, setPDetails] = useState<playlistSongs[]>();
 
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+
   const getPlaylistDetails = async () => {
     const r = await db.listDocuments(DATABASE_ID, EDITS, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [id || localStorage.getItem("uid") || ""]),
+      Query.equal("for", [id || uid || ""]),
       Query.limit(150),
     ]);
 
@@ -129,11 +131,11 @@ function SavedEditsComp() {
   }, [currentIndex, playlist]);
 
   useEffect(() => {
-    if (inView) {
+    if (inView && uid) {
       if (id && pDetails && offset) {
         db.listDocuments(DATABASE_ID, EDITS, [
           Query.orderDesc("$createdAt"),
-          Query.equal("for", [id || localStorage.getItem("uid") || ""]),
+          Query.equal("for", [id || uid]),
           Query.cursorAfter(offset),
         ]).then((r) => {
           const lastId = r.documents[r.documents.length - 1].$id;
@@ -153,12 +155,12 @@ function SavedEditsComp() {
             title: doc.title,
             thumbnailUrl: doc.thumbnailUrl,
           }));
-          setPDetails((prev) => prev?.concat(modified));
+          setPDetails((prev) => prev && [...prev, ...modified]);
           return modified as unknown as likedSongs[];
         });
       }
     }
-  }, [inView, id, pDetails, offset]);
+  }, [inView, id, pDetails, offset, uid]);
 
   return (
     <div className=" flex flex-col items-center">
@@ -173,6 +175,11 @@ function SavedEditsComp() {
         </div>
       )}
       {pLoading && pLoading && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          <Loader />
+        </div>
+      )}
+      {!pDetails && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <Loader />
         </div>
@@ -209,7 +216,7 @@ function SavedEditsComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6  animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -218,7 +225,7 @@ function SavedEditsComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6 animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

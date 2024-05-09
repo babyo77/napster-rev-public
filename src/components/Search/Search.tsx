@@ -12,6 +12,7 @@ import {
   SearchPlaylist,
   likedSongs,
   playlistSongs,
+  profiles,
   searchAlbumsInterface,
   suggestedArtists,
 } from "@/Interface";
@@ -19,8 +20,8 @@ import Loader from "../Loaders/Loader";
 import React, { useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
-import { setSearch } from "@/Store/Player";
-import { DATABASE_ID, INSIGHTS, db } from "@/appwrite/appwriteConfig";
+import { setSearch, setSearchToggle } from "@/Store/Player";
+import { DATABASE_ID, INSIGHTS, NEW_USER, db } from "@/appwrite/appwriteConfig";
 import SearchSong from "./SearchSong";
 import { Query } from "appwrite";
 import { ArtistSearch } from "./artistSearch";
@@ -31,6 +32,7 @@ import SkeletonP from "../Library/SkeletonP";
 import RecentSearchesComp from "./RecentSearches";
 import { SearchToggle } from "./searchToggle";
 import { IoSearchOutline } from "react-icons/io5";
+import { ProfileSearch } from "./Profile";
 
 function SearchComp() {
   const searchQuery = useSelector(
@@ -38,11 +40,12 @@ function SearchComp() {
   );
   const dispatch = useDispatch();
   const s = useRef<HTMLInputElement>(null);
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   const loadRecentSearch = async () => {
     const r = await db.listDocuments(DATABASE_ID, INSIGHTS, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [localStorage.getItem("uid") || ""]),
+      Query.equal("for", [uid || ""]),
       Query.limit(11),
     ]);
     const p = r.documents as unknown as likedSongs[];
@@ -91,6 +94,26 @@ function SearchComp() {
     staleTime: 5 * 60000,
     refetchOnMount: false,
   });
+  const profile = async () => {
+    if (searchQuery.length > 0) {
+      const q = await db.listDocuments(DATABASE_ID, NEW_USER, [
+        Query.startsWith("name", searchQuery),
+        Query.notEqual("$id", uid || ""),
+      ]);
+      return q.documents as unknown as profiles[];
+    } else {
+      return [];
+    }
+  };
+  const { data: profileData, refetch: profileRefetch } = useQuery<profiles[]>(
+    ["profileSearch", searchQuery],
+    profile,
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60000,
+      refetchOnMount: false,
+    }
+  );
 
   const albums = async () => {
     if (searchQuery.length > 0) {
@@ -137,12 +160,14 @@ function SearchComp() {
 
   const search = useCallback(
     (time: number) => {
+      dispatch(setSearchToggle("Music"));
       s.current?.value.trim() == "" && dispatch(setSearch(""));
       const q = setTimeout(() => {
         if (s.current?.value) {
           s.current.value.length > 1 &&
             (refetch(),
             artistsRefetch(),
+            profileRefetch(),
             playlistsRefetch(),
             albumRefetch(),
             dispatch(setSearch(s.current?.value || "")));
@@ -150,18 +175,25 @@ function SearchComp() {
       }, time);
       return () => clearTimeout(q);
     },
-    [refetch, dispatch, artistsRefetch, playlistsRefetch, albumRefetch]
+    [
+      refetch,
+      dispatch,
+      artistsRefetch,
+      playlistsRefetch,
+      albumRefetch,
+      profileRefetch,
+    ]
   );
 
   return (
     <>
       <Header title="Search" />
-      <div className="flex flex-col fade-in items-center space-x-1 px-4">
-        <div className="flex w-full -space-x-2">
+      <div className="flex flex-col fade-in items-center space-x-1 ">
+        <div className="flex w-full px-4  -space-x-2">
           <div className="border rounded-lg rounded-r-none border-r-0 px-2 border-zinc-800">
             <IoSearchOutline
               onClick={clearSearchQuery}
-              className=" text-white  animate-fade-right left-6 mt-2 h-5 w-5"
+              className=" text-white left-6 mt-2 h-5 w-5"
             />
           </div>
           <Input
@@ -169,7 +201,7 @@ function SearchComp() {
             type="text"
             onChange={() => search(1100)}
             placeholder="Artists, Songs, Playlists and More"
-            className="  px-2 relative   animate-fade-down shadow-none rounded-lg rounded-l-none border-l-0 "
+            className="  px-2 relative shadow-none rounded-lg rounded-l-none border-l-0 "
           />
         </div>
         {searchQuery.length > 0 && (
@@ -190,10 +222,10 @@ function SearchComp() {
             RecentSearch.length > 0 &&
             searchQuery.length <= 0 && (
               <>
-                <h3 className="text-xs fade-in text-zinc-500 pt-2 pb-1 ">
+                <h3 className="text-xs fade-in px-4 text-zinc-500 pt-2 pb-1 ">
                   Recently Searched
                 </h3>
-                <div className="h-[63dvh] pb-7 overflow-scroll">
+                <div className="h-[63dvh] pb-7 px-4 overflow-scroll">
                   <div className="flex  fade-in  justify-center flex-col -space-y-1  ">
                     {RecentSearch.filter(
                       (r, i, s) =>
@@ -209,7 +241,7 @@ function SearchComp() {
           {searchQuery.length == 0 && (
             <>
               {RecentLoading && (
-                <div className="flex fade-in mt-1 flex-col space-y-3 ">
+                <div className="flex fade-in mt-1 px-4 flex-col space-y-3 ">
                   <SkeletonP />
                   <SkeletonP />
                   <SkeletonP />
@@ -221,49 +253,58 @@ function SearchComp() {
 
           {music && !isLoading && searchQuery.length > 0 && (
             <>
-              <SearchToggle />
-              <div className="h-[63vh] pb-7 overflow-y-scroll overflow-hidden flex flex-col items-center">
+              <div className="px-4">
+                <SearchToggle
+                  Profile={(profileData && profileData.length > 0) || false}
+                  Artist={(artistsData && artistsData.length > 0) || false}
+                  Music={(music && music.length > 0) || false}
+                  Albums={(albumData && albumData.length > 0) || false}
+                  Playlists={
+                    (playlistsData && playlistsData.length > 0) || false
+                  }
+                />
+              </div>
+              <div className="h-[63vh] pb-7 px-4 overflow-y-scroll overflow-hidden flex flex-col items-center">
                 {searchToggle === "Music" &&
-                  music
-                    .slice(0, 3)
-                    .map((r) => (
-                      <SearchSong
-                        artistId={r.artists[0].id}
-                        audio={r.youtubeId}
-                        artistName={r.artists[0].name}
-                        id={r.youtubeId}
-                        key={r.youtubeId}
-                        title={r.title}
-                        artist={r.artists}
-                        cover={r.thumbnailUrl}
-                      />
-                    ))}
+                  music.map((r) => (
+                    <SearchSong
+                      artistId={r.artists ? r?.artists[0]?.id : "unknown"}
+                      audio={r.youtubeId ? r.youtubeId : ""}
+                      artistName={r.artists ? r.artists[0]?.name : "unknown"}
+                      id={r.youtubeId}
+                      key={r.youtubeId}
+                      title={r?.title || "unknown"}
+                      artist={
+                        r.artists ? r?.artists : [{ id: "", name: "unknown" }]
+                      }
+                      cover={r?.thumbnailUrl || "/cache.jpg"}
+                    />
+                  ))}
 
-                {searchToggle === "Music" &&
-                  music
-                    .slice(4, 6)
-                    .map((r) => (
-                      <SearchSong
-                        artistId={r.artists[0].id}
-                        audio={r.youtubeId}
-                        artistName={r.artists[0].name}
-                        id={r.youtubeId}
-                        key={r.youtubeId}
-                        title={r.title}
-                        artist={r.artists}
-                        cover={r.thumbnailUrl}
-                      />
-                    ))}
                 {searchToggle === "Artists" &&
                   artistsData &&
                   artistsData.length > 0 && (
                     <div>
-                      {artistsData.slice(0, 4).map((a, i) => (
+                      {artistsData.map((a, i) => (
                         <ArtistSearch
-                          key={a.name + a.artistId + i}
-                          name={a.name}
-                          artistId={a.artistId}
+                          key={i}
+                          name={a?.name || "unknown"}
+                          artistId={a?.artistId || "unknown"}
                           thumbnailUrl={a.thumbnailUrl}
+                        />
+                      ))}
+                    </div>
+                  )}
+                {searchToggle === "Profile" &&
+                  profileData &&
+                  profileData.length > 0 && (
+                    <div>
+                      {profileData.map((a, i) => (
+                        <ProfileSearch
+                          key={i}
+                          name={a.name || "unknown"}
+                          artistId={a.user}
+                          thumbnailUrl={a.image || "/cache.jpg"}
                         />
                       ))}
                     </div>
@@ -272,132 +313,28 @@ function SearchComp() {
                   albumData &&
                   albumData.length > 0 && (
                     <div>
-                      {albumData.slice(0, 4).map((a, i) => (
+                      {albumData.map((a, i) => (
                         <AlbumSearchComp
-                          key={a.albumId + a.title + i}
-                          title={a.title}
-                          albumId={a.albumId}
+                          key={i}
+                          title={a?.title || "unknown"}
+                          albumId={a?.albumId || "unknown"}
                           thumbnailUrl={a.thumbnailUrl}
                         />
                       ))}
                     </div>
                   )}
-                {searchToggle === "Music" &&
-                  music
-                    .slice(7, 10)
-                    .map((r) => (
-                      <SearchSong
-                        artistName={r.artists[0].name}
-                        artistId={r.artists[0].id}
-                        audio={r.youtubeId}
-                        id={r.youtubeId}
-                        key={r.youtubeId}
-                        title={r.title}
-                        artist={r.artists}
-                        cover={r.thumbnailUrl}
-                      />
-                    ))}
 
                 {searchToggle === "Playlists" &&
                   playlistsData &&
                   playlistsData.length > 0 &&
-                  playlistsData
-                    .slice(0, 3)
-                    .map((p) => (
-                      <PlaylistSearchComp
-                        key={p.thumbnailUrl + p.playlistId}
-                        playlistId={p.playlistId}
-                        thumbnailUrl={p.thumbnailUrl}
-                        title={p.title}
-                      />
-                    ))}
-
-                {searchToggle === "Albums" &&
-                  albumData &&
-                  albumData.length > 0 && (
-                    <div>
-                      {albumData.slice(4, 7).map((a, i) => (
-                        <AlbumSearchComp
-                          key={a.albumId + a.title + i}
-                          title={a.title}
-                          albumId={a.albumId}
-                          thumbnailUrl={a.thumbnailUrl}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                {searchToggle === "Music" &&
-                  music
-                    .slice(11, music.length - 1)
-                    .map((r) => (
-                      <SearchSong
-                        artistId={r.artists[0].id}
-                        artistName={r.artists[0].name}
-                        audio={r.youtubeId}
-                        id={r.youtubeId}
-                        key={r.youtubeId}
-                        title={r.title}
-                        artist={r.artists}
-                        cover={r.thumbnailUrl}
-                      />
-                    ))}
-
-                {searchToggle === "Playlists" &&
-                  playlistsData &&
-                  playlistsData.length > 0 &&
-                  playlistsData
-                    .slice(3, 7)
-                    .map((p) => (
-                      <PlaylistSearchComp
-                        key={p.thumbnailUrl + p.playlistId}
-                        playlistId={p.playlistId}
-                        thumbnailUrl={p.thumbnailUrl}
-                        title={p.title}
-                      />
-                    ))}
-
-                {searchToggle === "Albums" &&
-                  albumData &&
-                  albumData.length > 0 && (
-                    <div>
-                      {albumData.slice(7, albumData.length - 1).map((a, i) => (
-                        <AlbumSearchComp
-                          key={a.albumId + a.title + i}
-                          title={a.title}
-                          albumId={a.albumId}
-                          thumbnailUrl={a.thumbnailUrl}
-                        />
-                      ))}
-                    </div>
-                  )}
-                {searchToggle === "Artists" &&
-                  artistsData &&
-                  artistsData.length > 0 && (
-                    <div>
-                      {artistsData.slice(5, artists.length - 1).map((a, i) => (
-                        <ArtistSearch
-                          key={a.name + a.artistId + i}
-                          name={a.name}
-                          artistId={a.artistId}
-                          thumbnailUrl={a.thumbnailUrl}
-                        />
-                      ))}
-                    </div>
-                  )}
-                {searchToggle === "Playlists" &&
-                  playlistsData &&
-                  playlistsData.length > 0 &&
-                  playlistsData
-                    .slice(8, playlistsData.length - 1)
-                    .map((p) => (
-                      <PlaylistSearchComp
-                        key={p.thumbnailUrl + p.playlistId}
-                        playlistId={p.playlistId}
-                        thumbnailUrl={p.thumbnailUrl}
-                        title={p.title}
-                      />
-                    ))}
+                  playlistsData.map((p, i) => (
+                    <PlaylistSearchComp
+                      key={i}
+                      playlistId={p?.playlistId || "unknown"}
+                      thumbnailUrl={p.thumbnailUrl}
+                      title={p?.title || "unknown"}
+                    />
+                  ))}
               </div>
             </>
           )}

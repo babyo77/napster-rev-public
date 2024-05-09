@@ -6,8 +6,9 @@ import { Link } from "react-router-dom";
 import { SearchPlaylist } from "@/Interface";
 import { useCallback } from "react";
 import { DATABASE_ID, ID, INSIGHTS, db } from "@/appwrite/appwriteConfig";
-import { useQuery } from "react-query";
-import axios from "axios";
+import { useSelector } from "react-redux";
+import { RootState } from "@/Store/Store";
+import useImage from "@/hooks/useImage";
 
 function PlaylistSearchComp({
   playlistId,
@@ -15,7 +16,8 @@ function PlaylistSearchComp({
   fromSearch,
   thumbnailUrl,
 }: SearchPlaylist) {
-  const handleClick = useCallback(() => {
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+  const handleClick = useCallback(async () => {
     if (!fromSearch) {
       try {
         db.createDocument(DATABASE_ID, INSIGHTS, ID.unique(), {
@@ -23,29 +25,15 @@ function PlaylistSearchComp({
           title: title,
           type: "playlist",
           thumbnailUrl: thumbnailUrl,
-          for: localStorage.getItem("uid") || "error",
+          for: uid || "",
         });
       } catch (error) {
         console.log(error);
       }
     }
-  }, [playlistId, title, thumbnailUrl, fromSearch]);
+  }, [playlistId, title, thumbnailUrl, fromSearch, uid]);
 
-  const image = async () => {
-    const response = await axios.get(thumbnailUrl, {
-      responseType: "arraybuffer",
-    });
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"],
-    });
-    return URL.createObjectURL(blob);
-  };
-
-  const { data: c } = useQuery(["image", thumbnailUrl], image, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-  });
+  const c = useImage(thumbnailUrl);
   return (
     <div
       onClick={handleClick}
@@ -55,14 +43,14 @@ function PlaylistSearchComp({
         <div className="overflow-hidden h-14 w-14 space-y-2">
           <AspectRatio ratio={1 / 1}>
             <LazyLoadImage
-              src={c || thumbnailUrl}
+              src={c || ""}
               width="100%"
               height="100%"
               effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
-                (e.currentTarget.src = "/liked.webp")
+                (e.currentTarget.src = "/cache.jpg")
               }
               className="rounded-sm object-cover h-[100%] w-[100%]"
             />

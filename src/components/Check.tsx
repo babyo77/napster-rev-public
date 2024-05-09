@@ -3,13 +3,10 @@ import App from "@/App";
 import { Desktop } from "./Desktop";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  SetFeed,
-  SetFeedMode,
-  SetLastPlayed,
   SetPlaylistOrAlbum,
   SetQueue,
   SetReels,
-  SetSeek,
+  Setuid,
   setCurrentIndex,
   setIsIphone,
   setPlayingPlaylistUrl,
@@ -17,7 +14,7 @@ import {
 } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
 import Loader from "./Loaders/Loader";
-import {
+import authService, {
   ADD_TO_LIBRARY,
   DATABASE_ID,
   EDITS,
@@ -36,29 +33,25 @@ import {
   SuggestionSearchApi,
 } from "@/API/api";
 import { Query } from "appwrite";
+import { useNavigate } from "react-router-dom";
+import { v4 } from "uuid";
 
 function Check() {
   const dispatch = useDispatch();
   const [check, setCheck] = useState<boolean>(true);
-  const [isStandalone, setIsStandalone] = useState<boolean>();
-  const [graphic, setGraphic] = useState<boolean>();
-  const [hardwareConcurrency, setHardwareConcurrency] = useState<number | null>(
-    null
-  );
+  const [isStandalone, setIsStandalone] = useState<boolean>(true);
+
   const [online, setOnline] = useState<boolean>();
   const [isiPad, setIsIpad] = useState<boolean>();
-  const [isIPhone, setIphone] = useState<boolean>();
   const [isDesktop, setDesktop] = useState<boolean>();
 
   useEffect(() => {
-    const isIPhone = /iPhone/i.test(navigator.userAgent);
     const isDesktop = window.innerWidth > 786;
     const isiPad = navigator.userAgent.match(/iPad/i) !== null;
     const online = navigator.onLine;
     setIsIpad(isiPad);
     setOnline(online);
     setDesktop(isDesktop);
-    setIphone(isIPhone);
   }, []);
 
   const isStandaloneWep = useSelector(
@@ -66,28 +59,16 @@ function Check() {
   );
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
-  const checkGpuCapabilities = () => {
-    const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl");
-
-    if (gl) {
-      const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
-      const renderer = debugInfo
-        ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
-        : null;
-
-      return renderer;
-    }
-
-    return null;
-  };
-
+  const [lastPlayed, setLastPlayed] = useState(false);
   const getLastPlayed = async () => {
     const lastPlayed = await db.getDocument(
       DATABASE_ID,
       LAST_PLAYED,
       uid || ""
     );
+    if (lastPlayed) {
+      setLastPlayed(false);
+    }
     return lastPlayed as unknown as lastPlayed;
   };
 
@@ -101,9 +82,9 @@ function Check() {
     if (data && data.playlisturl.startsWith("custom")) {
       const r = await db.listDocuments(DATABASE_ID, ADD_TO_LIBRARY, [
         Query.orderDesc("$createdAt"),
-        Query.equal("for", [localStorage.getItem("uid") || ""]),
+        Query.equal("for", [uid || ""]),
         Query.equal("playlistId", [data.playlisturl.replace("custom", "")]),
-        Query.limit(999),
+        Query.limit(500),
       ]);
       const modified = r.documents.map((doc) => ({
         for: doc.for,
@@ -119,7 +100,7 @@ function Check() {
       }));
 
       const s = await axios.get(`${SuggestionSearchApi}${data?.curentsongid}`);
-      if (data.index > modified.length) {
+      if (data.index > modified.length - 1) {
         dispatch(setCurrentIndex(0));
       }
       if (data?.index !== 0) {
@@ -132,7 +113,11 @@ function Check() {
           dispatch(setPlaylist([s.data[0], ...modified]));
         }
       }
-
+      if (modified.length == 0) {
+        dispatch(setCurrentIndex(0));
+        dispatch(SetPlaylistOrAlbum("suggested"));
+        dispatch(setPlaylist(s.data));
+      }
       return modified as playlistSongs[];
     } else {
       const list = await axios.get(
@@ -202,8 +187,8 @@ function Check() {
   const getPlaylistDetails = async () => {
     const r = await db.listDocuments(DATABASE_ID, LIKE_SONG, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [localStorage.getItem("uid") || ""]),
-      Query.limit(999),
+      Query.equal("for", [uid || ""]),
+      Query.limit(500),
     ]);
     const s = await axios.get(`${SuggestionSearchApi}${data?.curentsongid}`);
     const modified = r.documents.map((doc) => ({
@@ -220,7 +205,7 @@ function Check() {
     }));
 
     if (data) {
-      if (data.index > modified.length) {
+      if (data.index > modified.length - 1) {
         dispatch(setCurrentIndex(0));
       }
       if (data.index !== 0) {
@@ -240,8 +225,8 @@ function Check() {
   const getEditDetails = async () => {
     const r = await db.listDocuments(DATABASE_ID, EDITS, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [localStorage.getItem("uid") || ""]),
-      Query.limit(999),
+      Query.equal("for", [uid || ""]),
+      Query.limit(500),
     ]);
 
     const modified = r.documents.map((doc) => ({
@@ -257,7 +242,7 @@ function Check() {
       thumbnailUrl: doc.thumbnailUrl,
     }));
     if (data) {
-      if (data.index > modified.length) {
+      if (data.index > modified.length - 1) {
         dispatch(setCurrentIndex(0));
       }
       if (data.index !== 0) {
@@ -268,11 +253,12 @@ function Check() {
     }
     return modified as unknown as likedSongs[];
   };
+
   const getTuneBoxDetails = async () => {
     const r = await db.listDocuments(DATABASE_ID, TUNEBOX, [
       Query.orderDesc("$createdAt"),
-      Query.equal("for", [localStorage.getItem("uid") || ""]),
-      Query.limit(999),
+      Query.equal("for", [uid || ""]),
+      Query.limit(500),
     ]);
     const s = await axios.get(`${SuggestionSearchApi}${data?.curentsongid}`);
     const modified = r.documents.map((doc) => ({
@@ -288,7 +274,7 @@ function Check() {
       thumbnailUrl: doc.thumbnailUrl,
     }));
     if (data) {
-      if (data.index > modified.length) {
+      if (data.index > modified.length - 1) {
         dispatch(setCurrentIndex(0));
       }
       if (data.index !== 0) {
@@ -360,43 +346,15 @@ function Check() {
   );
   const playlist = useSelector((state: RootState) => state.musicReducer.queue);
 
-  const query = async () => {
-    const currentIndex = Math.floor(Math.random() * playlist.length);
-    const q = await axios.get(
-      `${SuggestionSearchApi}${
-        playlist[currentIndex]?.youtubeId.startsWith("https")
-          ? "sem" +
-            playlist[currentIndex].title +
-            " " +
-            playlist[currentIndex].artists[0].name
-          : playlist[currentIndex]?.youtubeId || "rnd"
-      }`
-    );
-    dispatch(SetFeed(q.data));
-    return q.data as playlistSongs[];
-  };
-
-  const { refetch: refetchFeed } = useQuery<playlistSongs[]>(["Feed"], query, {
-    refetchOnWindowFocus: false,
-    staleTime: 60 * 60000,
-    refetchOnMount: false,
-
-    onError() {
-      refetchFeed();
-    },
-    onSuccess(data) {
-      data.length == 0 && refetchFeed();
-      data[0].youtubeId == null && refetchFeed();
-    },
-  });
-
   const getReels = useCallback(async () => {
     const rnDno = Math.floor(Math.random() * playlist.length - 1);
     const r = await axios.get(
       `${ReelsApi}${
-        playlist[rnDno]?.title.replace("/", "") +
-        " " +
-        playlist[rnDno]?.artists[0]?.name.replace("/", "")
+        playlist && playlist.length > 0
+          ? playlist[rnDno]?.title.replace("/", "") +
+            " " +
+            playlist[rnDno]?.artists[0]?.name.replace("/", "")
+          : "rnd"
       }`
     );
 
@@ -409,49 +367,34 @@ function Check() {
     refetchOnWindowFocus: false,
   });
 
-  const music = useSelector((state: RootState) => state.musicReducer.music);
-
-  useEffect(() => {
+  const setData = useCallback(() => {
     if (data && uid && online) {
-      dispatch(SetFeedMode(true));
-      dispatch(SetLastPlayed(true));
       dispatch(setPlayingPlaylistUrl(data.playlisturl));
       dispatch(SetPlaylistOrAlbum(data.navigator));
       dispatch(setCurrentIndex(data.index));
-      dispatch(SetSeek(data.seek));
 
       if (data.navigator == "library") {
         refetch();
-      }
-      if (data.navigator == "album") {
+      } else if (data.navigator == "playlist") {
+        refetch();
+      } else if (data.navigator == "playlists") {
+        refetch();
+      } else if (data.navigator == "album") {
         album();
-      }
-      if (data.navigator == "liked") {
+      } else if (data.navigator == "liked") {
         likedSong();
-      }
-      if (data.navigator == "edits") {
+      } else if (data.navigator == "edits") {
         editSong();
-      }
-      if (data.navigator == "tunebox") {
+      } else if (data.navigator == "tunebox") {
         tuneboxSong();
-      }
-      if (data.navigator == "suggested") {
+      } else if (data.navigator == "suggested") {
         dispatch(setCurrentIndex(0));
         suggested();
       }
-    } else {
-      dispatch(SetFeedMode(true));
     }
-    const isStandalone = window.matchMedia(
-      "(display-mode: standalone)"
-    ).matches;
-    const hardwareConcurrency = navigator.hardwareConcurrency || null;
-    dispatch(setIsIphone(isStandalone));
-    setHardwareConcurrency(hardwareConcurrency);
-    setIsStandalone(isStandalone);
-    setGraphic(checkGpuCapabilities());
-    setCheck(false);
   }, [
+    uid,
+    online,
     dispatch,
     data,
     editSong,
@@ -460,10 +403,60 @@ function Check() {
     suggested,
     tuneboxSong,
     album,
-    music,
-    uid,
-    online,
   ]);
+  useEffect(() => {
+    const divId = localStorage.getItem("$d_id_");
+    if (!divId) {
+      localStorage.setItem("$d_id_", v4());
+    }
+    if (divId && online) {
+      const savedPlaylistData = localStorage.getItem(divId);
+      const savedIndex = localStorage.getItem("$cu_idx");
+      const savedNavigator = localStorage.getItem("_nv_nav");
+
+      if (
+        savedPlaylistData &&
+        savedPlaylistData.length > 0 &&
+        savedIndex &&
+        savedIndex &&
+        savedNavigator
+      ) {
+        dispatch(setPlaylist(JSON.parse(savedPlaylistData)));
+        dispatch(SetQueue(JSON.parse(savedPlaylistData)));
+        dispatch(SetPlaylistOrAlbum(savedNavigator));
+        dispatch(setCurrentIndex(parseInt(savedIndex)));
+      } else {
+        setData();
+      }
+    } else {
+      setData();
+    }
+
+    const isStandalone = window.matchMedia(
+      "(display-mode: standalone)"
+    ).matches;
+    dispatch(setIsIphone(isStandalone));
+    setIsStandalone(isStandalone);
+
+    setCheck(false);
+  }, [dispatch, online, setData]);
+  useEffect(() => {
+    if (data) {
+      dispatch(setPlayingPlaylistUrl(data.playlisturl));
+    }
+  }, [data, dispatch]);
+  useEffect(() => {
+    try {
+      authService.getAccount().then((account) => {
+        if (account) {
+          localStorage.setItem("uid", account.$id);
+          dispatch(Setuid(account.$id));
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     console.log(status);
@@ -477,30 +470,30 @@ function Check() {
       });
     }
   }, [playlist, data, dispatch, online]);
-
+  const nav = useNavigate();
+  useEffect(() => {
+    if (online && !online) {
+      nav("/offline/");
+    }
+  }, [nav, online]);
   if (isDesktop || isiPad) {
     return <Desktop />;
   }
   if (isStandalone) {
     return <App />;
   }
-  if (
-    !isStandaloneWep &&
-    hardwareConcurrency &&
-    hardwareConcurrency >= 4 &&
-    graphic
-  ) {
+  if (!isStandaloneWep) {
     return <App />;
   }
 
   return (
     <>
-      {check && online && !data && !playlistSongs ? (
+      {check && online && !lastPlayed && !playlistSongs ? (
         <div className="load flex justify-center items-center h-screen">
           <Loader />
         </div>
       ) : (
-        <>{isIPhone ? <Desktop /> : <Desktop />}</>
+        <Desktop />
       )}
     </>
   );

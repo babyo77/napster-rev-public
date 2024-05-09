@@ -163,7 +163,7 @@ export function EditCustomPlaylist({
                     {<Loader loading={true} />}
                   </div>
                 ) : (
-                  <div className=" animate-fade-down h-80 w-full">
+                  <div className=" animate-fade-down h-80 px-0.5 w-full">
                     <LazyLoadImage
                       effect="blur"
                       width="100%"
@@ -171,7 +171,7 @@ export function EditCustomPlaylist({
                       src={image}
                       alt="Image"
                       loading="lazy"
-                      className="object-cover rounded-xl h-[100%] w-[100%]"
+                      className="object-cover  rounded-xl h-[100%] w-[100%]"
                     />
                   </div>
                 )}
@@ -186,7 +186,7 @@ export function EditCustomPlaylist({
                       <Input
                         placeholder="Playlist Name"
                         {...field}
-                        className="animate-fade-up"
+                        className="animate-fade-up mt-2"
                       />
                     </FormControl>
 
@@ -215,7 +215,7 @@ export function EditCustomPlaylist({
               <div className=" space-y-2 flex flex-col">
                 <Button
                   type="submit"
-                  className=" rounded-xl animate-fade-up"
+                  className=" rounded-xl border bg-neutral-900 animate-fade-up"
                   variant={"secondary"}
                   disabled={isSubmit}
                 >
@@ -231,7 +231,7 @@ export function EditCustomPlaylist({
                     ref={close}
                     type="button"
                     variant={"secondary"}
-                    className="w-full  rounded-xl animate-fade-up"
+                    className="w-full border bg-neutral-900  rounded-xl animate-fade-up"
                   >
                     <p>Close</p>
                   </Button>

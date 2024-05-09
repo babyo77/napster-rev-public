@@ -13,7 +13,13 @@ interface homePagePlaylist {
   type: string;
 }
 
+interface savedProfile {
+  $id: string;
+  for: string;
+  pid: string;
+}
 interface Sponsors {
+  type: string;
   name: string;
   discord: string;
   image: string;
@@ -87,6 +93,14 @@ interface suggestedArtists {
   thumbnailUrl: string;
 }
 
+interface profiles {
+  user: string;
+  ios?: string;
+  name?: string;
+  image?: string;
+  spotifyId?: string;
+}
+
 interface thumbnails {
   url: string;
 }
@@ -95,6 +109,8 @@ interface ArtistDetails {
   name: string;
   albums: albums[];
   singles: albums[];
+  subscribers?: string;
+
   suggestedArtists: suggestedArtists[];
   thumbnails: thumbnails[];
   songsPlaylistId: string;
@@ -109,8 +125,11 @@ interface lastPlayed {
   index: number;
 }
 interface likedSongs {
-  type?: "album" | "playlist" | "music" | "artist";
+  type?: "album" | "playlist" | "music" | "artist" | "profile";
   for: string;
+  name?: string;
+  user?: string;
+  image?: string;
   $id: string;
   youtubeId: string;
   artists: artists[];
@@ -148,8 +167,10 @@ export type {
   lastPlayed,
   spotifyTransfer,
   albums,
+  profiles,
   likedSongs,
   ArtistDetails,
   suggestedArtists,
+  savedProfile,
   searchAlbumsInterface,
 };

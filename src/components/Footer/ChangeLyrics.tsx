@@ -100,7 +100,7 @@ export function ChangeLyrics({
             <Button
               asChild
               variant={"secondary"}
-              className="w-full py-5 rounded-2xl"
+              className="w-full py-5 border bg-neutral-900 rounded-2xl"
             >
               <p>Done</p>
             </Button>
