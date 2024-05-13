@@ -26,6 +26,7 @@ import User from "./user/User.tsx";
 import Track from "./Track/Track.tsx";
 import Playlists from "./user/Playlists.tsx";
 import Mode from "./Mode.tsx";
+import Loader from "./components/Loaders/Loader.tsx";
 
 const client = new QueryClient();
 const router = createBrowserRouter([
@@ -46,6 +47,15 @@ const router = createBrowserRouter([
       {
         path: "/library",
         element: <RememberLib />,
+      },
+      {
+        path: "/social",
+        element: (
+          <div className=" flex flex-col space-y-1 justify-center items-center h-dvh">
+            <Loader />
+            <p>Coming soon</p>
+          </div>
+        ),
       },
       {
         path: "/library/:id",

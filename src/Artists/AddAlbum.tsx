@@ -185,7 +185,7 @@ const AddAlbum: React.FC<{
                 type="submit"
                 variant={"secondary"}
                 disabled={isSubmit || error}
-                className=" py-5 w-full rounded-xl border bg-neutral-900 animate-fade-up"
+                className=" py-5 w-full rounded-xl border bg-neutral-950 animate-fade-up"
               >
                 {isSubmit ? (
                   <Loader size="20" loading={true} />
@@ -204,7 +204,7 @@ const AddAlbum: React.FC<{
               onClick={handleReset}
               variant={"secondary"}
               disabled={isSubmit || error}
-              className=" text-zinc-100 py-5 border bg-neutral-900 animate-fade-up -mt-1.5 w-full rounded-xl"
+              className=" text-zinc-100 py-5 border bg-neutral-950 animate-fade-up -mt-1.5 w-full rounded-xl"
             >
               <p>Close</p>
             </Button>

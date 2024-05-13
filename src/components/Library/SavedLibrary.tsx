@@ -1,27 +1,11 @@
 import Header from "../Header/Header";
 import SavedLibraryCard from "./SavedLibraryCard";
-import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  setPlaylistUrl,
-  setSavedAlbums,
-  setSavedArtists,
-  setSavedPlaylist,
-  setSavedProfile,
-} from "@/Store/Player";
+import React from "react";
+import { useSelector } from "react-redux";
+
 import { RootState } from "@/Store/Store";
 import SkeletonP from "./SkeletonP";
-import {
-  ALBUM_COLLECTION_ID,
-  DATABASE_ID,
-  FAV_ARTIST,
-  FAV_PROFILES,
-  PLAYLIST_COLLECTION_ID,
-  db,
-} from "@/appwrite/appwriteConfig";
-import { Query } from "appwrite";
-import { savedPlaylist, savedProfile, suggestedArtists } from "@/Interface";
-import { useQuery } from "react-query";
+
 import { Link } from "react-router-dom";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { LazyLoadImage } from "react-lazy-load-image-component";
@@ -34,9 +18,9 @@ import Lottie from "lottie-react";
 import likeData from "../../assets/like.json";
 import editsData from "../../assets/edits.json";
 import { SavedProfile } from "./Savedprofile";
+import useSaved from "@/hooks/saved";
 
 function SavedLibraryComp() {
-  const dispatch = useDispatch();
   const savedPlaylist = useSelector(
     (state: RootState) => state.musicReducer.savedPlaylist
   );
@@ -54,76 +38,7 @@ function SavedLibraryComp() {
   );
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
-  const loadSavedPlaylist = async () => {
-    const r = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("for", [uid || ""]),
-      Query.limit(70),
-    ]);
-    const p = r.documents as unknown as savedPlaylist[];
-    return p;
-  };
-  const { data, isLoading } = useQuery("savedPlaylist", loadSavedPlaylist, {
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-  const loadSavedAlbums = async () => {
-    const r = await db.listDocuments(DATABASE_ID, ALBUM_COLLECTION_ID, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("for", [uid || ""]),
-      Query.limit(70),
-    ]);
-    const p = r.documents as unknown as savedPlaylist[];
-    return p;
-  };
-  const { data: SavedAlbums } = useQuery("savedAlbums", loadSavedAlbums, {
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-  const loadSavedArtists = async () => {
-    const r = await db.listDocuments(DATABASE_ID, FAV_ARTIST, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("for", [uid || ""]),
-      Query.limit(70),
-    ]);
-    const p = r.documents as unknown as suggestedArtists[];
-    return p;
-  };
-  const { data: SavedArtists } = useQuery("savedArtists", loadSavedArtists, {
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-  const loadSavedProfiles = async () => {
-    const r = await db.listDocuments(DATABASE_ID, FAV_PROFILES, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("for", [uid || ""]),
-      Query.limit(70),
-    ]);
-    const p = r.documents as unknown as savedProfile[];
-    return p;
-  };
-  const { data: SavedProfiles } = useQuery("savedProfiles", loadSavedProfiles, {
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-
-  useEffect(() => {
-    dispatch(setSavedPlaylist([]));
-    dispatch(setPlaylistUrl(""));
-    if (data) {
-      if (SavedAlbums) {
-        dispatch(setSavedAlbums(SavedAlbums));
-      }
-      if (SavedArtists) {
-        dispatch(setSavedArtists(SavedArtists));
-      }
-      if (SavedProfiles) {
-        dispatch(setSavedProfile(SavedProfiles));
-      }
-      dispatch(setSavedPlaylist([...data]));
-    }
-  }, [dispatch, data, SavedAlbums, SavedArtists, SavedProfiles]);
-
+  const { isLoading } = useSaved();
   return (
     <>
       <Header title="Library" l={true} />
@@ -135,7 +50,7 @@ function SavedLibraryComp() {
               <div className="flex space-x-2 px-5 mb-3 animate-fade-right items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="overflow-hidden h-14  w-14 ">
-                    <AspectRatio ratio={1 / 1} className="bg-white rounded-md">
+                    <AspectRatio ratio={1 / 1} className="bg-white -md">
                       <Lottie
                         loop={false}
                         animationData={likeData}
@@ -161,7 +76,7 @@ function SavedLibraryComp() {
               <div className="flex space-x-2 px-5 mb-3 animate-fade-right items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="overflow-hidden h-14  w-14 ">
-                    <AspectRatio ratio={1 / 1} className="bg-white rounded-md">
+                    <AspectRatio ratio={1 / 1} className="bg-white -md">
                       <Lottie
                         loop={false}
                         animationData={editsData}
@@ -186,7 +101,7 @@ function SavedLibraryComp() {
             <Link to={`/tunebox/${uid}`}>
               <div className="flex space-x-2 px-5 mb-3 animate-fade-right items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="overflow-hidden h-14  w-14 rounded-md ">
+                  <div className="overflow-hidden h-14  w-14 -md ">
                     <AspectRatio ratio={1 / 1}>
                       <LazyLoadImage
                         height="100%"
@@ -194,7 +109,7 @@ function SavedLibraryComp() {
                         effect="blur"
                         src="/tunebox.jpg"
                         alt="Image"
-                        className="rounded-md object-cover w-[100%] h-[100%]"
+                        className="-md object-cover w-[100%] h-[100%]"
                       />
                     </AspectRatio>
                   </div>

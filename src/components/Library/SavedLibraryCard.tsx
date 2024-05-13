@@ -1,8 +1,6 @@
 import { Link } from "react-router-dom";
 import { AspectRatio } from "../ui/aspect-ratio";
 import EditInfo from "./EditInfo";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 import { useQuery } from "react-query";
 import { SearchPlaylist, savedPlaylist } from "@/Interface";
 import axios from "axios";
@@ -11,7 +9,8 @@ import { SearchPlaylistApi } from "@/API/api";
 import { useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import useImage from "@/hooks/useImage";
-function SavedLibraryCard({
+import React from "react";
+function SavedLibraryCardComp({
   author,
   link,
   f,
@@ -59,20 +58,19 @@ function SavedLibraryCard({
           >
             <div
               className={`overflow-hidden  space-y-2 ${
-                className ? "h-14 w-14" : "h-14 w-14 "
-              } rounded-md`}
+                className ? "h-[3.3rem] w-[3.3rem]" : "h-14 w-14 "
+              } -md`}
             >
-              <AspectRatio ratio={1 / 1} className=" rounded-md">
-                <LazyLoadImage
+              <AspectRatio ratio={1 / 1} className=" -md">
+                <img
                   height="100%"
                   width="100%"
-                  effect="blur"
                   src={c}
                   alt="Image"
                   onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
                     (e.currentTarget.src = "/cache.jpg")
                   }
-                  className="rounded-md object-cover object-center w-[100%] h-[100%]"
+                  className="-md object-cover object-center w-[100%] h-[100%]"
                 />
               </AspectRatio>
             </div>
@@ -99,18 +97,17 @@ function SavedLibraryCard({
                 to={`/library/${"custom" + data.$id}`}
                 className="flex space-x-2.5 items-center justify-between"
               >
-                <div className="overflow-hidden h-14 rounded-sm w-14 space-y-2">
+                <div className="overflow-hidden h-14 -sm w-14 space-y-2">
                   <AspectRatio ratio={1 / 1}>
-                    <LazyLoadImage
+                    <img
                       height="100%"
                       width="100%"
-                      effect="blur"
                       src={c1 || ""}
                       alt="Image"
                       onError={(
                         e: React.SyntheticEvent<HTMLImageElement, Event>
                       ) => (e.currentTarget.src = "/cache.jpg")}
-                      className="rounded-sm object-cover w-[100%] h-[100%]"
+                      className="-sm object-cover w-[100%] h-[100%]"
                     />
                   </AspectRatio>
                 </div>
@@ -132,4 +129,5 @@ function SavedLibraryCard({
   );
 }
 
+const SavedLibraryCard = React.memo(SavedLibraryCardComp);
 export default SavedLibraryCard;

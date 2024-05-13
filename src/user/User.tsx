@@ -23,7 +23,6 @@ import { RiTwitterXFill, RiUserUnfollowFill } from "react-icons/ri";
 import socket from "@/socket";
 import { getSpotifyProfile } from "@/API/api";
 import ProgressBar from "@ramonak/react-progress-bar";
-import { RxCodesandboxLogo } from "react-icons/rx";
 import axios from "axios";
 import { IoLogoInstagram } from "react-icons/io5";
 import { FaSnapchat } from "react-icons/fa";
@@ -34,6 +33,8 @@ import { RootState } from "@/Store/Store";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import useImage from "@/hooks/useImage";
+import { MdAttachMoney } from "react-icons/md";
+import { PiBoxArrowDownLight } from "react-icons/pi";
 
 interface User extends Models.Document {
   name: string;
@@ -42,6 +43,7 @@ interface User extends Models.Document {
   insta: string;
   other: string;
   twitter: string;
+  paytm: string;
 }
 function User({ app }: { app?: boolean }) {
   const { id } = useParams();
@@ -66,6 +68,7 @@ function User({ app }: { app?: boolean }) {
         insta: result.insta,
         other: result.other,
         twitter: result.twitter,
+        paytm: result.paytm,
       },
     ];
 
@@ -171,6 +174,8 @@ function User({ app }: { app?: boolean }) {
           setIsFavArtist(false);
         });
       refetchFav();
+    } else {
+      setIsFavArtist(false);
     }
   }, [uid, refetchFav, id, toast]);
 
@@ -222,6 +227,7 @@ function User({ app }: { app?: boolean }) {
   }, []);
 
   const c = useImage(listening?.thumbnailUrl || "");
+
   return (
     <>
       {app && <GoBack />}
@@ -244,6 +250,11 @@ function User({ app }: { app?: boolean }) {
                 )}
               </>
             )}
+            {user[0].paytm && (
+              <a href={user[0].paytm} target="blank">
+                <MdAttachMoney className="h-8 w-8  mb-2 backdrop-blur-md fade-in  bg-black/30 rounded-full p-1.5" />
+              </a>
+            )}
             <Share />
           </>
         )}
@@ -256,16 +267,16 @@ function User({ app }: { app?: boolean }) {
         </div>
       )}
       {user && user.length > 0 && (
-        <div className="absolute top-24 z-10 right-3 animate-fade-left flex-col space-y-0.5">
+        <div className="absolute top-24 z-10 bg-black/30 right-3 animate-fade-left flex-col space-y-0.5">
           <Link target="blank" to={`/box/${id}`}>
-            <RxCodesandboxLogo className="h-8 w-8 animate-fade-left backdrop-blur-md text-zinc-300 bg-black/30 rounded-full p-1.5" />
+            <PiBoxArrowDownLight className="h-8 w-8 animate-fade-left backdrop-blur-md text-zinc-300 bg-black/30 rounded-full p-1.5" />
           </Link>
         </div>
       )}
 
       <div
         style={{
-          backgroundImage: `linear-gradient(to top, #121212, ${color[3]}`,
+          backgroundImage: `linear-gradient(to top, black, ${color[3]}`,
         }}
         className={`w-full  flex justify-start items-center px-5 ${
           app ? "pt-[8vh] pb-4" : "pt-[5vh] pb-4"
@@ -307,10 +318,26 @@ function User({ app }: { app?: boolean }) {
                     </p>
                   </div> */}
                     <div className="flex animate-fade-right space-x-1.5 text-sm ml-1">
-                      {user[0].insta && <IoLogoInstagram />}
-                      {user[0].twitter && <RiTwitterXFill />}
-                      {user[0].snap && <FaSnapchat />}
-                      {user[0].other && <BsGlobeAmericas />}
+                      {user[0].insta && (
+                        <a target="blank" href={user[0].insta}>
+                          <IoLogoInstagram />
+                        </a>
+                      )}
+                      {user[0].twitter && (
+                        <a target="blank" href={user[0].twitter}>
+                          <RiTwitterXFill />
+                        </a>
+                      )}
+                      {user[0].snap && (
+                        <a target="blank" href={user[0].snap}>
+                          <FaSnapchat />
+                        </a>
+                      )}
+                      {user[0].other && (
+                        <a target="blank" href={user[0].other}>
+                          <BsGlobeAmericas />
+                        </a>
+                      )}
                     </div>
                   </div>
                 )}

@@ -236,7 +236,7 @@ function TuneBoxComp() {
                 src="/tunebox.jpg"
                 alt="Image"
                 loading="lazy"
-                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down -xl h-[100%] w-[100%]"
               />
             </div>
             <p className=" text-zinc-300 text-center animate-fade-up  text-lg">
@@ -249,7 +249,7 @@ function TuneBoxComp() {
               <Button
                 onClick={handleShare}
                 variant={"secondary"}
-                className=" rounded-xl border bg-neutral-900 animate-fade-up text-xl space-x-1 py-6 font-normal p-6"
+                className=" rounded-xl border bg-neutral-950 animate-fade-up text-xl space-x-1 py-6 font-normal p-6"
               >
                 <FiShare />
 
@@ -298,7 +298,7 @@ function TuneBoxComp() {
                 src="/tunebox.jpg"
                 alt="Image"
                 loading="lazy"
-                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down -xl h-[100%] w-[100%]"
               />
             </div>
             <div className=" absolute bottom-[1.5vh] px-4 left-0  right-0">
@@ -310,7 +310,7 @@ function TuneBoxComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[13dvw]"
+                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[13dvw]]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -319,7 +319,7 @@ function TuneBoxComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

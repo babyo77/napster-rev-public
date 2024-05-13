@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { useDispatch } from "react-redux";
 import { setReelsIndex } from "@/Store/Player";
-import { BsSoundwave } from "react-icons/bs";
+import { MdOutlineAmpStories, MdOutlineExplore } from "react-icons/md";
 function TabsComp() {
   const [online, setOnline] = useState<boolean>();
   const q = useQueryClient();
@@ -32,10 +32,10 @@ function TabsComp() {
       <Player />
       <nav
         className={`py-3 pb-7  animate-fade-up backdrop-blur-md ${
-          location.pathname !== "/share-play" ? "bg-neutral-900 pt-5" : "pt-0"
+          location.pathname !== "/share-play" ? "bg-zinc-950/90 pt-5" : "pt-0"
         }  w-full transition-all duration-500`}
       >
-        <ul className="flex items-center text-zinc-500 space-x-14 justify-center">
+        <ul className="flex items-center text-zinc-500 space-x-8   justify-center">
           <li>
             <NavLink
               onClick={handleClick}
@@ -44,7 +44,7 @@ function TabsComp() {
                 `${isActive && "text-zinc-300"} flex flex-col  items-center`
               }
             >
-              <GoHomeFill className="h-7 w-7" />
+              <GoHomeFill className="h-6 w-6" />
               <span className="text-xs">Home</span>
             </NavLink>
           </li>
@@ -55,7 +55,7 @@ function TabsComp() {
                 `${isActive && "text-zinc-300"} flex flex-col mb-1 items-center`
               }
             >
-              <MdOutlineGridView className="h-7 w-7" />
+              <MdOutlineGridView className="h-6 w-6" />
               <span className="text-xs ">Browse</span>
             </NavLink>
           </li> */}
@@ -67,8 +67,21 @@ function TabsComp() {
                 `${isActive && "text-zinc-300"} flex flex-col mb-1 items-center`
               }
             >
-              <BsSoundwave className="h-8 w-8" />
+              <MdOutlineAmpStories className="h-7 w-7" />
               <span className="text-xs px-[3dvw] ">Tunes</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to={online ? "/social" : "/offline/"}
+              className={({ isActive }) =>
+                `${
+                  isActive && "text-zinc-300"
+                } -ml-2.5 flex flex-col mb-1 items-center`
+              }
+            >
+              <MdOutlineExplore className="h-7 w-7" />
+              <span className="text-xs px-[3dvw] ">Social</span>
             </NavLink>
           </li>
           <li>
@@ -78,7 +91,7 @@ function TabsComp() {
                 `${isActive && "text-zinc-300"} flex flex-col mb-1 items-center`
               }
             >
-              <BiLibrary className="h-7 w-7" />
+              <BiLibrary className="h-6 w-6" />
               <span className="text-xs ">Library</span>
             </NavLink>
           </li>
@@ -90,7 +103,7 @@ function TabsComp() {
                 `${isActive && "text-zinc-300"} flex flex-col mb-1 items-center`
               }
             >
-              <IoSearch className="h-7 w-7 " />
+              <IoSearch className="h-6 w-6 " />
               <span className="text-xs ">Search</span>
             </NavLink>
           </li>

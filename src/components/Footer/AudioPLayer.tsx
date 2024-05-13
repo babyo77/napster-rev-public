@@ -414,8 +414,12 @@ function AudioPLayerComp({
         const loading = () => {
           dispatch(setIsLoading(true));
         };
+        const startPlay = () => {
+          sound.play();
+        };
         sound.setAttribute("playsinline", "true");
         sound.addEventListener("loadstart", loading);
+        sound.addEventListener("canplay", startPlay);
         sound.addEventListener("play", handlePlay);
         sound.addEventListener("pause", handlePause);
         sound.addEventListener("loadedmetadata", handleLoad);
@@ -423,24 +427,25 @@ function AudioPLayerComp({
         sound.addEventListener("timeupdate", handleTimeUpdate);
         sound.addEventListener("ended", handleNext);
         sound.play();
-        const preloadAudio = new Audio();
-        preloadAudio.src = playlist[currentIndex + 1]
-          ? `${
-              online &&
-              !playlist[currentIndex + 1]?.youtubeId.startsWith("http")
-                ? streamApi
-                : ""
-            }${playlist[currentIndex + 1]?.youtubeId}`
-          : "";
-
-        preloadAudio.load();
+        if (playlist[currentIndex + 1]) {
+          new Audio(
+            playlist[currentIndex + 1]
+              ? `${
+                  online &&
+                  !playlist[currentIndex + 1]?.youtubeId.startsWith("http")
+                    ? streamApi
+                    : ""
+                }${playlist[currentIndex + 1]?.youtubeId}`
+              : ""
+          ).load();
+        }
         return () => {
           sound.pause();
           sound.src = "";
 
-          preloadAudio.src = "";
           sound.removeEventListener("loadstart", loading);
           sound.removeEventListener("play", handlePlay);
+          sound.removeEventListener("canplay", startPlay);
           sound.removeEventListener("pause", handlePause);
           sound.removeEventListener("loadedmetadata", handleLoad);
           sound.removeEventListener("timeupdate", handleTimeUpdate);
@@ -517,7 +522,7 @@ function AudioPLayerComp({
     <>
       <audio src="" ref={audioRef} hidden preload="true"></audio>
 
-      {isStandalone ? (
+      {!isStandalone ? (
         <p
           className={`w-[68dvw] ${
             location.pathname == "/share-play" ? "hidden" : ""
@@ -532,7 +537,7 @@ function AudioPLayerComp({
               <></>
             ) : (
               <div className="items-center leading-tight  flex space-x-1.5 w-[74dvw]   px-2.5">
-                <div className=" h-11 w-11 overflow-hidden rounded-xl">
+                <div className=" h-11 w-11 overflow-hidden rounded-lg">
                   <LazyLoadImage
                     height="100%"
                     width="100%"
@@ -557,7 +562,7 @@ function AudioPLayerComp({
             )}
           </DrawerTrigger>
 
-          <DrawerContent className=" h-[100dvh]  rounded-none bg-[#121212] ">
+          <DrawerContent className=" h-[100dvh]  rounded-none  ">
             <div className="flex flex-col justify-start pt-7  h-full">
               <DrawerHeader>
                 <div

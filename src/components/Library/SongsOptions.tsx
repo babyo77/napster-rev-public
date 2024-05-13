@@ -211,10 +211,14 @@ function SongsOptions({
   }, [music, like, reload, edits, tunebox, toast]);
   const handleShare = useCallback(() => {
     navigator.share({
-      url: `${window.location.origin}/track/${music.youtubeId.replace(
-        "https://occasional-clara-babyo777.koyeb.app/?url=https://soundcloud.com/",
-        ""
-      )}`,
+      url: !music.youtubeId.startsWith(
+        "https://occasional-clara-babyo777.koyeb.app/"
+      )
+        ? `${window.location.origin}/track/${music.youtubeId}`
+        : music.youtubeId.replace(
+            "https://occasional-clara-babyo777.koyeb.app/",
+            window.location.origin + "/share-play"
+          ),
     });
   }, [music]);
 

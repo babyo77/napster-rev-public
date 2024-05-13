@@ -52,7 +52,7 @@ export function Token() {
   return (
     <Drawer>
       <DrawerTrigger className="w-full">
-        <p className=" animate-fade-up border font-medium  rounded-xl py-2.5 mt-3 bg-neutral-900  w-full text-base flex items-center justify-center space-x-1">
+        <p className=" bg-neutral-950 animate-fade-up font-medium  rounded-xl py-2.5 mt-3  w-full text-base flex items-center justify-center space-x-1">
           <SiJsonwebtokens className="h-4 w-4" />
           <span>Credentials</span>
         </p>
@@ -75,7 +75,7 @@ export function Token() {
             size="sm"
             onClick={handleCopy}
             variant={"secondary"}
-            className="px-3 w-full border bg-neutral-900  text-base font-medium rounded-2xl animate-fade-up hover:bg-zinc-100/20 text-zinc-200 py-5"
+            className="px-3 w-full border bg-neutral-950  text-base font-medium rounded-2xl animate-fade-up hover:bg-zinc-100/20 text-zinc-200 py-5"
           >
             <p className="flex space-x-1.5 items-center">
               {saving && <Loader size="21" className=" mt-2" />}

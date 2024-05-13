@@ -52,7 +52,7 @@ function AlbumSearchComp({
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
                 (e.currentTarget.src = "/cache.jpg")
               }
-              className="rounded-sm object-cover h-[100%] w-[100%]"
+              className="-sm object-cover h-[100%] w-[100%]"
             />
           </AspectRatio>
         </div>

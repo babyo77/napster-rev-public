@@ -5,9 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "./Store/Store";
 import { v4 } from "uuid";
 import { SetLoggedIn, Setuid } from "./Store/Player";
-import Loader2 from "./components/Loaders/loader2";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Loader2 from "./components/Loaders/loader2";
 
 function Auth() {
   const LoggedIn = useSelector(

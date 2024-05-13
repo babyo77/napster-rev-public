@@ -76,8 +76,8 @@ function SpotifyTransfer({
       <DrawerTrigger className=" w-full animate-fade-up">
         <p
           className={` ${
-            className ? " justify-center bg-neutral-900" : "px-4"
-          } animate-fade-up border rounded-xl flex items-center space-x-1 bg-neutral-900 py-2.5 mt-3  w-full text-base`}
+            className ? " justify-center bg-neutral-950" : "px-4"
+          } animate-fade-up bg-neutral-950 rounded-xl flex items-center space-x-1  py-2.5 mt-3  w-full text-base`}
         >
           <BiImport className="h-5 w-5" />
           <span>Import from Spotify</span>
@@ -112,7 +112,7 @@ function SpotifyTransfer({
                     <Button
                       type="submit"
                       variant={"secondary"}
-                      className=" w-full py-5 border bg-neutral-900 animate-fade-up  rounded-xl"
+                      className=" w-full py-5 border bg-neutral-950 animate-fade-up  rounded-xl"
                     >
                       Import
                     </Button>
@@ -126,7 +126,7 @@ function SpotifyTransfer({
                   <Button
                     asChild
                     variant={"secondary"}
-                    className=" w-full py-5 bg-neutral-900 animate-fade-up rounded-xl"
+                    className=" w-full py-5 bg-neutral-950 animate-fade-up rounded-xl"
                   >
                     <p>Close</p>
                   </Button>

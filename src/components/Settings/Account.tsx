@@ -29,6 +29,7 @@ import { setUser } from "@/Store/Player";
 import { RiLinkM } from "react-icons/ri";
 import { AvatarFallback } from "@radix-ui/react-avatar";
 import { IoSyncOutline } from "react-icons/io5";
+import useImage from "@/hooks/useImage";
 
 interface user extends Models.Document {
   user: string;
@@ -191,16 +192,17 @@ function AccountComp({
     });
   }, [uid]);
 
+  const c = useImage(image ? image : "/cache.jpg");
   return (
     <Drawer>
       <DrawerTrigger className=" w-full animate-fade-up">
         <p
-          className={`rounded-xl border py-2 animate-fade-up bg-neutral-900 flex  text-base ${className} space-x-2 items-center flex`}
+          className={`rounded-xl bg-neutral-950 py-2 animate-fade-up flex text-base ${className} space-x-2 items-center flex`}
         >
-          <Avatar className="t h-7  w-7 p-0 m-0 -mr-0.5">
+          <Avatar className=" h-7  w-7 p-0 m-0 -mr-0.5">
             <AvatarImage
               className="rounded-full object-cover h-[100%] w-[100%]"
-              src={image ? image : "/cache.jpg"}
+              src={c || "/cachejpg"}
             ></AvatarImage>
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
@@ -266,7 +268,7 @@ function AccountComp({
                     <Button
                       type="submit"
                       variant={"secondary"}
-                      className=" w-full py-5 animate-fade-up border bg-neutral-900 rounded-xl"
+                      className=" w-full py-5 animate-fade-up border bg-neutral-950 rounded-xl"
                     >
                       Continue
                     </Button>
@@ -276,7 +278,7 @@ function AccountComp({
                     <Button
                       asChild
                       variant={"secondary"}
-                      className=" w-full py-5 animate-fade-up border bg-neutral-900 rounded-xl"
+                      className=" w-full py-5 animate-fade-up border bg-neutral-950 rounded-xl"
                     >
                       <p>Close</p>
                     </Button>
@@ -302,7 +304,7 @@ function AccountComp({
                   onClick={handleVerify}
                   variant={"secondary"}
                   asChild
-                  className=" animate=fade-up w-full border bg-neutral-900 py-5 mt-3 text-lg animate-fade-up rounded-xl"
+                  className=" animate=fade-up w-full border bg-neutral-950 py-5 mt-3 text-lg animate-fade-up rounded-xl"
                 >
                   <p>Verify</p>
                 </Button>
@@ -310,7 +312,7 @@ function AccountComp({
                   onClick={() => (refetch(), setVerify(""))}
                   variant={"secondary"}
                   asChild
-                  className=" w-full py-5 mt-1.5 text-lg border bg-neutral-900 animate-fade-up rounded-xl"
+                  className=" w-full py-5 mt-1.5 text-lg border bg-neutral-950 animate-fade-up rounded-xl"
                 >
                   <p>Cancel</p>
                 </Button>

@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   SetPlaylistOrAlbum,
   SetQueue,
-  SetReels,
   Setuid,
   setCurrentIndex,
   setIsIphone,
@@ -18,6 +17,7 @@ import authService, {
   ADD_TO_LIBRARY,
   DATABASE_ID,
   EDITS,
+  INSIGHTS,
   LAST_PLAYED,
   LIKE_SONG,
   TUNEBOX,
@@ -29,12 +29,13 @@ import axios from "axios";
 import {
   GetAlbumSongs,
   GetPlaylistHundredSongsApi,
-  ReelsApi,
   SuggestionSearchApi,
+  streamApi,
 } from "@/API/api";
 import { Query } from "appwrite";
 import { useNavigate } from "react-router-dom";
 import { v4 } from "uuid";
+import useSaved from "@/hooks/saved";
 
 function Check() {
   const dispatch = useDispatch();
@@ -346,26 +347,25 @@ function Check() {
   );
   const playlist = useSelector((state: RootState) => state.musicReducer.queue);
 
-  const getReels = useCallback(async () => {
-    const rnDno = Math.floor(Math.random() * playlist.length - 1);
-    const r = await axios.get(
-      `${ReelsApi}${
-        playlist && playlist.length > 0
-          ? playlist[rnDno]?.title.replace("/", "") +
-            " " +
-            playlist[rnDno]?.artists[0]?.name.replace("/", "")
-          : "rnd"
-      }`
-    );
+  const loadRecentSearch = async () => {
+    const r = await db.listDocuments(DATABASE_ID, INSIGHTS, [
+      Query.orderDesc("$createdAt"),
+      Query.equal("for", [uid || ""]),
+      Query.limit(11),
+    ]);
+    const p = r.documents as unknown as likedSongs[];
+    return p;
+  };
+  const { status: RecentSearch } = useQuery<likedSongs[]>(
+    "recentSearch",
+    loadRecentSearch,
+    {
+      refetchOnWindowFocus: false,
+      keepPreviousData: true,
+    }
+  );
 
-    dispatch(SetReels(r.data));
-    return r.data as playlistSongs[];
-  }, [dispatch, playlist]);
-
-  const { status } = useQuery<playlistSongs[]>(["reels"], getReels, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  useSaved();
 
   const setData = useCallback(() => {
     if (data && uid && online) {
@@ -421,8 +421,11 @@ function Check() {
         savedIndex &&
         savedNavigator
       ) {
-        dispatch(setPlaylist(JSON.parse(savedPlaylistData)));
-        dispatch(SetQueue(JSON.parse(savedPlaylistData)));
+        const playlist = JSON.parse(savedPlaylistData);
+
+        new Audio(`${streamApi}${playlist[0].youtubeId}`).load();
+        dispatch(setPlaylist(playlist));
+        dispatch(SetQueue(playlist));
         dispatch(SetPlaylistOrAlbum(savedNavigator));
         dispatch(setCurrentIndex(parseInt(savedIndex)));
       } else {
@@ -459,8 +462,8 @@ function Check() {
   }, [dispatch]);
 
   useEffect(() => {
-    console.log(status);
-  }, [status]);
+    console.log(RecentSearch);
+  }, [RecentSearch]);
 
   useEffect(() => {
     if (playlist.length == 1 && online) {

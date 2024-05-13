@@ -8,11 +8,11 @@ import { useQuery } from "react-query";
 import axios from "axios";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import Header from "../Header/Header";
-import { SuggestionSearchApi, streamApi } from "@/API/api";
+import { ReelsApi, SuggestionSearchApi, streamApi } from "@/API/api";
 
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
-import { SetFeed } from "@/Store/Player";
+import { SetFeed, SetReels } from "@/Store/Player";
 import { useInView } from "react-intersection-observer";
 import ReactPullToRefresh from "react-simple-pull-to-refresh";
 import FeedSong from "./FeedSongs";
@@ -68,11 +68,34 @@ export function ListenNowComp() {
     (state: RootState) => state.musicReducer.playlist
   );
 
-  const query = async (empty?: boolean) => {
+  const getReels = React.useCallback(async () => {
+    const rnDno = Math.floor(Math.random() * playlist.length - 1);
+    const r = await axios.get(
+      `${ReelsApi}${
+        playlist && playlist.length > 0
+          ? playlist[rnDno]?.title.replace("/", "") +
+            " " +
+            playlist[rnDno]?.artists[0]?.name.replace("/", "")
+          : "rnd"
+      }`
+    );
+    new Audio(r.data[0].youtubeId).load();
+    dispatch(SetReels(r.data));
+    return r.data as playlistSongs[];
+  }, [dispatch, playlist]);
+
+  const { status } = useQuery<playlistSongs[]>(["reels"], getReels, {
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+  React.useEffect(() => {
+    console.log(status);
+  }, [status]);
+  const query = async () => {
     const currentIndex = Math.floor(Math.random() * playlist.length);
     const q = await axios.get(
       `${SuggestionSearchApi}${
-        playlist.length > 0 && !empty
+        playlist.length > 0
           ? playlist[currentIndex].youtubeId.startsWith("https")
             ? "sem" +
               playlist[currentIndex].title +
@@ -85,23 +108,19 @@ export function ListenNowComp() {
     if (q.data.length > 0) {
       localStorage.setItem("feed", JSON.stringify(q.data.slice(0, 17)));
       dispatch(SetFeed(q.data.slice(0, 17)));
-    } else {
-      query(true);
     }
     return q.data.slice(0, 17) as playlistSongs[];
   };
 
-  const { refetch: refetchFeed } = useQuery<playlistSongs[]>(
-    ["Feed"],
-    //@ts-expect-error:ignore
-    query,
-    {
-      enabled: false,
-      refetchOnWindowFocus: false,
-      staleTime: 60 * 60000,
-      refetchOnMount: false,
-    }
-  );
+  const { refetch: refetchFeed } = useQuery<playlistSongs[]>(["Feed"], query, {
+    enabled: false,
+    refetchOnWindowFocus: false,
+    staleTime: 60 * 60000,
+    refetchOnMount: false,
+    onSuccess(data) {
+      if (data.length == 0) refetchFeed();
+    },
+  });
 
   React.useEffect(() => {
     const savedFeed = localStorage.getItem("feed");

@@ -11,10 +11,8 @@ import TuneSong from "./tuneSong";
 import { Link, useParams } from "react-router-dom";
 import { DATABASE_ID, NEW_USER, db } from "@/appwrite/appwriteConfig";
 import { Models, Query } from "appwrite";
-import { MdOutlineSpatialTracking } from "react-icons/md";
-import { IoMdMusicalNote } from "react-icons/io";
-import { useSelector } from "react-redux";
-import { RootState } from "@/Store/Store";
+import { MdOutlineSpatialAudio } from "react-icons/md";
+import { FaItunesNote } from "react-icons/fa";
 
 interface User extends Models.Document {
   name: string;
@@ -97,7 +95,6 @@ function Box() {
     refetchOnWindowFocus: false,
   });
 
-  const uid = useSelector((state: RootState) => state.musicReducer.uid);
   return (
     <div
       className={`  max-md:px-4 py-11 flex transition-all duration-300 px-[35dvw] flex-col h-dvh justify-center space-y-1.5 items-center`}
@@ -111,16 +108,6 @@ function Box() {
         <>
           {user && user[0] ? (
             <>
-              {data.length == 0 && !isLoading && (
-                <div className="flex items-center space-x-1 absolute bottom-12 text-lg  border font-semibold   animated-button animate-fade-up animated-button tracking-tight justify-center px-4 py-1.5 rounded-full">
-                  <Link
-                    className=" animate-fade-up"
-                    to={`${window.location.origin}/tunebox/${uid}`}
-                  >
-                    Get Your Own
-                  </Link>
-                </div>
-              )}
               <div className="flex animate-fade-down bg-neutral-800/20 w-full border rounded-2xl  justify-between items-center p-3 space-x-1.5 pr-3">
                 <div className=" flex items-center space-x-2">
                   <div>
@@ -145,14 +132,14 @@ function Box() {
                           Send me Tracks
                         </h1>
                         <div>
-                          <IoMdMusicalNote />
+                          <FaItunesNote />
                         </div>
                       </div>
                     </div>
                   </Link>
                 </div>
                 <div className="flex text-xl space-x-1.5 items-center">
-                  <MdOutlineSpatialTracking className="h-7 w-7" />
+                  <MdOutlineSpatialAudio className="h-7 w-7" />
                 </div>
               </div>
 

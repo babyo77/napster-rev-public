@@ -102,7 +102,7 @@ function SuggestedComp() {
               >
                 <div onClick={handleAdd} className="w-fit -mr-2">
                   <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/0 rounded-xl p-1.5 px-2 w-fit">
-                    {Add ? "Cancel" : "Add"}
+                    {Add ? "Cancel" : "Action"}
                   </p>
                 </div>
               </div>

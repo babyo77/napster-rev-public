@@ -266,20 +266,28 @@ function SearchComp() {
               </div>
               <div className="h-[63vh] pb-7 px-4 overflow-y-scroll overflow-hidden flex flex-col items-center">
                 {searchToggle === "Music" &&
-                  music.map((r) => (
-                    <SearchSong
-                      artistId={r.artists ? r?.artists[0]?.id : "unknown"}
-                      audio={r.youtubeId ? r.youtubeId : ""}
-                      artistName={r.artists ? r.artists[0]?.name : "unknown"}
-                      id={r.youtubeId}
-                      key={r.youtubeId}
-                      title={r?.title || "unknown"}
-                      artist={
-                        r.artists ? r?.artists : [{ id: "", name: "unknown" }]
-                      }
-                      cover={r?.thumbnailUrl || "/cache.jpg"}
-                    />
-                  ))}
+                  music.map((r) => {
+                    if (r.youtubeId && r.artists) {
+                      return (
+                        <SearchSong
+                          artistId={r.artists ? r?.artists[0]?.id : "unknown"}
+                          audio={r.youtubeId ? r.youtubeId : ""}
+                          artistName={
+                            r.artists ? r.artists[0]?.name : "unknown"
+                          }
+                          id={r.youtubeId}
+                          key={r.youtubeId}
+                          title={r?.title || "unknown"}
+                          artist={
+                            r.artists
+                              ? r?.artists
+                              : [{ id: "", name: "unknown" }]
+                          }
+                          cover={r?.thumbnailUrl || "/cache.jpg"}
+                        />
+                      );
+                    }
+                  })}
 
                 {searchToggle === "Artists" &&
                   artistsData &&

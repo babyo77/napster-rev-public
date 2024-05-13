@@ -8,22 +8,22 @@ import { DATABASE_ID, EDITS, db } from "@/appwrite/appwriteConfig";
 import { ID, Permission, Query, Role } from "appwrite";
 import { playlistSongs } from "@/Interface";
 import { useQuery } from "react-query";
-import { ReelsApi } from "@/API/api";
+import { ReelsApi, ReelsInfoApi } from "@/API/api";
 import axios from "axios";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { SetReels, SetStopPlaying, setReelsIndex } from "@/Store/Player";
-// import { useDoubleTap } from "use-double-tap";
 import { LuMusic2 } from "react-icons/lu";
 import { Skeleton } from "../ui/skeleton";
 import Lottie, { LottieRefCurrentProps } from "lottie-react";
 import musicData from "../../assets/music.json";
-// import likeData from "../../assets/like.json";
 import { GoMute, GoUnmute } from "react-icons/go";
 import Loader from "../Loaders/Loader";
 import { SiGooglegemini } from "react-icons/si";
 import socket from "@/socket";
 import { FaPlay } from "react-icons/fa";
 import useImage from "@/hooks/useImage";
+import { useSearchParams } from "react-router-dom";
+import { IoShareOutline } from "react-icons/io5";
 
 function SharePlay() {
   const playlist = useSelector((state: RootState) => state.musicReducer.reels);
@@ -36,15 +36,13 @@ function SharePlay() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [muted, setMuted] = useState<boolean>();
 
-  const isPlaying = useSelector(
-    (state: RootState) => state.musicReducer.isPlaying
-  );
-
   const dispatch = useDispatch();
   const currentIndex = useSelector(
     (state: RootState) => state.musicReducer.reelsIndex
   );
 
+  const [search] = useSearchParams();
+  const url = search.get("url");
   const getReels = useCallback(async () => {
     const rnDno = Math.floor(Math.random() * queue.length - 1);
     const r = await axios.get(
@@ -57,9 +55,29 @@ function SharePlay() {
       }`
     );
 
-    dispatch(SetReels([...r.data]));
+    if (url) {
+      const re = await axios.get(`${ReelsInfoApi}${url}`);
+      if (re.status === 200 && re.data) {
+        new Audio(re.data.youtubeId);
+        console.log([re.data, ...r.data]);
+
+        dispatch(SetReels([re.data, ...r.data]));
+      } else {
+        new Audio(r.data[0].youtubeId);
+        dispatch(SetReels(r.data));
+      }
+    } else {
+      new Audio(r.data[0].youtubeId);
+      dispatch(SetReels(r.data));
+    }
     return r.data as playlistSongs[];
-  }, [dispatch, queue]);
+  }, [dispatch, queue, url]);
+
+  const { isRefetching } = useQuery<playlistSongs[]>(["reels"], getReels, {
+    retry: 1,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
 
   const loadMoreReels = useCallback(async () => {
     const rnDno = Math.floor(Math.random() * queue.length - 1);
@@ -72,16 +90,10 @@ function SharePlay() {
           : "rnd"
       }`
     );
-
+    new Audio(r.data[0].youtubeId);
     dispatch(SetReels([...playlist, ...r.data]));
     return r.data as playlistSongs[];
   }, [dispatch, queue, playlist]);
-
-  const { isRefetching } = useQuery<playlistSongs[]>(["reels"], getReels, {
-    enabled: false,
-    retry: 10,
-    refetchOnWindowFocus: false,
-  });
 
   const isLikedCheck = async () => {
     const r = await db.listDocuments(DATABASE_ID, EDITS, [
@@ -111,12 +123,10 @@ function SharePlay() {
   );
 
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
-  // const [once, setOnce] = useState<boolean>();
   const handleLike = useCallback(async () => {
     if (liked) return;
     if (playlist.length == 0) return;
     SetLiked(true);
-    // setOnce(true);
 
     if (uid) {
       db.createDocument(
@@ -168,16 +178,10 @@ function SharePlay() {
   }, [isLiked, playlist]);
 
   useEffect(() => {
-    if (playlist[currentIndex]?.artists[0].id) {
+    if (playlist[currentIndex]?.artists) {
       refetch();
     }
   }, [playlist, currentIndex, refetch]);
-
-  useEffect(() => {
-    if (playlist.length == 0) {
-      loadMoreReels();
-    }
-  }, [playlist, loadMoreReels]);
 
   const handleDownload = useCallback(() => {
     if (playlist.length == 0) return;
@@ -190,23 +194,6 @@ function SharePlay() {
     document.body.removeChild(link);
   }, [playlist, currentIndex]);
 
-  // const [dbClick, setDb] = useState<boolean>();
-
-  // const handleDbClick = useCallback(() => {
-  //   setDb(true);
-  //   if (!once) {
-  //     if (playlist.length > 0) {
-  //       handleLike();
-  //     }
-  //   }
-  //   const t = setTimeout(() => {
-  //     setDb(false);
-  //   }, 1287);
-  //   return () => clearTimeout(t);
-  // }, [handleLike, once, playlist]);
-
-  // const bind = useDoubleTap(handleDbClick);
-
   const handleMute = useCallback(() => {
     const music = audioRef.current;
     if (music) {
@@ -216,25 +203,19 @@ function SharePlay() {
   }, []);
 
   useEffect(() => {
-    if (isPlaying) {
-      dispatch(SetStopPlaying(true));
-    }
-  }, [isPlaying, dispatch]);
+    dispatch(SetStopPlaying(true));
+  }, [dispatch]);
 
   const goNext = useCallback(() => {
-    if (
-      playlist &&
-      playlist.length > 0 &&
-      playlist[currentIndex + 1] &&
-      document.visibilityState === "hidden"
-    ) {
+    if (playlist && playlist.length > 0 && playlist[currentIndex + 1]) {
       if (currentIndex == playlist.length - 2) {
         loadMoreReels();
       }
+
       document
         .getElementById(playlist[currentIndex + 1]?.youtubeId)
         ?.scrollIntoView({
-          behavior: "auto",
+          behavior: "smooth",
           block: "start",
         });
       dispatch(setReelsIndex(currentIndex + 1));
@@ -242,16 +223,11 @@ function SharePlay() {
   }, [playlist, currentIndex, dispatch, loadMoreReels]);
 
   const goPrev = useCallback(() => {
-    if (
-      playlist &&
-      playlist.length > 0 &&
-      playlist[currentIndex - 1] &&
-      document.visibilityState === "hidden"
-    ) {
+    if (playlist && playlist.length > 0 && playlist[currentIndex - 1]) {
       document
         .getElementById(playlist[currentIndex - 1]?.youtubeId)
         ?.scrollIntoView({
-          behavior: "auto",
+          behavior: "smooth",
           block: "start",
         });
       dispatch(setReelsIndex(currentIndex - 1));
@@ -282,8 +258,6 @@ function SharePlay() {
 
       const handlePlay = () => {
         socket.emit("message", { id: uid, ...playlist[currentIndex] });
-        navigator.mediaSession.setActionHandler("nexttrack", () => goNext);
-        navigator.mediaSession.setActionHandler("previoustrack", () => goPrev);
         animationRef.current?.play();
         refetch();
         setPaused(false);
@@ -326,10 +300,9 @@ function SharePlay() {
         });
 
         navigator.mediaSession.setActionHandler("play", () => sound.play());
-        navigator.mediaSession.setActionHandler("nexttrack", () => goNext);
-        navigator.mediaSession.setActionHandler("previoustrack", () => goPrev);
+        navigator.mediaSession.setActionHandler("nexttrack", goNext);
+        navigator.mediaSession.setActionHandler("previoustrack", goPrev);
         navigator.mediaSession.setActionHandler("pause", () => sound.pause());
-
         navigator.mediaSession.setActionHandler("seekto", handleSeek);
         setDuration(sound.duration);
         socket.emit("duration", { id: uid, duration: sound.duration });
@@ -345,18 +318,13 @@ function SharePlay() {
       sound.addEventListener("ended", goNext);
       sound.addEventListener("error", handleError);
 
-      const preloadAudio = new Audio();
-      preloadAudio.src = playlist[currentIndex + 1]
-        ? playlist[currentIndex + 1].youtubeId
-        : "";
-
-      preloadAudio.preload = "auto";
-      preloadAudio.load();
+      new Audio(
+        playlist[currentIndex + 1] ? playlist[currentIndex + 1].youtubeId : ""
+      ).load();
 
       return () => {
         sound.pause();
         sound.src = "";
-        preloadAudio.src = "";
         sound.removeEventListener("pause", handlePause);
         sound.removeEventListener("error", handleError);
         sound.removeEventListener("play", handlePlay);
@@ -440,19 +408,32 @@ function SharePlay() {
   const c = useImage(playlist[currentIndex]?.thumbnailUrl);
 
   useEffect(() => {
-    const keydown = () => {
-      goNext();
+    const keydown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        goNext();
+      }
     };
-    const keyup = () => {
-      goPrev();
+    const keyup = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") {
+        goPrev();
+      }
     };
     window.addEventListener("keydown", keydown);
     window.addEventListener("keyup", keyup);
     return () => {
-      window.removeEventListener("keyup", keyup);
+      window.removeEventListener("keydown", keydown);
       window.removeEventListener("keyup", keyup);
     };
   }, [goNext, goPrev]);
+
+  const handleCopy = useCallback(() => {
+    navigator.share({
+      url: playlist[currentIndex].youtubeId.replace(
+        "https://occasional-clara-babyo777.koyeb.app/",
+        window.location.origin + "/share-play"
+      ),
+    });
+  }, [playlist, currentIndex]);
 
   return (
     <div
@@ -510,20 +491,23 @@ function SharePlay() {
               </div>
             )}
 
-            <div className=" z-10 animate-fade-right  h-10 w-10 rounded-md justify-between absolute bottom-[1.6rem] space-y-2.5 flex  items-center right-2.5">
+            <div className=" z-10 animate-fade-right  h-10 w-10 rounded-sm justify-between absolute bottom-[1.6rem] space-y-2.5 flex  items-center right-2.5">
               <img
                 height="100%"
                 width="100%"
                 src={
                   c
-                    ? playlist?.thumbnailUrl.replace("w120-h120", "w1080-h1080")
+                    ? playlist?.thumbnailUrl?.replace(
+                        "w120-h120",
+                        "w1080-h1080"
+                      )
                     : "/cache.jpg"
                 }
                 onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
                   (e.currentTarget.src = "/newfavicon.jpg")
                 }
                 alt="Image"
-                className="object-cover rounded-md  transition-all duration-300 w-[100%] h-[100%] "
+                className="object-cover rounded-sm  transition-all duration-300 w-[100%] h-[100%] "
               />
             </div>
 
@@ -564,10 +548,19 @@ function SharePlay() {
                   <IoMdHeartEmpty onClick={handleLike} />
                 )}
               </div>
+              {!window.matchMedia("(display-mode:standalone)").matches ? (
+                <div
+                  onClick={handleCopy}
+                  className="m-0 p-1.5 flex  justify-center items-center    rounded-full "
+                >
+                  <IoShareOutline className="h-7 w-7 text-white" />
+                </div>
+              ) : (
+                <div className=" animate-fade-left">
+                  <ShareLyrics className="h-7 w-7" />
+                </div>
+              )}
 
-              <div className=" animate-fade-left">
-                <ShareLyrics className="h-7 w-7" />
-              </div>
               <div onClick={handleDownload} className=" animate-fade-left">
                 <LiaDownloadSolid />
               </div>
@@ -615,7 +608,7 @@ function SharePlay() {
                     (e.currentTarget.src = "/newfavicon.jpg")
                   }
                   alt="Image"
-                  className={`  object-cover rounded-xl 
+                  className={`  object-cover rounded-lg 
                 
                     animate-fade-down
                    transition-all duration-300 w-[100%] h-[100%] `}

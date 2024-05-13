@@ -124,7 +124,7 @@ function SearchSong({
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
               (e.currentTarget.src = "/cache.jpg")
             }
-            className="rounded-md object-cover h-[100%] w-[100%]"
+            className="-md object-cover h-[100%] w-[100%]"
           />
         </AspectRatio>
       </div>

@@ -63,7 +63,7 @@ export function Player() {
       <div
         className={`  ${
           location.pathname !== "/share-play"
-            ? "flex items-center rounded-2xl shadow-md z-10 -mb-3   w-[95vw] ml-0.5 fade-in  backdrop-blur-md justify-between py-2 bg-zinc-800/70"
+            ? "flex items-center rounded-2xl shadow-md z-10 -mb-3   w-[95vw] ml-0.5 fade-in  backdrop-blur-md justify-between py-2 bg-zinc-900/90"
             : ""
         } `}
       >
@@ -77,7 +77,7 @@ export function Player() {
                   location.pathname == "/share-play" ? "hidden" : ""
                 } flex space-x-2 w-[68dvw]  border-white   px-2.5`}
               >
-                <div className=" h-11 w-11 overflow-hidden rounded-xl">
+                <div className=" h-11 w-11 overflow-hidden rounded-lg">
                   <AspectRatio>
                     <LazyLoadImage
                       width="100%"
@@ -85,7 +85,7 @@ export function Player() {
                       effect="blur"
                       src="/cache.jpg"
                       alt="Image"
-                      className="object-cover rounded-xl w-[100%] h-[100%] "
+                      className="object-cover rounded-lg w-[100%] h-[100%] "
                     />
                   </AspectRatio>
                 </div>
@@ -95,7 +95,7 @@ export function Player() {
               </div>
             )}
             {isLoading && location.pathname !== "/share-play" ? (
-              <Loader loading={true} />
+              <div></div>
             ) : (
               <div
                 className={` ${

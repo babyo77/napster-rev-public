@@ -1,8 +1,4 @@
-import {
-  GetArtistDetails,
-  GetImage,
-  GetPlaylistHundredSongsApi,
-} from "@/API/api";
+import { GetArtistDetails, GetPlaylistHundredSongsApi } from "@/API/api";
 import { ArtistDetails, favArtist, playlistSongs } from "@/Interface";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
@@ -33,6 +29,7 @@ import { IoPlay } from "react-icons/io5";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { LuDot } from "react-icons/lu";
+import useImage from "@/hooks/useImage";
 
 function ArtistPageComp() {
   const dispatch = useDispatch();
@@ -167,6 +164,10 @@ function ArtistPageComp() {
       }
     }
   }, [dispatch, song, isPlaying, data?.songsPlaylistId]);
+  const c1 = useImage(
+    (data && data.thumbnails[0]?.url.replace("w540-h225", "w1080-h1080")) ||
+      "/cache.jpg"
+  );
   return (
     <>
       {isError && (
@@ -209,11 +210,7 @@ function ArtistPageComp() {
               effect="blur"
               width="100%"
               height="100%"
-              src={
-                GetImage +
-                  data.thumbnails[0]?.url.replace("w540-h225", "w1080-h1080") ||
-                "/favicon.jpeg"
-              }
+              src={c1 || "/favicon.jpeg"}
               alt="Image"
               loading="lazy"
               className="object-cover animate-fade-down rounded-full h-[100%] w-[100%]"

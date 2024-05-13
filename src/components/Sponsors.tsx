@@ -37,7 +37,7 @@ function SponsorsComp() {
   return (
     <Drawer>
       <DrawerTrigger className="w-full animate-fade-up">
-        <p className=" w-full border animate-fade-up rounded-xl flex px-5 items-center justify-start bg-neutral-900   py-2.5 mt-3  text-base">
+        <p className=" w-full bg-neutral-950 animate-fade-up rounded-xl flex px-5 items-center justify-start py-2.5 mt-3  text-base">
           <SiGithubsponsors className="mr-2 h-[1.1rem] w-[1.1rem] fill-pink-400" />
 
           <span>Sponsors</span>

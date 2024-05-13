@@ -201,7 +201,7 @@ function TrackComp() {
                 src={data[0]?.thumbnailUrl || "newfavicon.jpg"}
                 alt="Image"
                 loading="lazy"
-                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down -xl h-[100%] w-[100%]"
               />
             </div>
 

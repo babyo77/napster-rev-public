@@ -42,7 +42,7 @@ const EditInfo: React.FC<{ id: string; f: string; collection?: string }> = ({
       <AlertDialogTrigger className="flex w-full items-center justify-end space-x-2">
         <RxCross2 className="h-6 w-6 text-zinc-500" />
       </AlertDialogTrigger>
-      <AlertDialogContent className="items-center m-0 p-0 pt-3 pb-1 border-none rounded-2xl flex flex-col w-[60vw] bg-neutral-900/95">
+      <AlertDialogContent className="items-center m-0 p-0 pt-3 pb-1 border-none rounded-2xl flex flex-col w-[60vw] bg-neutral-950/95">
         <AlertDialogHeader>
           <AlertTitle className="text-zinc-300  font-semibold pt-1">
             Are you sure?

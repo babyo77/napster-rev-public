@@ -44,6 +44,7 @@ function Playlists() {
               {savedPlaylist &&
                 savedPlaylist.map((saved, id) => (
                   <SavedLibraryCard
+                    className
                     key={saved.link + id}
                     id={saved.$id || ""}
                     data={saved}

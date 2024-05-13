@@ -1,9 +1,62 @@
 import { FaXTwitter } from "react-icons/fa6";
 import { FiGithub } from "react-icons/fi";
 import Download from "@/Landing Page/Download";
+import { useEffect, useState } from "react";
+import { setIsIphone } from "@/Store/Player";
+import { useDispatch } from "react-redux";
+import { Button } from "./ui/button";
 function Desktop() {
+  const dispatch = useDispatch();
+  const [show, setShow] = useState<boolean>(false);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setShow(true);
+    }, 1111);
+    return () => clearTimeout(t);
+  }, []);
+
+  const handlePwa = () => {
+    dispatch(setIsIphone(true));
+  };
   return (
     <>
+      {!window.matchMedia("(display-mode: standalone)").matches && (
+        <>
+          {show && (
+            <div className=" fixed fade-in flex flex-col space-y-3 leading-tight tracking-tight font-medium text-xl items-center justify-center px-7 h-dvh w-full bg-black/75 z-50 ">
+              <div className="relative pt-7 pb-5 w-[33dvw] bg-neutral-950 p-4 tracking-tight leading-tight  rounded-md">
+                <div className=" px-1">
+                  <h1 className=" text-5xl font-semibold">Hi,There 👋 </h1>
+                  <p className=" mt-1.5 text-xl">
+                    Welcome to Napster's PWA app! Enjoy instant access to
+                    playlists for uninterrupted tunes. Connect with fellow music
+                    lovers effortlessly.{" "}
+                    <span onClick={handlePwa} className=" text-red-300">
+                      Install App now{" "}
+                    </span>
+                    for a seamless experience!
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShow(false)}
+                  variant={"secondary"}
+                  className=" bg-neutral-900 text-lg py-6 w-full rounded-lg mt-2"
+                >
+                  Continue
+                </Button>
+              </div>
+
+              <img
+                src="/hi.png"
+                height={200}
+                width={200}
+                className="  absolute top-[18dvh] right-[29dvw]"
+                alt="intro"
+              />
+            </div>
+          )}
+        </>
+      )}
       <div className=" fade-in">
         <header className=" px-11 max-md:px-5 py-4  fixed w-full backdrop-blur-xl justify-between flex">
           <h1 className=" font-semibold text-2xl max-md:text-xl animate-fade-right">
@@ -32,7 +85,7 @@ function Desktop() {
               <img
                 src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=455248&theme=light"
                 alt="Music&#0032;Streaming&#0032; - music | Product Hunt"
-                style={{ width: "250px; height: 54px;" }}
+                style={{ width: "250px", height: "54px" }}
                 width="250"
                 height="54"
               />

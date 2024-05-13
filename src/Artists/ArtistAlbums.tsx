@@ -22,7 +22,7 @@ const ArtistAlbums: React.FC<albums> = ({
                 (e.currentTarget.src = "/cache.jpg")
               }
               alt="Image"
-              className="rounded-lg animate-fade-right object-cover h-[100%] w-[100%]"
+              className="-lg animate-fade-right object-cover h-[100%] w-[100%]"
             />
           </div>
           <h1 className=" truncate pt-2 animate-fade-right w-[8.1rem] overflow-hidden">

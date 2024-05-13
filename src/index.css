@@ -37,7 +37,7 @@
   }
 
   .dark {
-    --background: 0, 0%, 7%;
+    --background: 0, 0%, 0%;
     --foreground: 0 0% 98%;
 
     --card: 240 10% 3.9%;
@@ -61,7 +61,7 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
+    --border: 0, 0%, 7%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
   }
@@ -78,7 +78,7 @@
 
 body {
   font-family: "Inter" sans-serif;
-  background-color: #121212;
+  background-color: black;
 }
 
 *:focus {

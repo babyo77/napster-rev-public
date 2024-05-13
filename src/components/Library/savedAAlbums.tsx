@@ -53,7 +53,7 @@ function SavedAlbumCard({
             to={`/album/${link}`}
             className="flex space-x-2.5 items-center justify-between"
           >
-            <div className="overflow-hidden h-14 rounded-md w-14 space-y-2">
+            <div className="overflow-hidden h-14 -md w-14 space-y-2">
               <AspectRatio ratio={1 / 1}>
                 <LazyLoadImage
                   height="100%"
@@ -64,7 +64,7 @@ function SavedAlbumCard({
                   onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
                     (e.currentTarget.src = "/cache.jpg")
                   }
-                  className="rounded-md object-cover w-[100%] h-[100%]"
+                  className="-md object-cover w-[100%] h-[100%]"
                 />
               </AspectRatio>
             </div>

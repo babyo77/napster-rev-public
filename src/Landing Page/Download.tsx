@@ -41,7 +41,7 @@ export default function Download() {
         >
           <div>
             <RiDownloadLine />
-            <p title="install pwa app">Install Now</p>
+            <p title="install pwa app">Install app</p>
           </div>
         </Button>
       </DialogTrigger>

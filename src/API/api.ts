@@ -60,12 +60,15 @@ const getUserApi = `${mainApi}/user/`;
 
 const ReelsApi = `${"https://reels-phi.vercel.app"}/reels/`;
 
+const ReelsInfoApi = `${"https://reels-phi.vercel.app"}/info/?url=`;
+
 const sendNotificationApi = `${mainApi}/notify/`;
 
 export {
   getSpotifyProfile,
   sendNotificationApi,
   ReelsApi,
+  ReelsInfoApi,
   getUserApi,
   SharePlayApi,
   SearchOneTrackApi,

@@ -24,7 +24,7 @@ import {
 import { Link } from "react-router-dom";
 import SongsOptions from "./SongsOptions";
 import axios from "axios";
-import { SuggestionSearchApi } from "@/API/api";
+import { SuggestionSearchApi, streamApi } from "@/API/api";
 import useImage from "@/hooks/useImage";
 
 function Songs({
@@ -83,6 +83,7 @@ function Songs({
         data[0].youtubeId.startsWith("http") ? data[0].title : data[0].youtubeId
       }`
     );
+    new Audio(`${streamApi}${r.data[0].youtubeId}`).load();
     return data[0].youtubeId.startsWith("http")
       ? [data[0], ...r.data]
       : (r.data as playlistSongs[]);
@@ -146,7 +147,7 @@ function Songs({
     >
       {!album ? (
         <div className="overflow-hidden  h-12 w-12 space-y-2">
-          <AspectRatio ratio={1 / 1} className=" rounded-md overflow-hidden">
+          <AspectRatio ratio={1 / 1} className=" -md overflow-hidden">
             <LazyLoadImage
               onClick={handlePlay}
               src={c ? c : "/cache.jpg"}
@@ -158,7 +159,7 @@ function Songs({
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
                 (e.currentTarget.src = "/cache.jpg")
               }
-              className="rounded-md object-cover h-[100%] w-[100%]"
+              className="-md object-cover h-[100%] w-[100%]"
             />
           </AspectRatio>
         </div>

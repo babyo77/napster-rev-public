@@ -309,6 +309,7 @@ function LibraryComp() {
 
   const handleSave = useCallback(async () => {
     if (uid && id) {
+      setIsSaved([{ name: "", creator: "", for: "", link: "" }]);
       const q = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
         Query.equal("$id", [id.replace("custom", "")]),
       ]);
@@ -402,7 +403,7 @@ function LibraryComp() {
                     cover={
                       (playlistThumbnail &&
                         playlistThumbnail[0]?.thumbnailUrl) ||
-                      "https://i.pinimg.com/564x/38/2f/fe/382ffec40fdab343c9989b2373425a90.jpg"
+                      "/cache.jpg"
                     }
                     maker={(pDetails && pDetails[0]?.name) || ""}
                     name={(pDetails && pDetails[0]?.title) || ""}
@@ -423,11 +424,11 @@ function LibraryComp() {
                       "w120-h120",
                       "w1080-h1080"
                     )) ||
-                  "https://i.pinimg.com/564x/38/2f/fe/382ffec40fdab343c9989b2373425a90.jpg"
+                  "/cache.jpg"
                 }
                 alt="Image"
                 loading="lazy"
-                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down -xl h-[100%] w-[100%]"
               />
             </div>
 
@@ -440,7 +441,7 @@ function LibraryComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none rounded-lg px-[13dvw] border bg-neutral-900"
+                  className="text-lg py-6 animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -449,7 +450,7 @@ function LibraryComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down   shadow-none rounded-lg px-[12dvw]  border bg-neutral-900"
+                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

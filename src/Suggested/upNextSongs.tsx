@@ -126,7 +126,7 @@ function UpNextSongs({
       {...attributes}
       style={style}
       className={` ${
-        isDragging ? "bg-zinc-900 rounded-md" : ""
+        isDragging ? "bg-zinc-900 -md" : ""
       } flex  py-2 space-x-2  px-1.5 items-center`}
     >
       {!album ? (
@@ -146,7 +146,7 @@ function UpNextSongs({
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
                 (e.currentTarget.src = "/cache.jpg")
               }
-              className="rounded-md object-cover h-[100%] w-[100%]"
+              className="-md object-cover h-[100%] w-[100%]"
             />
           </AspectRatio>
         </div>

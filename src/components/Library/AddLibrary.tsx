@@ -186,7 +186,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
                 type="submit"
                 variant={"secondary"}
                 disabled={isSubmit || error}
-                className=" py-5 w-full animate-fade-up border bg-neutral-900 rounded-xl"
+                className=" py-5 w-full animate-fade-up border bg-neutral-950 rounded-xl"
               >
                 {isSubmit ? (
                   <Loader size="20" loading={true} />
@@ -206,7 +206,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
               onClick={handleReset}
               variant={"secondary"}
               disabled={isSubmit || error}
-              className=" text-zinc-100 py-5 border bg-neutral-900 animate-fade-up -mt-1.5 w-full rounded-xl"
+              className=" text-zinc-100 py-5 border bg-neutral-950 animate-fade-up -mt-1.5 w-full rounded-xl"
             >
               <p>Close</p>
             </Button>

@@ -1,5 +1,4 @@
 import { FaPlay } from "react-icons/fa6";
-import { IoIosArrowBack } from "react-icons/io";
 import { NavLink, useParams } from "react-router-dom";
 import { useQuery } from "react-query";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,6 +26,7 @@ import Share from "@/HandleShare/Share";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import "react-lazy-load-image-component/src/effects/blur.css";
 import { useInView } from "react-intersection-observer";
+import NotFound from "@/components/404";
 function SavedEditsComp() {
   const { ref, inView } = useInView({
     threshold: 0,
@@ -88,7 +88,7 @@ function SavedEditsComp() {
     isError: pError,
     refetch: pRefetch,
   } = useQuery<likedSongs[]>(["editSongDetails", id], getPlaylistDetails, {
-    retry: 5,
+    retry: 0,
     staleTime: 1000,
     refetchOnWindowFocus: false,
   });
@@ -164,26 +164,18 @@ function SavedEditsComp() {
 
   return (
     <div className=" flex flex-col items-center">
-      {pError && pError && (
-        <div className=" relative  w-full">
-          <div className="fixed  top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            No playlist found
-          </div>
-          <NavLink to={"/library/"}>
-            <IoIosArrowBack className="h-7 w-7  my-5 mx-4  backdrop-blur-md text-black bg-white/70 rounded-full p-1" />
-          </NavLink>
-        </div>
-      )}
+      {pError && <NotFound />}
       {pLoading && pLoading && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <Loader />
         </div>
       )}
-      {!pDetails && (
+      {!pDetails && !pError && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <Loader />
         </div>
       )}
+      {pDetails && pDetails?.length == 0 && <NotFound />}
       {pDetails && pDetails.length > 1 ? (
         <>
           <div className="flex w-screen h-[25rem] justify-center pt-[6vh] relative ">
@@ -204,7 +196,7 @@ function SavedEditsComp() {
                 src="/edits.jpg"
                 alt="Image"
                 loading="lazy"
-                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down -xl h-[100%] w-[100%]"
               />
             </div>
             <div className=" absolute bottom-[1.5vh] px-4 left-0  right-0">
@@ -216,7 +208,7 @@ function SavedEditsComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[13dvw]"
+                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -225,7 +217,7 @@ function SavedEditsComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none border bg-neutral-900 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

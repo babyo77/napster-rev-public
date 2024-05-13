@@ -206,7 +206,7 @@ function AlbumPageComp() {
                 src={data[0]?.thumbnailUrl.replace("w120-h120", "w1080-h1080")}
                 alt="Image"
                 loading="lazy"
-                className="object-cover animate-fade-down rounded-xl h-[100%] w-[100%]"
+                className="object-cover animate-fade-down -xl h-[100%] w-[100%]"
               />
             </div>
             <div className=" absolute bottom-[1.5vh] px-4 left-0  right-0">
@@ -218,7 +218,7 @@ function AlbumPageComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none border bg-neutral-900 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 shadow-none border bg-neutral-950 rounded-lg px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -227,7 +227,7 @@ function AlbumPageComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none border bg-neutral-900 rounded-lg px-[12dvw]"
+                  className="text-lg py-6 shadow-none border bg-neutral-950 rounded-lg px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle

@@ -3,7 +3,7 @@ import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
 import { AspectRatio } from "../ui/aspect-ratio";
 import { Blurhash } from "react-blurhash";
 import { toBlob } from "html-to-image";
-import { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { encode } from "blurhash";
 import { TbMicrophone2 } from "react-icons/tb";
 import { LiaExchangeAltSolid } from "react-icons/lia";
@@ -17,7 +17,7 @@ import { BiLinkAlt } from "react-icons/bi";
 import { RootState } from "@/Store/Store";
 import { useSelector } from "react-redux";
 
-function PlaylistShare({
+function PlaylistShareComp({
   lyrics,
   cover,
   name,
@@ -243,5 +243,5 @@ function PlaylistShare({
     </Drawer>
   );
 }
-
+const PlaylistShare = React.memo(PlaylistShareComp);
 export default PlaylistShare;

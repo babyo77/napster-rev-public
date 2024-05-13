@@ -13,6 +13,7 @@ interface Player {
   playlistUrl: string;
   playingPlaylistUrl: string;
   playlist: playlistSongs[];
+  sleepTimer: NodeJS.Timeout | null | "end";
   isPlaying: boolean;
   currentIndex: number;
   isIphone: boolean;
@@ -63,6 +64,7 @@ const initialState: Player = {
   isLikedSong: false,
   loggedIn: false,
   stopPlaying: false,
+  sleepTimer: null,
   user: false,
   sharePlayCode: "",
   uid: localStorage.getItem("uid"),
@@ -121,6 +123,12 @@ const MusicPlayer = createSlice({
     },
     SetPlaylistOrAlbum: (state, action: PayloadAction<string>) => {
       state.PlaylistOrAlbum = action.payload;
+    },
+    SetSleepTimer: (
+      state,
+      action: PayloadAction<NodeJS.Timeout | null | "end">
+    ) => {
+      state.sleepTimer = action.payload;
     },
     Setuid: (state, action: PayloadAction<string>) => {
       state.uid = action.payload;
@@ -284,7 +292,7 @@ export const {
   setUser,
   play,
   SetFeedMode,
-
+  SetSleepTimer,
   SetSharePlayConnected,
   SetSeek,
   SetShareLyrics,
