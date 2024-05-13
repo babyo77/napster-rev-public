@@ -2,19 +2,15 @@ const mainApi = import.meta.env.VITE_API_URL;
 const isIPhone = /iPhone/i.test(navigator.userAgent);
 
 const STREAM = [
-  "https://exotic-cloe-babyo77.koyeb.app/?url=",
-  "https://unconscious-elianora-babyo7.koyeb.app/?url=",
-  "https://architectural-consuela-krsna.koyeb.app/?url=",
+  
 ];
 const DOWNLOAD = [
-  "https://exotic-cloe-babyo77.koyeb.app/download?url=",
-  "https://unconscious-elianora-babyo7.koyeb.app/download?url=",
-  "https://architectural-consuela-krsna.koyeb.app/download/?url=",
+  
 ];
 
 const streamApi = isIPhone
   ? STREAM[Math.floor(Math.random() * STREAM.length)]
-  : "https://economic-glynda-groot.koyeb.app?url=";
+  : "";
 
 const downloadApi = DOWNLOAD[Math.floor(Math.random() * STREAM.length)];
 
