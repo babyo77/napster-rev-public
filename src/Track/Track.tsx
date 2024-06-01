@@ -5,7 +5,6 @@ import { useQuery } from "react-query";
 import axios from "axios";
 import { playlistSongs } from "@/Interface";
 import { RxShuffle } from "react-icons/rx";
-import { RiFocus3Line } from "react-icons/ri";
 import { SearchApi, SuggestionSearchApi } from "@/API/api";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -20,18 +19,16 @@ import {
 } from "@/Store/Player";
 import React, { useCallback, useEffect, useState } from "react";
 import { RootState } from "@/Store/Store";
-
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 import { useInView } from "react-intersection-observer";
 import { ADD_TO_LIBRARY, DATABASE_ID, db } from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
-
 import Share from "@/HandleShare/Share";
 import Loader from "@/components/Loaders/Loader";
 import { Button } from "@/components/ui/button";
 import Songs from "@/components/Library/Songs";
 import GoBack from "@/components/Goback";
+import Rating from "@/components/Library/rating";
+
 function TrackComp() {
   const { ref, inView } = useInView({
     threshold: 0,
@@ -40,17 +37,7 @@ function TrackComp() {
   const dispatch = useDispatch();
   const { id } = useParams();
 
-  const currentIndex = useSelector(
-    (state: RootState) => state.musicReducer.currentIndex
-  );
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
-  const playingPlaylistUrl = useSelector(
-    (state: RootState) => state.musicReducer.playingPlaylistUrl
-  );
-
-  const playlist = useSelector(
-    (state: RootState) => state.musicReducer.playlist
-  );
 
   const [offset, setOffset] = useState<string>();
 
@@ -71,15 +58,11 @@ function TrackComp() {
   const { isLoading, isError, refetch, isRefetching } = useQuery<
     playlistSongs[]
   >(["playlist", id], getPlaylist, {
-    retry: 5,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    staleTime: 60 * 60000,
+    staleTime: Infinity,
+    keepPreviousData: true,
   });
 
   useEffect(() => {
-    refetch();
-
     dispatch(setIsLikedSong(false));
   }, [dispatch, refetch, id]);
   const handleShufflePlay = useCallback(async () => {
@@ -114,11 +97,6 @@ function TrackComp() {
       }
     }
   }, [dispatch, data, isPlaying, id]);
-
-  const handleFocus = useCallback(() => {
-    const toFocus = document.getElementById(playlist[currentIndex].youtubeId);
-    toFocus?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [currentIndex, playlist]);
 
   useEffect(() => {
     if (inView) {
@@ -185,17 +163,13 @@ function TrackComp() {
             <GoBack />
 
             <div className="absolute top-4 z-10 right-3  flex-col space-y-0.5">
-              {playingPlaylistUrl == id && (
-                <div className="" onClick={handleFocus}>
-                  <RiFocus3Line className="h-8 w-8  mb-2 animate-fade-left backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
-                </div>
-              )}
-
               <Share />
+              <div>
+                <Rating />
+              </div>
             </div>
             <div className="h-56  w-56">
-              <LazyLoadImage
-                effect="blur"
+              <img
                 width="100%"
                 height="100%"
                 src={data[0]?.thumbnailUrl || "newfavicon.jpg"}
@@ -204,7 +178,6 @@ function TrackComp() {
                 className="object-cover animate-fade-down -xl h-[100%] w-[100%]"
               />
             </div>
-
             <div className=" absolute bottom-[1.5vh]  px-4 left-0  right-0">
               <h1 className="text-center animate-fade-down  font-semibold py-[1vh] truncate text-2xl capitalize">
                 {data[0]?.title || "unknown"}
@@ -214,7 +187,7 @@ function TrackComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 animate-fade-down  shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 animate-fade-down text-red-500 shadow-none bg-neutral-900 rounded-md px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -223,7 +196,7 @@ function TrackComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down  text-red-500 shadow-none bg-neutral-900 rounded-md px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle
@@ -231,7 +204,7 @@ function TrackComp() {
               </div>
             </div>
           </div>
-          <div className="py-3 -mt-[2vh] pb-[8.5rem]">
+          <div className="py-3 -mt-[2vh] pb-[9.4rem]">
             {data.map((d, i) => (
               <div key={d.youtubeId + i} ref={ref}>
                 <Songs

@@ -3,29 +3,28 @@ import { Drawer, DrawerContent, DrawerTrigger } from "../ui/drawer";
 import { AspectRatio } from "../ui/aspect-ratio";
 import { Blurhash } from "react-blurhash";
 import { toBlob } from "html-to-image";
-import { useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useRef, useState } from "react";
 import { encode } from "blurhash";
 import { useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import { TbMicrophone2 } from "react-icons/tb";
 import { LiaExchangeAltSolid } from "react-icons/lia";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
-import { GetImage } from "@/API/api";
 import Loader from "../Loaders/Loader";
 import { Button } from "../ui/button";
 import { VscMusic } from "react-icons/vsc";
 import { ChangeLyrics } from "./ChangeLyrics";
+import { BiLinkAlt } from "react-icons/bi";
+import useOptions from "../Library/useoptions";
+import { toast } from "../ui/use-toast";
 
-function ShareLyrics({
-  lyrics,
-  size,
-  className,
-}: {
-  size?: boolean;
-  className?: string;
-  lyrics?: [{ time: number | string; lyrics: string }];
-}) {
+const ShareLyrics = forwardRef<
+  HTMLButtonElement,
+  {
+    size?: boolean;
+    className?: string;
+    lyrics?: [{ time: number | string; lyrics: string }];
+  }
+>(({ lyrics, size, className }, ref) => {
   const currentIndex = useSelector(
     (state: RootState) => state.musicReducer.currentIndex
   );
@@ -99,15 +98,24 @@ function ShareLyrics({
 
   const encodeImageToBlurhash = useCallback(
     async (imageUrl: string) => {
-      setRound(false);
-      const image = await loadImage(imageUrl);
-      const imageData = getImageData(image as unknown as HTMLImageElement);
-      if (imageData) {
-        setBlur((prev) => !prev);
+      try {
+        setRound(false);
+        const image = await loadImage(imageUrl);
+        const imageData = getImageData(image as unknown as HTMLImageElement);
+        if (imageData) {
+          setBlur((prev) => !prev);
+          setRound(true);
+          return setBlurHash(
+            encode(imageData.data, imageData.width, imageData.height, 4, 4)
+          );
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          //@ts-expect-error:error
+          description: `Error: ${error.message || "Try again"}`,
+        });
         setRound(true);
-        return setBlurHash(
-          encode(imageData.data, imageData.width, imageData.height, 4, 4)
-        );
       }
     },
     [getImageData, loadImage]
@@ -117,9 +125,11 @@ function ShareLyrics({
     setShareSong((prev) => !prev);
   }, []);
 
+  const { handleShare } = useOptions({ music: playlist[currentIndex] });
   return (
     <Drawer>
       <DrawerTrigger
+        ref={ref}
         className={`m-0 p-1.5 flex  justify-center items-center ${
           className ? "" : "bg-zinc-900"
         }   rounded-full `}
@@ -132,7 +142,7 @@ function ShareLyrics({
       </DrawerTrigger>
       <DrawerContent className="  h-[100dvh] rounded-none px-[4.5vw]">
         {!round && (
-          <div className=" absolute z-10 bg-black/10 w-[91vw] h-[100dvh] flex justify-center items-center">
+          <div className=" absolute z-10 bg-black/10 w-[91vw] h-full pb-14 flex justify-center items-center">
             <Loader color="white" />
           </div>
         )}
@@ -155,9 +165,7 @@ function ShareLyrics({
                 punch={1}
               />
             ) : (
-              <LazyLoadImage
-                effect="blur"
-                visibleByDefault
+              <img
                 loading="lazy"
                 src={
                   playlist[currentIndex]?.thumbnailUrl.replace(
@@ -176,7 +184,7 @@ function ShareLyrics({
               {ShareSong ? (
                 <div className=" flex flex-col text-left  space-y-2  bg-black/30  py-3 px-3 pt-4">
                   <div className="overflow-hidden flex h-[15.5rem] w-[15.5rem]">
-                    <LazyLoadImage
+                    <img
                       src={
                         playlist[currentIndex]?.thumbnailUrl.replace(
                           "w120-h120",
@@ -184,12 +192,10 @@ function ShareLyrics({
                         ) || "/favicon.jpeg"
                       }
                       width="100%"
-                      effect="blur"
                       height="100%"
                       alt="Image"
                       loading="lazy"
-                      visibleByDefault
-                      className="rounded-xl object-cover h-[100%] w-[100%]"
+                      className="rounded-lg object-cover h-[100%] w-[100%]"
                     />
                   </div>
                   <div className=" break-words ">
@@ -218,7 +224,7 @@ function ShareLyrics({
               variant={"secondary"}
               onClick={shareLyrics}
               id="share"
-              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <IoShareOutline className=" h-6 w-6" />
               <p>Share</p>
@@ -226,14 +232,9 @@ function ShareLyrics({
             <Button
               variant={"secondary"}
               onClick={() =>
-                encodeImageToBlurhash(
-                  `${GetImage}${playlist[currentIndex].thumbnailUrl.replace(
-                    "w120-h120",
-                    "w1080-h1080"
-                  )}`
-                )
+                encodeImageToBlurhash(playlist[currentIndex].thumbnailUrl)
               }
-              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <LiaExchangeAltSolid className=" h-6 w-6" />
               <p>Change BG</p>
@@ -242,7 +243,7 @@ function ShareLyrics({
               <Button
                 variant={"secondary"}
                 onClick={handleShareSong}
-                className="text-xs fade-in flex  animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+                className="text-xs  flex  animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
               >
                 {ShareSong ? (
                   <TbMicrophone2 className=" h-6 w-6" />
@@ -252,11 +253,21 @@ function ShareLyrics({
                 <p>{ShareSong ? "Lyrics" : "Music"}</p>
               </Button>
             )}
+            {!lyrics && (
+              <Button
+                variant={"secondary"}
+                onClick={handleShare}
+                className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
+              >
+                <BiLinkAlt className=" h-6 w-6" />
+                <p>Copy link</p>
+              </Button>
+            )}
           </div>
         </div>
       </DrawerContent>
     </Drawer>
   );
-}
+});
 
 export default ShareLyrics;

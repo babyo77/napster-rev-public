@@ -31,26 +31,12 @@ import {
 } from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
 import { RxShuffle } from "react-icons/rx";
-import { RiFocus3Line } from "react-icons/ri";
 import Share from "@/HandleShare/Share";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 
 function AlbumPageComp() {
   const dispatch = useDispatch();
   const { id } = useParams();
   const artistId = useMemo(() => new URLSearchParams(location.search), []);
-
-  const currentIndex = useSelector(
-    (state: RootState) => state.musicReducer.currentIndex
-  );
-  const playingPlaylistUrl = useSelector(
-    (state: RootState) => state.musicReducer.playingPlaylistUrl
-  );
-
-  const playlist = useSelector(
-    (state: RootState) => state.musicReducer.playlist
-  );
 
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
@@ -60,14 +46,16 @@ function AlbumPageComp() {
       Query.equal("link", [id || ""]),
     ]);
     const p = r.documents as unknown as savedPlaylist[];
+    console.log(p);
+
     return p;
   };
   const { data: isSaved } = useQuery<savedPlaylist[]>(
     ["checkIfSaved", id],
     loadSavedPlaylist,
     {
-      refetchOnWindowFocus: false,
-      keepPreviousData: true,
+      refetchOnMount: true,
+      staleTime: 0,
     }
   );
 
@@ -83,7 +71,6 @@ function AlbumPageComp() {
     AlbumSongs[]
   >(["album", id], getAlbumSONGS, {
     retry: 5,
-    refetchOnWindowFocus: false,
     staleTime: 60 * 600000,
     onSuccess(data) {
       data.length == 0 && refetch();
@@ -102,7 +89,6 @@ function AlbumPageComp() {
 
   const { refetch: a } = useQuery<string>(["searchAlbumArtist"], artistSearch, {
     enabled: false,
-    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -147,11 +133,6 @@ function AlbumPageComp() {
     }
   }, [dispatch, data, isPlaying, id, artistId, handleArtist]);
 
-  const handleFocus = useCallback(() => {
-    const toFocus = document.getElementById(playlist[currentIndex].youtubeId);
-    toFocus?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [currentIndex, playlist]);
-
   return (
     <div className=" flex flex-col items-center">
       {isError && (
@@ -191,16 +172,11 @@ function AlbumPageComp() {
                   />
                 </div>
               )}
-              {playingPlaylistUrl == id && (
-                <div className="" onClick={handleFocus}>
-                  <RiFocus3Line className="h-8 w-8 fade-in mb-2  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
-                </div>
-              )}
+
               <Share />
             </div>
             <div className="h-56  w-56">
-              <LazyLoadImage
-                effect="blur"
+              <img
                 width="100%"
                 height="100%"
                 src={data[0]?.thumbnailUrl.replace("w120-h120", "w1080-h1080")}
@@ -218,7 +194,7 @@ function AlbumPageComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none border bg-neutral-950 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 animate-fade-down text-red-500 shadow-none bg-neutral-900 rounded-md px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -227,7 +203,7 @@ function AlbumPageComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6 shadow-none border bg-neutral-950 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down  text-red-500 shadow-none bg-neutral-900 rounded-md px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle
@@ -235,7 +211,7 @@ function AlbumPageComp() {
               </div>
             </div>
           </div>
-          <div className="py-3 -mt-[2vh] pb-[8.5rem]">
+          <div className="py-3 -mt-[2vh] pb-[8.9rem]">
             {data.map((d, i) => (
               <div onClick={handleArtist} key={d.artists[0].id + i + d.title}>
                 <Songs

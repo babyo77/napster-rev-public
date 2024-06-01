@@ -2,7 +2,7 @@ import { GetArtistDetails, GetPlaylistHundredSongsApi } from "@/API/api";
 import { ArtistDetails, favArtist, playlistSongs } from "@/Interface";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useParams } from "react-router-dom";
 import SuggestedArtist from "./SuggestedArtist";
 import ArtistAlbums from "./ArtistAlbums";
@@ -26,8 +26,7 @@ import { RootState } from "@/Store/Store";
 import { FaStar } from "react-icons/fa6";
 import Share from "@/HandleShare/Share";
 import { IoPlay } from "react-icons/io5";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { LuDot } from "react-icons/lu";
 import useImage from "@/hooks/useImage";
 
@@ -59,7 +58,6 @@ function ArtistPageComp() {
     ["checkFavArtist", id],
     loadIsFav,
     {
-      refetchOnWindowFocus: false,
       keepPreviousData: true,
     }
   );
@@ -67,14 +65,13 @@ function ArtistPageComp() {
   const { data, isLoading, isError, refetch, isRefetching } =
     useQuery<ArtistDetails>(["artist", id], getArtistDetails, {
       retry: 5,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+
       staleTime: 60 * 60000,
       onSuccess(d) {
         d == null && refetch();
       },
     });
-
+  const q = useQueryClient();
   const addToFav = useCallback(async () => {
     setIsFavArtist(true);
 
@@ -97,8 +94,9 @@ function ArtistPageComp() {
         )
         .catch(() => setIsFavArtist(false));
       refetchFav();
+      await q.fetchQuery("savedArtists");
     }
-  }, [data, id, refetchFav, uid]);
+  }, [data, id, refetchFav, uid, q]);
 
   const removeFromFav = useCallback(async () => {
     if (isFav) {
@@ -108,8 +106,9 @@ function ArtistPageComp() {
         .deleteDocument(DATABASE_ID, FAV_ARTIST, isFav[0].$id)
         .catch(() => setIsFavArtist(true));
       refetchFav();
+      await q.fetchQuery("savedArtists");
     }
-  }, [refetchFav, isFav]);
+  }, [refetchFav, isFav, q]);
 
   const getPlaylist = async () => {
     const list = await axios.get(
@@ -127,8 +126,7 @@ function ArtistPageComp() {
     {
       enabled: false,
       retry: 5,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+
       staleTime: 60 * 60000,
       onSuccess(data) {
         data.length == 0 && songRefetch();
@@ -195,24 +193,26 @@ function ArtistPageComp() {
             {isFavArtist ? (
               <FaStar
                 onClick={removeFromFav}
-                className="h-8 w-8  backdrop-blur-md mb-2 fade-in  bg-black/30 rounded-full p-1.5"
+                className="h-8 w-8  backdrop-blur-md mb-2   bg-black/30 rounded-full p-1.5"
               />
             ) : (
               <FaRegStar
                 onClick={addToFav}
-                className="h-8 w-8 mb-2 backdrop-blur-md fade-in  bg-black/30 rounded-full p-1.5"
+                className="h-8 w-8 mb-2 backdrop-blur-md   bg-black/30 rounded-full p-1.5"
               />
             )}
             <Share />
           </div>
           <div className="h-[50vw] w-[50vw]">
-            <LazyLoadImage
-              effect="blur"
+            <img
               width="100%"
               height="100%"
               src={c1 || "/favicon.jpeg"}
               alt="Image"
               loading="lazy"
+              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
+                (e.currentTarget.src = "/cache.jpg")
+              }
               className="object-cover animate-fade-down rounded-full h-[100%] w-[100%]"
             />
           </div>

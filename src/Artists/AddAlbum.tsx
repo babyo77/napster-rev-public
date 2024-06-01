@@ -24,10 +24,8 @@ import { IoMdAdd } from "react-icons/io";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { useDispatch, useSelector } from "react-redux";
-import { setCurrentToggle, setSavedPlaylist } from "@/Store/Player";
+import { useSelector } from "react-redux";
 import { savedPlaylist } from "@/Interface";
-import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Loader from "@/components/Loaders/Loader";
@@ -39,6 +37,8 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { RootState } from "@/Store/Store";
+import { useQueryClient } from "react-query";
+import { toast } from "@/components/ui/use-toast";
 
 const AddAlbum: React.FC<{
   clone?: boolean;
@@ -49,10 +49,8 @@ const AddAlbum: React.FC<{
 }> = ({ clone, id, name, album, image }) => {
   const close = useRef<HTMLButtonElement>(null);
 
-  const dispatch = useDispatch();
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
-  const n = useNavigate();
   const [isSubmit, setIsSubmit] = useState<boolean>();
   const [error, setError] = useState<boolean>();
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -62,6 +60,7 @@ const AddAlbum: React.FC<{
       creator: "",
     },
   });
+  const q = useQueryClient();
   useEffect(() => {
     clone && id && form.setValue("link", id);
     clone && id && form.setValue("creator", `${name}`);
@@ -76,7 +75,7 @@ const AddAlbum: React.FC<{
           image: image,
           creator: data.creator,
           link: data.link,
-          for: uid || "default",
+          for: uid,
         };
         db.createDocument(
           DATABASE_ID,
@@ -87,16 +86,22 @@ const AddAlbum: React.FC<{
         )
           .then(async () => {
             form.reset();
-            const r = await db.listDocuments(DATABASE_ID, ALBUM_COLLECTION_ID, [
+            await db.listDocuments(DATABASE_ID, ALBUM_COLLECTION_ID, [
               Query.orderDesc("$createdAt"),
-              Query.equal("for", [uid || "default", "default"]),
+              Query.equal("for", [uid]),
             ]);
-            const p = r.documents as unknown as savedPlaylist[];
-            dispatch(setCurrentToggle("Albums"));
-            dispatch(setSavedPlaylist(p)), close.current?.click();
-            clone && n("/library/");
+            close.current?.click();
+            toast({
+              description: "New album added",
+            });
+            await q.fetchQuery("savedAlbums");
+            await q.fetchQuery(["checkIfSaved", id]);
           })
           .catch((error) => {
+            toast({
+              variant: "destructive",
+              description: "error saving album",
+            });
             throw new Error(error);
           });
       }
@@ -185,7 +190,7 @@ const AddAlbum: React.FC<{
                 type="submit"
                 variant={"secondary"}
                 disabled={isSubmit || error}
-                className=" py-5 w-full rounded-xl border bg-neutral-950 animate-fade-up"
+                className=" py-5 w-full rounded-lg border bg-neutral-950 animate-fade-up"
               >
                 {isSubmit ? (
                   <Loader size="20" loading={true} />
@@ -204,7 +209,7 @@ const AddAlbum: React.FC<{
               onClick={handleReset}
               variant={"secondary"}
               disabled={isSubmit || error}
-              className=" text-zinc-100 py-5 border bg-neutral-950 animate-fade-up -mt-1.5 w-full rounded-xl"
+              className=" text-zinc-100 py-5 border bg-neutral-950 animate-fade-up -mt-1.5 w-full rounded-lg"
             >
               <p>Close</p>
             </Button>

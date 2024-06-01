@@ -1,23 +1,19 @@
 import * as React from "react";
-import "react-lazy-load-image-component/src/effects/blur.css";
 import { useNavigate } from "react-router-dom";
-
 import { playlistSongs } from "@/Interface";
 import { useQuery } from "react-query";
-
 import axios from "axios";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import Header from "../Header/Header";
-import { ReelsApi, SuggestionSearchApi, streamApi } from "@/API/api";
-
+import { SuggestionSearchApi, streamApi } from "@/API/api";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
-import { SetFeed, SetReels } from "@/Store/Player";
+import { SetFeed } from "@/Store/Player";
 import { useInView } from "react-intersection-observer";
 import ReactPullToRefresh from "react-simple-pull-to-refresh";
 import FeedSong from "./FeedSongs";
 import { Skeleton } from "../ui/skeleton";
 import { AspectRatio } from "../ui/aspect-ratio";
+import AI from "@/AI/AI";
 
 export function ListenNowComp() {
   const feed = useSelector((state: RootState) => state.musicReducer.Feed);
@@ -33,10 +29,8 @@ export function ListenNowComp() {
   };
 
   const { data, isError, refetch } = useQuery("playbackCheck", PlaybackCheck, {
-    refetchOnMount: false,
     staleTime: Infinity,
     retry: 0,
-    refetchOnWindowFocus: false,
   });
 
   const handleReport = () => {
@@ -68,29 +62,7 @@ export function ListenNowComp() {
     (state: RootState) => state.musicReducer.playlist
   );
 
-  const getReels = React.useCallback(async () => {
-    const rnDno = Math.floor(Math.random() * playlist.length - 1);
-    const r = await axios.get(
-      `${ReelsApi}${
-        playlist && playlist.length > 0
-          ? playlist[rnDno]?.title.replace("/", "") +
-            " " +
-            playlist[rnDno]?.artists[0]?.name.replace("/", "")
-          : "rnd"
-      }`
-    );
-    new Audio(r.data[0].youtubeId).load();
-    dispatch(SetReels(r.data));
-    return r.data as playlistSongs[];
-  }, [dispatch, playlist]);
 
-  const { status } = useQuery<playlistSongs[]>(["reels"], getReels, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
-  React.useEffect(() => {
-    console.log(status);
-  }, [status]);
   const query = async () => {
     const currentIndex = Math.floor(Math.random() * playlist.length);
     const q = await axios.get(
@@ -106,17 +78,15 @@ export function ListenNowComp() {
       }`
     );
     if (q.data.length > 0) {
-      localStorage.setItem("feed", JSON.stringify(q.data.slice(0, 17)));
-      dispatch(SetFeed(q.data.slice(0, 17)));
+      localStorage.setItem("feed", JSON.stringify(q.data.slice(0, 10)));
+      dispatch(SetFeed(q.data.slice(0, 10)));
     }
-    return q.data.slice(0, 17) as playlistSongs[];
+    return q.data.slice(0, 10) as playlistSongs[];
   };
 
   const { refetch: refetchFeed } = useQuery<playlistSongs[]>(["Feed"], query, {
     enabled: false,
-    refetchOnWindowFocus: false,
-    staleTime: 60 * 60000,
-    refetchOnMount: false,
+    staleTime: Infinity,
     onSuccess(data) {
       if (data.length == 0) refetchFeed();
     },
@@ -160,8 +130,8 @@ export function ListenNowComp() {
   return (
     <>
       {data && data !== "url not provided" && (
-        <div className=" fixed fade-in w-full px-4 z-10">
-          <Alert className=" fade-in bg-red-500 top-4 border-none">
+        <div className=" fixed  w-full px-4 z-10">
+          <Alert className=" hidden  bg-red-500 top-4 border-none">
             <AlertTitle>Playback Server is Down !</AlertTitle>
             <AlertDescription>
               <p>
@@ -176,8 +146,8 @@ export function ListenNowComp() {
         </div>
       )}
       {isError && (
-        <div className=" fixed fade-in  w-full px-4 z-10 ">
-          <Alert className=" fade-in bg-red-500 top-4 border-none">
+        <div className=" fixed   w-full px-4 z-10 ">
+          <Alert className="  bg-red-500 top-4 border-none">
             <AlertTitle>Playback Server is Down !</AlertTitle>
             <AlertDescription>
               <p>
@@ -191,18 +161,17 @@ export function ListenNowComp() {
           </Alert>
         </div>
       )}
-      <Header title="Home" />
-
+      <AI />
       {feed.length == 0 && (
-        <div className="px-4 pb-40 space-y-[5rem] animate-fade-up">
-          <AspectRatio ratio={4 / 5}>
-            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-[100%] rounded-xl" />
+        <div className="px-4 pb-44 space-y-[5rem] animate-fade-up">
+          <AspectRatio ratio={4 / 4}>
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-[100%] rounded-lg" />
             <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-52 rounded-lg" />
             <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-44 rounded-lg" />
           </AspectRatio>
 
-          <AspectRatio ratio={4 / 5}>
-            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-[100%] rounded-xl" />
+          <AspectRatio ratio={4 / 3}>
+            <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-[100%] rounded-lg" />
             <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-52 rounded-lg" />
             <Skeleton className="flex  animate-fade-up flex-col py-2 space-y-2 h-5 mt-2 w-44 rounded-lg" />
           </AspectRatio>
@@ -213,7 +182,7 @@ export function ListenNowComp() {
         <ReactPullToRefresh
           pullingContent={""}
           onRefresh={handleRefresh}
-          className="px-4"
+          className="px-4 pb-60"
         >
           <>
             {music.map((r, i) => (

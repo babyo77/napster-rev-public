@@ -8,14 +8,13 @@ import { encode } from "blurhash";
 import { useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import { LiaExchangeAltSolid } from "react-icons/lia";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
-import { GetImage } from "@/API/api";
+
+import { GetImage, ReelsStreamApi } from "@/API/api";
 import Loader from "../Loaders/Loader";
 import { Button } from "../ui/button";
-import { BiLinkAlt } from "react-icons/bi";
+import { BiLinkAlt, BiNavigation } from "react-icons/bi";
 
-function ShareLyricsComp({ className }: { className?: string }) {
+function ShareLyricsComp() {
   const currentIndex = useSelector(
     (state: RootState) => state.musicReducer.reelsIndex
   );
@@ -101,7 +100,7 @@ function ShareLyricsComp({ className }: { className?: string }) {
   const handleCopy = useCallback(() => {
     navigator.share({
       url: playlist[currentIndex].youtubeId.replace(
-        "https://occasional-clara-babyo777.koyeb.app/",
+        ReelsStreamApi,
         window.location.origin + "/share-play"
       ),
     });
@@ -109,12 +108,10 @@ function ShareLyricsComp({ className }: { className?: string }) {
 
   return (
     <Drawer>
-      <DrawerTrigger
-        className={`m-0 p-1.5 flex  justify-center items-center ${
-          className ? "" : "bg-zinc-900"
-        }   rounded-full `}
-      >
-        <IoShareOutline className={`h-6 w-6 text-white ${className}`} />
+      <DrawerTrigger>
+        <div className="m-0 p-1.5 flex  justify-center items-center    rounded-full ">
+          <BiNavigation className="h-8 w-8 text-white" />
+        </div>
       </DrawerTrigger>
       <DrawerContent className="  h-[100dvh] rounded-none px-[4.5vw]">
         {!round && (
@@ -141,9 +138,7 @@ function ShareLyricsComp({ className }: { className?: string }) {
                 punch={1}
               />
             ) : (
-              <LazyLoadImage
-                effect="blur"
-                visibleByDefault
+              <img
                 loading="lazy"
                 src={
                   playlist[currentIndex]?.thumbnailUrl.replace(
@@ -161,7 +156,7 @@ function ShareLyricsComp({ className }: { className?: string }) {
             <div className=" absolute text-zinc-100  overflow-hidden rounded-2xl font-semibold backdrop-blur-lg">
               <div className=" flex flex-col text-left  space-y-2  bg-black/30  py-3 px-3 pt-4">
                 <div className="overflow-hidden flex h-[15.5rem] w-[15.5rem]">
-                  <LazyLoadImage
+                  <img
                     src={
                       playlist[currentIndex]?.thumbnailUrl.replace(
                         "w120-h120",
@@ -169,12 +164,10 @@ function ShareLyricsComp({ className }: { className?: string }) {
                       ) || "/favicon.jpeg"
                     }
                     width="100%"
-                    effect="blur"
                     height="100%"
                     alt="Image"
                     loading="lazy"
-                    visibleByDefault
-                    className="rounded-xl object-cover h-[100%] w-[100%]"
+                    className="rounded-lg object-cover h-[100%] w-[100%]"
                   />
                 </div>
                 <div className=" break-words ">
@@ -198,7 +191,7 @@ function ShareLyricsComp({ className }: { className?: string }) {
               variant={"secondary"}
               onClick={shareLyrics}
               id="share"
-              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <IoShareOutline className=" h-6 w-6" />
               <p>Share</p>
@@ -213,7 +206,7 @@ function ShareLyricsComp({ className }: { className?: string }) {
                   )}`
                 )
               }
-              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <LiaExchangeAltSolid className=" h-6 w-6" />
               <p>Change BG</p>
@@ -221,7 +214,7 @@ function ShareLyricsComp({ className }: { className?: string }) {
             <Button
               variant={"secondary"}
               onClick={handleCopy}
-              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <BiLinkAlt className=" h-6 w-6" />
               <p>Copy link</p>
@@ -232,5 +225,5 @@ function ShareLyricsComp({ className }: { className?: string }) {
     </Drawer>
   );
 }
-const ShareLyrics = React.memo(ShareLyricsComp);
-export default ShareLyrics;
+const ReelShare = React.memo(ShareLyricsComp);
+export default ReelShare;

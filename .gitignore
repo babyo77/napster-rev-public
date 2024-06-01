@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+# Other
+dev-dist
+# Sentry Config File
+.env.sentry-build-plugin

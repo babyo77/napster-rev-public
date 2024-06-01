@@ -7,8 +7,7 @@ import { FaPause } from "react-icons/fa6";
 import { useCallback, useState } from "react";
 import { play, setCurrentIndex, setIsIphone } from "@/Store/Player";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import Loader from "../Loaders/Loader";
 import { useLocation } from "react-router-dom";
 export function Player() {
@@ -63,7 +62,7 @@ export function Player() {
       <div
         className={`  ${
           location.pathname !== "/share-play"
-            ? "flex items-center rounded-2xl shadow-md z-10 -mb-3   w-[95vw] ml-0.5 fade-in  backdrop-blur-md justify-between py-2 bg-zinc-900/90"
+            ? "flex items-center rounded-xl shadow-md z-10 -mb-3 w-full backdrop-blur-md justify-between py-2 bg-zinc-900/90"
             : ""
         } `}
       >
@@ -75,14 +74,13 @@ export function Player() {
               <div
                 className={`items-center animate-fade-up  ${
                   location.pathname == "/share-play" ? "hidden" : ""
-                } flex space-x-2 w-[68dvw]  border-white   px-2.5`}
+                } flex space-x-2 w-[68dvw]  border-white px-2.5`}
               >
                 <div className=" h-11 w-11 overflow-hidden rounded-lg">
                   <AspectRatio>
-                    <LazyLoadImage
+                    <img
                       width="100%"
                       height="100%"
-                      effect="blur"
                       src="/cache.jpg"
                       alt="Image"
                       className="object-cover rounded-lg w-[100%] h-[100%] "
@@ -127,7 +125,7 @@ export function Player() {
                 <div
                   className={`flex ${
                     location.pathname == "/share-play" ? "hidden" : ""
-                  }  fade-in space-x-3  pr-3`}
+                  }   space-x-3  pr-3`}
                 >
                   {isPlaying && location.pathname !== "/share-play" ? (
                     <FaPause className="h-7 w-7" onClick={handlePlay} />

@@ -17,25 +17,40 @@ import {
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
 import { AlertTitle } from "../ui/alert";
+import { setCurrentToggle } from "@/Store/Player";
+import { useDispatch } from "react-redux";
 
 const EditInfo: React.FC<{ id: string; f: string; collection?: string }> = ({
   id,
   f,
   collection,
 }) => {
+  const dispatch = useDispatch();
+
   const q = useQueryClient();
   const closeRef = useRef<HTMLButtonElement>(null);
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
+    const savedPlaylist = await q.setQueryData("savedPlaylist", (data) =>
+      (data as savedPlaylist[]).filter((item) => item.$id !== id)
+    );
+    const savedAlbums = await q.setQueryData("savedAlbums", (data) =>
+      (data as savedPlaylist[]).filter((item) => item.$id !== id)
+    );
+    if ((savedAlbums as [])?.length == 0) {
+      dispatch(setCurrentToggle("Playlists"));
+    } else if ((savedPlaylist as [])?.length == 0) {
+      dispatch(setCurrentToggle("Albums"));
+    }
     db.deleteDocument(
       DATABASE_ID,
       collection || PLAYLIST_COLLECTION_ID,
       id
     ).then(async () => {
-      await q.refetchQueries<savedPlaylist[]>("savedPlaylist");
+      await q.fetchQuery("savedPlaylist");
       closeRef.current?.click();
-      await q.refetchQueries<savedPlaylist[]>("savedAlbums");
+      await q.fetchQuery("savedAlbums");
     });
-  }, [id, collection, q]);
+  }, [id, collection, q, dispatch]);
 
   return (
     <AlertDialog>
@@ -57,7 +72,7 @@ const EditInfo: React.FC<{ id: string; f: string; collection?: string }> = ({
               disabled={f === "default" ? true : false}
               variant={"secondary"}
               onClick={handleDelete}
-              className="px-7 py-5 bg-transparent text-lg font-normal rounded-xl  text-red-500 "
+              className="px-7 py-5 bg-transparent text-lg font-normal rounded-lg  text-red-500 "
             >
               <p className=" w-full">Yes</p>
             </Button>
@@ -68,7 +83,7 @@ const EditInfo: React.FC<{ id: string; f: string; collection?: string }> = ({
               asChild
               ref={closeRef}
               variant={"secondary"}
-              className="px-7 bg-transparent text-zinc-400 font-normal text-base rounded-xl "
+              className="px-7 bg-transparent text-zinc-400 font-normal text-base rounded-lg "
             >
               <p className="font-normal w-full">No</p>
             </Button>

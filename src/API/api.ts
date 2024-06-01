@@ -1,16 +1,20 @@
 const mainApi = import.meta.env.VITE_API_URL;
-const isIPhone = /iPhone/i.test(navigator.userAgent);
-
+const aiApi = "https://ai-playlist-api.vercel.app/api/v1/make/playlist/";
 const STREAM = [
-  
+  "https://exotic-cloe-babyo77.koyeb.app/?url=",
+  "https://unconscious-elianora-babyo7.koyeb.app/?url=",
+  "https://architectural-consuela-krsna.koyeb.app/?url=",
+  "https://economic-glynda-groot.koyeb.app/?url=",
 ];
 const DOWNLOAD = [
-  
+  "https://stream.toystack.dev/download/?url=",
+  "https://economic-glynda-groot.koyeb.app/download/?url=",
+  "https://architectural-consuela-krsna.koyeb.app/download/?url=",
+  "https://unconscious-elianora-babyo7.koyeb.app/download?url=",
+  "https://exotic-cloe-babyo77.koyeb.app/download?url=",
 ];
 
-const streamApi = isIPhone
-  ? STREAM[Math.floor(Math.random() * STREAM.length)]
-  : "";
+const streamApi = STREAM[Math.floor(Math.random() * STREAM.length)];
 
 const downloadApi = DOWNLOAD[Math.floor(Math.random() * STREAM.length)];
 
@@ -42,7 +46,7 @@ const GetAlbumSongs = `${mainApi}/gas/`;
 
 const GetLyrics = `${mainApi}/lrc/`;
 
-const GetImage = `${"https://image-proxy-psi.vercel.app"}/image/?img=`;
+const GetImage = ``;
 
 const TransferFromSpotifyApi = `${mainApi}/get/?id=`;
 
@@ -60,7 +64,11 @@ const ReelsInfoApi = `${"https://reels-phi.vercel.app"}/info/?url=`;
 
 const sendNotificationApi = `${mainApi}/notify/`;
 
+const ReelsStreamApi = "https://tabbyjackal-stone.toystack.dev/";
+
 export {
+  ReelsStreamApi,
+  aiApi,
   getSpotifyProfile,
   sendNotificationApi,
   ReelsApi,

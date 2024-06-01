@@ -1,6 +1,5 @@
 import { AspectRatio } from "../ui/aspect-ratio";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { Link } from "react-router-dom";
 import { profiles } from "@/Interface";
 import { useCallback } from "react";
@@ -18,8 +17,7 @@ function SavedProfile({ pid }: { pid: string }) {
     getArtistDetails,
     {
       retry: 5,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+
       staleTime: 60 * 60000,
       onSuccess(d) {
         d == null && refetch();
@@ -32,11 +30,10 @@ function SavedProfile({ pid }: { pid: string }) {
       <Link to={`/profile/${pid}`}>
         <div className="overflow-hidden h-14 w-14 space-y-2">
           <AspectRatio ratio={1 / 1}>
-            <LazyLoadImage
+            <img
               src={(data && data?.image) || "/cache.jpg"}
               width="100%"
               height="100%"
-              effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>

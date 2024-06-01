@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "./Store/Store";
 import { v4 } from "uuid";
 import { SetLoggedIn, Setuid } from "./Store/Player";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Loader2 from "./components/Loaders/loader2";
 
@@ -16,9 +15,7 @@ function Auth() {
   const dispatch = useDispatch();
   const [error, setError] = useState<boolean>(false);
   const [status, setStatus] = useState<string>("");
-  const navigate = useNavigate();
   useEffect(() => {
-    const online = navigator.onLine;
     const authorize = async () => {
       const password = localStorage.getItem("pp");
       const uid = localStorage.getItem("uid");
@@ -50,8 +47,17 @@ function Auth() {
       const isUserLoggedIn = await authService.isUserLoggedIn();
       if (isUserLoggedIn) {
         setStatus("Logging in..");
-        dispatch(Setuid((await authService.getAccount()).$id));
-        dispatch(SetLoggedIn(true));
+        try {
+          dispatch(Setuid((await authService.getAccount()).$id));
+        } catch (error) {
+          console.log("error", error);
+        }
+        const r = setTimeout(() => {
+          dispatch(SetLoggedIn(true));
+        }, 700);
+        return () => {
+          clearTimeout(r);
+        };
       } else {
         setStatus("Account Not Found");
         if (!CheckPassword) {
@@ -89,21 +95,17 @@ function Auth() {
       }
     };
     authorize().catch((error) => {
-      if (!online) {
-        dispatch(SetLoggedIn(true));
-        navigate("/offline/");
-      } else {
-        console.log(error);
-        axios.get(
-          `https://api.telegram.org/bot6178294062:AAEi72UVOgyEm_RhZqilO_ANsKcRcW06C-0/sendMessage?chat_id=5356614395&text=${encodeURIComponent(
-            error + " " + localStorage.getItem("uid") ||
-              error.message + " " + localStorage.getItem("uid")
-          )}`
-        );
-        setError(true);
-      }
+      console.log(error);
+      axios.get(
+        `https://api.telegram.org/bot6178294062:AAEi72UVOgyEm_RhZqilO_ANsKcRcW06C-0/sendMessage?chat_id=5356614395&text=${encodeURIComponent(
+          error + " " + localStorage.getItem("uid") ||
+            error.message + " " + localStorage.getItem("uid")
+        )}`
+      );
+      setError(true);
+      setStatus(error.message);
     });
-  }, [dispatch, navigate]);
+  }, [dispatch]);
 
   const handleSwitch = useCallback(async () => {
     const id = prompt("Enter your token");
@@ -126,7 +128,7 @@ function Auth() {
   if (error) {
     return (
       <div className=" w-full relative flex flex-col px-5 font-semibold text-2xl leading-tight tracking-tight animate-fade-up text-center items-center justify-center h-dvh">
-        <div className=" absolute bottom-4 text-xl">
+        <div className=" absolute bottom-4 text-xl px-5 text-pretty">
           <p
             onClick={() =>
               alert(
@@ -143,7 +145,7 @@ function Auth() {
             <span className=" text-red-500">@tanmay </span>{" "}
           </a>
           <span> or try </span>
-          <span className="text-red-500 " onClick={handleSwitch}>
+          <span className="text-red-500 cursor-pointer " onClick={handleSwitch}>
             login manually
           </span>
         </p>
@@ -155,9 +157,9 @@ function Auth() {
       {LoggedIn ? (
         <Check />
       ) : (
-        <div className=" fade-in w-full flex flex-col  leading-tight tracking-tight justify-center items-center h-dvh transition-all duration-500 space-y-3 font-semibold text-2xl capitalize text-center">
+        <div className="  w-dvw flex leading-tight tracking-tight justify-center items-center h-dvh transition-all duration-500 font-semibold capitalize text-center">
           <Loader2 />
-          <p className="">{status}</p>
+          <p className="hidden">{status}</p>
         </div>
       )}
     </>

@@ -1,7 +1,6 @@
 import { AspectRatio } from "../ui/aspect-ratio";
 import { useCallback } from "react";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import {
@@ -24,7 +23,7 @@ import {
 import { Link } from "react-router-dom";
 import SongsOptions from "./SongsOptions";
 import axios from "axios";
-import { SuggestionSearchApi, streamApi } from "@/API/api";
+import { SuggestionSearchApi } from "@/API/api";
 import useImage from "@/hooks/useImage";
 
 function Songs({
@@ -83,7 +82,6 @@ function Songs({
         data[0].youtubeId.startsWith("http") ? data[0].title : data[0].youtubeId
       }`
     );
-    new Audio(`${streamApi}${r.data[0].youtubeId}`).load();
     return data[0].youtubeId.startsWith("http")
       ? [data[0], ...r.data]
       : (r.data as playlistSongs[]);
@@ -92,8 +90,6 @@ function Songs({
     ["songsSuggestion", link],
     getSuggestedSongs,
     {
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
       staleTime: 2 * 6000,
     }
   );
@@ -138,7 +134,7 @@ function Songs({
     isSingle,
   ]);
 
-  const c = useImage(cover);
+  const c = useImage(cover.replace("w544-h544", "w120-h120"));
 
   return (
     <div
@@ -148,12 +144,11 @@ function Songs({
       {!album ? (
         <div className="overflow-hidden  h-12 w-12 space-y-2">
           <AspectRatio ratio={1 / 1} className=" -md overflow-hidden">
-            <LazyLoadImage
+            <img
               onClick={handlePlay}
               src={c ? c : "/cache.jpg"}
               width="100%"
               height="100%"
-              effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>

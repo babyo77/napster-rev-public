@@ -19,14 +19,13 @@ import {
   setIsIphone,
   setIsLoading,
   setNextPrev,
+  setPlaylist,
   setProgressLyrics,
 } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
-import { streamApi } from "@/API/api";
-import Loader from "../Loaders/Loader";
+import { SuggestionSearchApi, streamApi } from "@/API/api";
 import { Link, useLocation } from "react-router-dom";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import {
   DATABASE_ID,
   ID,
@@ -35,7 +34,7 @@ import {
   MOST_PLAYED,
   db,
 } from "@/appwrite/appwriteConfig";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { Permission, Query, Role } from "appwrite";
 import { useSwipeable } from "react-swipeable";
 import { IoIosList } from "react-icons/io";
@@ -44,6 +43,10 @@ import Options from "./Options";
 import Lyrics from "./Lyrics";
 import socket from "@/socket";
 import useImage from "@/hooks/useImage";
+import axios from "axios";
+import useCurrentPlaylist from "@/hooks/getCurrentPlaylistdetails";
+import { Skeleton } from "../ui/skeleton";
+import useFormatDuration from "@/hooks/formatDuration";
 function AudioPLayerComp({
   setPlay,
 }: {
@@ -55,12 +58,11 @@ function AudioPLayerComp({
   const dispatch = useDispatch();
   const [duration, setDuration] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
-  const [music, setPlayer] = useState<HTMLAudioElement>();
+  const [music, setPlayer] = useState<HTMLAudioElement | null>(null);
   const [liked, SetLiked] = useState<boolean>();
   const PlaylistOrAlbum = useSelector(
     (state: RootState) => state.musicReducer.PlaylistOrAlbum
   );
-
   const isPlaying = useSelector(
     (state: RootState) => state.musicReducer.isPlaying
   );
@@ -82,6 +84,9 @@ function AudioPLayerComp({
     (state: RootState) => state.musicReducer.isIphone
   );
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
+  const q = useQueryClient();
+  const audioRef = useRef<HTMLAudioElement>(null);
+
   const isLikedCheck = async () => {
     const r = await db.listDocuments(DATABASE_ID, LIKE_SONG, [
       Query.equal("for", [uid || "default"]),
@@ -99,8 +104,6 @@ function AudioPLayerComp({
     ["likedSongs", playlist[currentIndex]?.youtubeId],
     isLikedCheck,
     {
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
       staleTime: Infinity,
     }
   );
@@ -126,26 +129,36 @@ function AudioPLayerComp({
         },
         [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
       )
-        .then(() => {
+        .then(async () => {
+          try {
+            await q.refetchQueries(["likedSongsDetails", uid]);
+          } catch (error) {
+            console.log(error);
+          }
           refetch();
         })
         .catch(() => {
           SetLiked(false);
         });
     }
-  }, [currentIndex, playlist, currentArtistId, refetch, uid]);
+  }, [currentIndex, playlist, currentArtistId, refetch, uid, q]);
 
   const RemoveLike = useCallback(async () => {
     SetLiked(false);
     if (isLiked) {
       try {
         await db.deleteDocument(DATABASE_ID, LIKE_SONG, isLiked[0].$id || "");
+        try {
+          await q.refetchQueries(["likedSongsDetails", uid]);
+        } catch (error) {
+          console.log(error);
+        }
       } catch (error) {
         console.error(error);
         SetLiked(true);
       }
     }
-  }, [isLiked]);
+  }, [isLiked, q, uid]);
 
   const handlePlay = useCallback(() => {
     if (music) {
@@ -154,15 +167,17 @@ function AudioPLayerComp({
         setPlayEffect(false);
       }, 200);
       if (isPlaying) {
-        music.pause();
         dispatch(play(false));
+        if (isLoading) return;
+        music.pause();
       } else {
-        music.play();
         dispatch(play(true));
+        if (isLoading) return;
+        music.play();
       }
       return () => clearTimeout(t);
     }
-  }, [isPlaying, music, dispatch]);
+  }, [isPlaying, music, dispatch, isLoading]);
 
   const handleNext = useCallback(() => {
     setDuration(0);
@@ -210,28 +225,30 @@ function AudioPLayerComp({
     onSwipedRight: handlePrev,
   });
 
+  const [online, setOnline] = useState<boolean>();
+  useEffect(() => {
+    const online = navigator.onLine;
+    setOnline(online);
+  }, []);
   const saveLastPlayed = useCallback(() => {
-    const divId = localStorage.getItem("$d_id_");
-    if (divId) {
-      localStorage.setItem(divId, JSON.stringify(playlist));
-      localStorage.setItem("$cu_idx", String(currentIndex));
-      localStorage.setItem("_nv_nav", String(PlaylistOrAlbum));
+    try {
+      const divId = localStorage.getItem("$d_id_");
+
+      if (divId && online) {
+        localStorage.setItem(divId, JSON.stringify(playlist));
+        localStorage.setItem("$cu_idx", String(currentIndex));
+        localStorage.setItem("_nv_nav", String(PlaylistOrAlbum));
+      }
+    } catch (error) {
+      console.log("local storage error: " + error);
+      const divId = localStorage.getItem("$d_id_");
+      if (divId) {
+        localStorage.removeItem(divId);
+      }
     }
     if (uid) {
-      db.createDocument(
-        DATABASE_ID,
-        LAST_PLAYED,
-        uid,
-        {
-          user: uid,
-          playlisturl: playingPlaylistUrl,
-          navigator: PlaylistOrAlbum,
-          curentsongid: playlist[currentIndex].youtubeId,
-          index: currentIndex,
-        },
-        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
-      ).catch(() => {
-        db.updateDocument(
+      try {
+        db.createDocument(
           DATABASE_ID,
           LAST_PLAYED,
           uid,
@@ -243,10 +260,38 @@ function AudioPLayerComp({
             index: currentIndex,
           },
           [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
-        );
-      });
+        ).catch((err) => {
+          console.error("db error: " + err);
+
+          db.updateDocument(
+            DATABASE_ID,
+            LAST_PLAYED,
+            uid,
+            {
+              user: uid,
+              playlisturl: playingPlaylistUrl,
+              navigator: PlaylistOrAlbum,
+              curentsongid: playlist[currentIndex].youtubeId,
+              index: currentIndex,
+            },
+            [
+              Permission.update(Role.user(uid)),
+              Permission.delete(Role.user(uid)),
+            ]
+          );
+        });
+      } catch (error) {
+        console.error("db error: " + error);
+      }
     }
-  }, [playlist, currentIndex, PlaylistOrAlbum, uid, playingPlaylistUrl]);
+  }, [
+    playlist,
+    currentIndex,
+    PlaylistOrAlbum,
+    uid,
+    playingPlaylistUrl,
+    online,
+  ]);
 
   const playingInsights = useCallback(() => {
     if (uid && playlist[currentIndex].youtubeId) {
@@ -261,7 +306,7 @@ function AudioPLayerComp({
           sartist: playlist[currentIndex]?.artists[0]?.name || "unknown",
         },
         [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
-      );
+      ).catch((err) => console.log(err));
     }
   }, [playlist, currentIndex, uid]);
   const updateSeek = useCallback(async () => {
@@ -283,13 +328,14 @@ function AudioPLayerComp({
       return () => clearInterval(seek);
     }
   }, [updateSeek, isPlaying]);
-
   useEffect(() => {
     socket.connect();
+
     return () => {
       socket.disconnect();
     };
   }, []);
+
   useEffect(() => {
     function handleNew() {
       socket.emit("message", { id: uid, ...playlist[currentIndex] });
@@ -300,59 +346,139 @@ function AudioPLayerComp({
 
     return () => {
       socket.off("new", handleNew);
+      // socket.disconnect();
     };
   }, [playlist, currentIndex, uid, duration, progress]);
-  const [online, setOnline] = useState<boolean>();
-  useEffect(() => {
-    const online = navigator.onLine;
-    setOnline(online);
+
+  const handleSeekMetadata = useCallback((seek: MediaSessionActionDetails) => {
+    const sound = audioRef.current;
+    if (sound) {
+      if (sound.currentTime !== seek.seekTime) {
+        sound.currentTime = seek.seekTime ?? 0;
+        if (sound.paused) {
+          sound.play();
+        }
+      }
+    }
   }, []);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const updateMetadata = useCallback(() => {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: playlist[currentIndex]?.title || "unknown",
+      artist: playlist[currentIndex]?.artists[0]?.name || "unknown",
+      album: "",
+      artwork: [
+        {
+          src:
+            playlist[currentIndex]?.thumbnailUrl.replace(
+              "w120-h120",
+              "w1080-h1080"
+            ) || "/cache.jpg",
+        },
+      ],
+    });
+  }, [playlist, currentIndex]);
+
+  const handlePlayListener = useCallback(() => {
+    const sound = audioRef.current;
+    if (sound) {
+      socket.emit("message", { id: uid, ...playlist[currentIndex] });
+      // updateMetadata();
+      if (isLooped) {
+        sound.loop = true;
+      }
+      dispatch(play(true));
+      setDuration(sound.duration);
+      dispatch(setDurationLyrics(sound.duration));
+      if (online) {
+        try {
+          saveLastPlayed();
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    }
+  }, [
+    currentIndex,
+    dispatch,
+    isLooped,
+    online,
+    playlist,
+    saveLastPlayed,
+    uid,
+    // updateMetadata
+  ]);
+
+  const handleTimeUpdate = useCallback(() => {
+    const sound = audioRef.current;
+    if (sound) {
+      const time = sound.currentTime;
+      setProgress(time);
+      socket.emit("progress", { id: uid, progress: time });
+      dispatch(setProgressLyrics(time));
+    }
+  }, [dispatch, uid]);
+
+  const handleLoad = useCallback(() => {
+    const sound = audioRef.current;
+    if (sound) {
+      sound.play();
+      if (playlist[currentIndex + 1]) {
+        const preload = new Audio();
+        preload.src = playlist[currentIndex + 1]
+          ? `${
+              online &&
+              !playlist[currentIndex + 1]?.youtubeId.startsWith("http")
+                ? streamApi
+                : ""
+            }${playlist[currentIndex + 1]?.youtubeId}`
+          : "";
+        preload.load();
+      }
+      dispatch(setIsLoading(false));
+      updateMetadata();
+      setDuration(sound.duration);
+      socket.emit("duration", { id: uid, duration: sound.duration });
+      setProgress(sound.currentTime);
+      dispatch(setDurationLyrics(sound.duration));
+      refetch();
+      navigator.mediaSession.setActionHandler("play", () => sound.play());
+      navigator.mediaSession.setActionHandler("pause", () => sound.pause());
+      navigator.mediaSession.setActionHandler("nexttrack", handleNext);
+      navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
+      navigator.mediaSession.setActionHandler("seekto", handleSeekMetadata);
+      return () => {
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+        navigator.mediaSession.setActionHandler("nexttrack", null);
+        navigator.mediaSession.setActionHandler("previoustrack", null);
+        navigator.mediaSession.setActionHandler("seekto", null);
+      };
+    }
+  }, [
+    currentIndex,
+    dispatch,
+    online,
+    playlist,
+    uid,
+    refetch,
+    updateMetadata,
+    handleNext,
+    handlePrev,
+    handleSeekMetadata,
+  ]);
+
   useEffect(() => {
     try {
       if (audioRef.current) {
         const sound: HTMLAudioElement = audioRef.current;
-        setPlayer(sound);
+        if (!music) {
+          setPlayer(sound);
+        }
         sound.src = `${
           online && !playlist[currentIndex]?.youtubeId.startsWith("http")
             ? streamApi
             : ""
         }${playlist[currentIndex]?.youtubeId}`;
-        const handlePlay = () => {
-          socket.emit("message", { id: uid, ...playlist[currentIndex] });
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: playlist[currentIndex].title,
-            artist: playlist[currentIndex].artists[0]?.name,
-            album: "",
-            artwork: [
-              {
-                src: playlist[currentIndex].thumbnailUrl.replace(
-                  "w120-h120",
-                  "w1080-h1080"
-                ),
-              },
-            ],
-          });
-
-          navigator.mediaSession.setActionHandler("play", () => sound.play());
-          navigator.mediaSession.setActionHandler("pause", () => sound.pause());
-          navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-          navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
-          navigator.mediaSession.setActionHandler("seekto", handleSeek);
-          if (isLooped) {
-            sound.loop = true;
-          }
-          dispatch(play(true));
-
-          dispatch(setDurationLyrics(sound.duration));
-          if (online) {
-            try {
-              saveLastPlayed();
-            } catch (error) {
-              console.log(error);
-            }
-          }
-        };
 
         const handlePause = () => {
           dispatch(play(false));
@@ -361,121 +487,57 @@ function AudioPLayerComp({
         const handleError = () => {
           setDuration(0);
           setProgress(0);
-          dispatch(setIsLoading(false));
-          sound.pause();
-          dispatch(play(false));
-        };
-
-        const handleSeek = (seek: MediaSessionActionDetails) => {
-          if (sound.currentTime !== seek.seekTime) {
-            sound.currentTime = seek.seekTime ?? 0;
-            if (sound.paused) {
-              sound.play();
-            }
+          if (document.visibilityState === "hidden") {
+            handleNext();
+          } else {
+            dispatch(play(false));
+            dispatch(setIsLoading(false));
+            sound.pause();
           }
         };
 
-        const handleLoad = () => {
-          dispatch(setIsLoading(false));
-
-          navigator.mediaSession.metadata = new MediaMetadata({
-            title: playlist[currentIndex]?.title || "unknown",
-            artist: playlist[currentIndex]?.artists[0]?.name || "unknown",
-            album: "",
-            artwork: [
-              {
-                src:
-                  playlist[currentIndex]?.thumbnailUrl.replace(
-                    "w120-h120",
-                    "w1080-h1080"
-                  ) || "/cache.jpg",
-              },
-            ],
-          });
-
-          navigator.mediaSession.setActionHandler("play", () => sound.play());
-          navigator.mediaSession.setActionHandler("pause", () => sound.pause());
-          navigator.mediaSession.setActionHandler("nexttrack", handleNext);
-          navigator.mediaSession.setActionHandler("previoustrack", handlePrev);
-          navigator.mediaSession.setActionHandler("seekto", handleSeek);
-          setDuration(sound.duration);
-          socket.emit("duration", { id: uid, duration: sound.duration });
-          setProgress(sound.currentTime);
-          dispatch(setDurationLyrics(sound.duration));
-          refetch();
-        };
-
-        const handleTimeUpdate = () => {
-          const time = sound.currentTime;
-          setProgress(time);
-          socket.emit("progress", { id: uid, progress: time });
-          dispatch(setProgressLyrics(time));
-        };
         const loading = () => {
           dispatch(setIsLoading(true));
         };
         const startPlay = () => {
           sound.play();
         };
-        sound.setAttribute("playsinline", "true");
+
         sound.addEventListener("loadstart", loading);
         sound.addEventListener("canplay", startPlay);
-        sound.addEventListener("play", handlePlay);
+        sound.addEventListener("canplaythrough", startPlay);
+        sound.addEventListener("play", handlePlayListener);
         sound.addEventListener("pause", handlePause);
         sound.addEventListener("loadedmetadata", handleLoad);
         sound.addEventListener("error", handleError);
         sound.addEventListener("timeupdate", handleTimeUpdate);
         sound.addEventListener("ended", handleNext);
-        sound.play();
-        if (playlist[currentIndex + 1]) {
-          new Audio(
-            playlist[currentIndex + 1]
-              ? `${
-                  online &&
-                  !playlist[currentIndex + 1]?.youtubeId.startsWith("http")
-                    ? streamApi
-                    : ""
-                }${playlist[currentIndex + 1]?.youtubeId}`
-              : ""
-          ).load();
-        }
-        return () => {
-          sound.pause();
-          sound.src = "";
 
+        return () => {
           sound.removeEventListener("loadstart", loading);
-          sound.removeEventListener("play", handlePlay);
+          sound.removeEventListener("canplaythrough", startPlay);
+          sound.removeEventListener("play", handlePlayListener);
           sound.removeEventListener("canplay", startPlay);
           sound.removeEventListener("pause", handlePause);
           sound.removeEventListener("loadedmetadata", handleLoad);
           sound.removeEventListener("timeupdate", handleTimeUpdate);
           sound.removeEventListener("error", handleError);
           sound.removeEventListener("ended", handleNext);
-
-          navigator.mediaSession.setActionHandler("play", null);
-          navigator.mediaSession.setActionHandler("pause", null);
-          navigator.mediaSession.setActionHandler("nexttrack", null);
-          navigator.mediaSession.setActionHandler("previoustrack", null);
-          navigator.mediaSession.setActionHandler("seekto", null);
         };
       }
     } catch (error) {
       console.log("audio player error " + error);
-      //@ts-expect-error:error
-      alert(error.message);
     }
   }, [
-    dispatch,
-    handlePrev,
     currentIndex,
-    playlist,
+    dispatch,
+    handleLoad,
     handleNext,
-    refetch,
-    isLooped,
+    handlePlayListener,
+    handleTimeUpdate,
     online,
-    uid,
-    setPlay,
-    saveLastPlayed,
+    playlist,
+    music,
   ]);
 
   useEffect(() => {
@@ -503,32 +565,41 @@ function AudioPLayerComp({
   );
   const closeRef = useRef<HTMLButtonElement>(null);
 
-  const formatDuration = useCallback((seconds: number | "--:--") => {
-    if (seconds == "--:--") return seconds;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-
-    const formattedMinutes = String(minutes).padStart(2, "0");
-    const formattedSeconds = String(remainingSeconds).padStart(2, "0");
-    return `${formattedMinutes}:${formattedSeconds}`;
-  }, []);
+  const { formatDuration } = useFormatDuration();
 
   const c = useImage(
     playlist[currentIndex]?.thumbnailUrl.replace("w120-h120", "w1080-h1080")
   );
   const location = useLocation();
 
+  useEffect(() => {
+    if (
+      currentIndex == playlist.length - 2 ||
+      (currentIndex == playlist.length - 1 && online)
+    ) {
+      axios
+        .get(`${SuggestionSearchApi}${playlist[playlist.length - 1].youtubeId}`)
+        .then((res) => {
+          if (res.data.length > 0) {
+            dispatch(
+              setPlaylist([...playlist, ...res.data.slice(1, res.data.length)])
+            );
+          }
+        });
+    }
+  }, [playlist, dispatch, currentIndex, online]);
+  const { currentPlaylist } = useCurrentPlaylist({ id: playingPlaylistUrl });
   return (
     <>
       <audio src="" ref={audioRef} hidden preload="true"></audio>
 
-      {!isStandalone ? (
+      {isStandalone ? (
         <p
           className={`w-[68dvw] ${
             location.pathname == "/share-play" ? "hidden" : ""
           }  px-4`}
         >
-          app not installed
+          install app to use player
         </p>
       ) : (
         <Drawer>
@@ -538,15 +609,14 @@ function AudioPLayerComp({
             ) : (
               <div className="items-center leading-tight  flex space-x-1.5 w-[74dvw]   px-2.5">
                 <div className=" h-11 w-11 overflow-hidden rounded-lg">
-                  <LazyLoadImage
+                  <img
                     height="100%"
                     width="100%"
                     src={c ? c : "/cache.jpg"}
                     onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
-                      (e.currentTarget.src = "/newfavicon.jpg")
+                      (e.currentTarget.src = "/cache.jpg")
                     }
                     alt="Image"
-                    effect="blur"
                     className="object-cover  transition-all duration-300 w-[100%] h-[100%] "
                   />
                 </div>
@@ -554,7 +624,7 @@ function AudioPLayerComp({
                   <p className=" text-sm truncate font-medium animate-fade-up w-[54vw] ">
                     {playlist[currentIndex]?.title}
                   </p>
-                  <p className=" text-xs w-[30vw] animate-fade-up truncate">
+                  <p className=" text-xs w-[30vw] text-zinc-400 animate-fade-up truncate">
                     {playlist[currentIndex].artists[0]?.name || "Unknown"}
                   </p>
                 </div>
@@ -563,22 +633,32 @@ function AudioPLayerComp({
           </DrawerTrigger>
 
           <DrawerContent className=" h-[100dvh]  rounded-none  ">
-            <div className="flex flex-col justify-start pt-7  h-full">
+            <div className="flex relative flex-col justify-start pt-7  h-full">
               <DrawerHeader>
                 <div
                   {...swipeHandler}
                   className={`overflow-hidden flex justify-center items-center 
                    
-                     rounded-lg mx-1 `}
+                     rounded-lg mx-1  `}
                 >
+                  {currentPlaylist && currentPlaylist.length > 0 && (
+                    <div className=" absolute text-zinc-400 text-xs font-medium tracking-tight leading-tight top-5">
+                      <p className=" max-w-[50dvw] truncate">
+                        <Link to={`/library/${playingPlaylistUrl}`}>
+                          <DrawerClose>
+                            {currentPlaylist[0].creator}
+                          </DrawerClose>
+                        </Link>
+                      </p>
+                    </div>
+                  )}
                   <div className="flex  justify-center items-center rounded-lg  h-[44dvh]">
-                    <LazyLoadImage
+                    <img
                       src={c ? c : "/cache.jpg"}
                       onError={(e: React.SyntheticEvent<HTMLImageElement>) =>
-                        (e.currentTarget.src = "/newfavicon.jpg")
+                        (e.currentTarget.src = "/cache.jpg")
                       }
                       alt="Image"
-                      visibleByDefault
                       className={`object-fit shadow-lg transition-all duration-500 rounded-lg ${
                         music && !music.paused
                           ? "w-[90vw] h-[44dvh]"
@@ -589,25 +669,24 @@ function AudioPLayerComp({
                 </div>
                 <div className=" absolute bottom-[35.5vh] w-full text-start px-2 ">
                   <div className="flex items-center  w-fit space-x-3">
-                    <h1
-                      className={`text-2xl leading-tight truncate transition-all duration-300  ${
+                    <div
+                      className={`text-2xl leading-tight overflow-x-scroll whitespace-nowrap transition-all duration-300  ${
                         online ? "w-[63vw] " : "w-[87vw]"
                       } font-semibold`}
                     >
-                      {" "}
-                      {playlist[currentIndex]?.title}
-                    </h1>
+                      <h1> {playlist[currentIndex]?.title}</h1>
+                    </div>
                     {online && (
                       <>
                         <div className=" bg-zinc-900 p-1.5 rounded-full">
                           {liked ? (
                             <AiFillStar
                               onClick={RemoveLike}
-                              className="h-6 w-6 fade-in "
+                              className="h-6 w-6  "
                             />
                           ) : (
                             <FaRegStar
-                              className="h-6 w-6 fade-in"
+                              className="h-6 w-6 "
                               onClick={handleLink}
                             />
                           )}
@@ -627,7 +706,7 @@ function AudioPLayerComp({
                       }`}
                     >
                       <DrawerClose className="text-start">
-                        <p className="text-base truncate leading-tight transition-all duration-300 w-[70vw] text-zinc-400">
+                        <p className="text-base truncate leading-tight transition-all duration-300 w-[70vw] text-red-500">
                           {" "}
                           {playlist[currentIndex].artists[0]?.name}
                         </p>
@@ -642,22 +721,29 @@ function AudioPLayerComp({
                 </div>
               </DrawerHeader>
               <div className="flex  absolute bottom-[26vh]  w-full flex-col justify-center px-6 pt-1 ">
-                <input
-                  type="range"
-                  value={progress || 0}
-                  max={duration || 1}
-                  onChange={handleSeek}
-                  min="0"
-                  step=".01"
-                  dir="ltr"
-                  className="w-full h-2 bg-zinc-300/75 transition-all duration-300 overflow-hidden rounded-lg appearance-none cursor-pointer"
-                />
+                {isLoading ? (
+                  <Skeleton className="w-full h-2 bg-zinc-300/75 " />
+                ) : (
+                  <input
+                    type="range"
+                    value={progress || 0}
+                    max={duration || 1}
+                    onChange={handleSeek}
+                    min="0"
+                    step=".01"
+                    dir="ltr"
+                    className="w-full h-2 bg-zinc-300/75 transition-all duration-300 overflow-hidden rounded-lg appearance-none cursor-pointer"
+                  />
+                )}
                 <div className="flex text-sm justify-between py-2 px-1">
                   <span className="text-zinc-400 transition-all duration-300 font-semibold">
                     {formatDuration(progress || 0)}
                   </span>
                   <span className="text-zinc-400 transition-all duration-300 font-semibold">
-                    {formatDuration(duration || 0)}
+                    {formatDuration(duration || 0)?.replace(
+                      "Infinity:NaN",
+                      "--:--"
+                    )}
                   </span>
                 </div>
               </div>
@@ -676,29 +762,25 @@ function AudioPLayerComp({
                     onClick={handlePrev}
                   />
                 </div>
-                {isLoading ? (
-                  <div className="h-12 w-12 flex justify-center items-center">
-                    <Loader size="37" loading={true} />
-                  </div>
-                ) : (
-                  <div className="h-12 w-12">
-                    {isPlaying ? (
-                      <FaPause
-                        className={` transition-all duration-300 ${
-                          playEffect ? "h-11 w-11" : "h-12 w-12"
-                        }`}
-                        onClick={handlePlay}
-                      />
-                    ) : (
-                      <IoPlay
-                        className={` transition-all duration-300 ${
-                          playEffect ? "h-11 w-11" : "h-12 w-12"
-                        }`}
-                        onClick={handlePlay}
-                      />
-                    )}
-                  </div>
-                )}
+
+                <div className="h-12 w-12">
+                  {isPlaying ? (
+                    <FaPause
+                      className={` transition-all duration-300 ${
+                        playEffect ? "h-11 w-11" : "h-12 w-12"
+                      }`}
+                      onClick={handlePlay}
+                    />
+                  ) : (
+                    <IoPlay
+                      className={` transition-all duration-300 ${
+                        playEffect ? "h-11 w-11" : "h-12 w-12"
+                      }`}
+                      onClick={handlePlay}
+                    />
+                  )}
+                </div>
+
                 <div
                   className={`${
                     next && "bg-zinc-900 rounded-full"

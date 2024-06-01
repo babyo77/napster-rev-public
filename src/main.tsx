@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { ThemeProvider } from "./components/theme-provider.tsx";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import SharePlay from "./components/SharePlay/SharePlay.tsx";
 import Search from "./components/Search/Search.tsx";
@@ -26,14 +25,40 @@ import User from "./user/User.tsx";
 import Track from "./Track/Track.tsx";
 import Playlists from "./user/Playlists.tsx";
 import Mode from "./Mode.tsx";
-import Loader from "./components/Loaders/Loader.tsx";
+import Social from "./Social/Social.tsx";
+import { Loader } from "./API/loader.ts";
+import BrowseAll from "./BrowseAll/BrowseAll.tsx";
+import EmbedUser from "./Embed/embedUser.tsx";
+import * as Sentry from "@sentry/react";
 
-const client = new QueryClient();
+Sentry.init({
+  dsn: "https://ef15c84b7fde37656c126b7334cb8872@o4507323218526208.ingest.us.sentry.io/4507323219443712",
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration(),
+  ],
+  // Performance Monitoring
+  tracesSampleRate: 1.0, //  Capture 100% of the transactions
+  // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+  tracePropagationTargets: ["localhost", /^https:\/\/yourserver\.io\/api/],
+  // Session Replay
+  replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+  replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+});
+
+const client = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Mode />,
     errorElement: <ErrorElement />,
+    loader: Loader,
     children: [
       {
         path: "",
@@ -50,12 +75,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/social",
-        element: (
-          <div className=" flex flex-col space-y-1 justify-center items-center h-dvh">
-            <Loader />
-            <p>Coming soon</p>
-          </div>
-        ),
+        element: <Social />,
       },
       {
         path: "/library/:id",
@@ -111,6 +131,10 @@ const router = createBrowserRouter([
         element: <User app />,
       },
       {
+        path: "/browse_all",
+        element: <BrowseAll />,
+      },
+      {
         path: "*",
         element: <NotFound />,
         errorElement: <ErrorElement />,
@@ -120,31 +144,34 @@ const router = createBrowserRouter([
   {
     path: "/docs/",
     element: <Docs />,
-  },
-  {
-    path: "/reels",
-    element: <SharePlay />,
+    errorElement: <ErrorElement />,
   },
   {
     path: "/user/:id",
     element: <User />,
+    errorElement: <ErrorElement />,
+  },
+  {
+    path: "/embed/user/:id",
+    element: <EmbedUser />,
+    errorElement: <ErrorElement />,
   },
   {
     path: "/playlists/:id",
     element: <Playlists />,
+    errorElement: <ErrorElement />,
   },
   {
     path: "/box/:id",
     element: <Box />,
+    errorElement: <ErrorElement />,
   },
 ]);
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Provider store={store}>
       <QueryClientProvider client={client}>
-        <ThemeProvider>
-          <RouterProvider router={router} />
-        </ThemeProvider>
+        <RouterProvider router={router} />
       </QueryClientProvider>
     </Provider>
   </React.StrictMode>

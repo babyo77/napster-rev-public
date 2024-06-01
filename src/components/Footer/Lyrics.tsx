@@ -4,7 +4,7 @@ import {
   DrawerContent,
   DrawerTrigger,
 } from "../ui/drawer";
-import { LazyLoadImage } from "react-lazy-load-image-component";
+
 import { useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import Options from "./Options";
@@ -12,19 +12,20 @@ import axios from "axios";
 import { GetLyrics } from "@/API/api";
 import { useQuery } from "react-query";
 import Loader from "../Loaders/Loader";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { Link } from "react-router-dom";
-import { transliterate as tr } from "transliteration";
 import React, {
   MouseEventHandler,
   RefObject,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 
 import ShareLyrics from "./Share";
+import useFormatDuration from "@/hooks/formatDuration";
 // import { prominent } from "color.js";
 
 function LyricsComp({
@@ -32,7 +33,7 @@ function LyricsComp({
   music,
 }: {
   closeRef: RefObject<HTMLButtonElement>;
-  music: HTMLAudioElement | undefined;
+  music: HTMLAudioElement | null | undefined;
 }) {
   const currentIndex = useSelector(
     (state: RootState) => state.musicReducer.currentIndex
@@ -46,20 +47,10 @@ function LyricsComp({
   const progress = useSelector(
     (state: RootState) => state.musicReducer.progress
   );
-  const duration = useSelector(
-    (state: RootState) => state.musicReducer.duration
-  );
+  const dur = useSelector((state: RootState) => state.musicReducer.duration);
 
-  const formatDuration = useCallback((seconds: number | "--:--") => {
-    if (seconds == "--:--") return seconds;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-
-    const formattedMinutes = String(minutes).padStart(2, "0");
-    const formattedSeconds = String(remainingSeconds).padStart(2, "0");
-    return `${formattedMinutes}:${formattedSeconds}`;
-  }, []);
-
+  const duration = useMemo<number | "--:--">(() => dur, [dur]);
+  const { formatDuration } = useFormatDuration();
   const getLyrics = useCallback(async () => {
     const query = `${playlist[currentIndex].title
       .replace("(sped up nightcore)", "sped up")
@@ -84,9 +75,7 @@ function LyricsComp({
         if (matches) {
           const minutes = parseInt(matches[1]);
           const seconds = parseFloat(matches[2]);
-          const lyrics = tr(matches[3].trim(), {
-            replaceAfter: [["N", "n"]],
-          });
+          const lyrics = matches[3];
           const time = minutes * 60 + seconds;
           return { time, lyrics };
         }
@@ -100,9 +89,7 @@ function LyricsComp({
   const { data: lyrics, isLoading } = useQuery<
     [{ time: number | string; lyrics: string }]
   >(["lyrics", playlist[currentIndex].youtubeId], getLyrics, {
-    refetchOnWindowFocus: false,
     staleTime: 60 * 6000,
-    refetchOnMount: false,
   });
 
   const lyricsRef = useRef<HTMLDivElement>(null);
@@ -187,7 +174,7 @@ function LyricsComp({
         <div className="   w-full px-5 mt-[0.5vh] pb-[2vh] backdrop-blur-lg bg-transparent flex justify-between items-center ">
           <div className="flex space-x-3 ">
             <div className=" h-14 w-14 overflow-hidden rounded-lg">
-              <LazyLoadImage
+              <img
                 height="100%"
                 width="100%"
                 src={
@@ -195,12 +182,11 @@ function LyricsComp({
                   "https://i.pinimg.com/564x/d4/40/76/d44076613b20dd92a8e4da29a8df538e.jpg"
                 }
                 alt="Image"
-                effect="blur"
                 className="object-cover transition-all duration-300 rounded-lg w-[100%] h-[100%] "
               />
             </div>
             <div className="flex flex-col justify-center">
-              <p className="text-xl truncate w-[47vw] fade-in">
+              <p className="text-xl truncate w-[47vw] ">
                 {playlist[currentIndex].title}
               </p>
 
@@ -212,7 +198,7 @@ function LyricsComp({
                   onClick={() => closeRef.current?.click()}
                   className="p-0 m-0"
                 >
-                  <p className="text-sm fade-in text-start truncate w-[37vw]  text-zinc-400">
+                  <p className="text-sm  text-start truncate w-[37vw]  text-zinc-400">
                     {playlist[currentIndex].artists[0]?.name}
                   </p>
                 </DrawerClose>
@@ -236,7 +222,7 @@ function LyricsComp({
               {lyrics ? (
                 <div
                   ref={lyricsRef}
-                  className=" transition-all h-[92dvh]  tracking-tight break-words duration-300 fade-in "
+                  className=" transition-all h-[92dvh]  tracking-tight break-words duration-300  "
                 >
                   {lyrics.map((line, index) => (
                     <p
@@ -281,7 +267,7 @@ function LyricsComp({
                 </div>
               ) : (
                 <div className="flex h-[77dvh] justify-center items-center">
-                  <p className="text-2xl fade-in break-words">
+                  <p className="text-2xl  break-words">
                     You'll have to guess the lyrics for this one.
                   </p>
                 </div>

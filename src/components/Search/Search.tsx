@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import Header from "../Header/Header";
+
 import { useQuery } from "react-query";
 import axios from "axios";
 import {
@@ -7,6 +7,7 @@ import {
   SearchApi,
   SearchArtist,
   SearchPlaylistApi,
+  streamApi,
 } from "@/API/api";
 import {
   SearchPlaylist,
@@ -17,7 +18,7 @@ import {
   suggestedArtists,
 } from "@/Interface";
 import Loader from "../Loaders/Loader";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import { setSearch, setSearchToggle } from "@/Store/Player";
@@ -33,6 +34,9 @@ import RecentSearchesComp from "./RecentSearches";
 import { SearchToggle } from "./searchToggle";
 import { IoSearchOutline } from "react-icons/io5";
 import { ProfileSearch } from "./Profile";
+import {} from "react-router-dom";
+import { Button } from "../ui/button";
+import BrowseAllCard from "../../BrowseAll/BrowseAllCard";
 
 function SearchComp() {
   const searchQuery = useSelector(
@@ -54,7 +58,7 @@ function SearchComp() {
   const { data: RecentSearch, isLoading: RecentLoading } = useQuery<
     likedSongs[]
   >("recentSearch", loadRecentSearch, {
-    refetchOnWindowFocus: false,
+    staleTime: 2000,
     keepPreviousData: true,
   });
 
@@ -64,6 +68,9 @@ function SearchComp() {
   const query = async () => {
     if (searchQuery.length > 0) {
       const q = await axios.get(`${SearchApi}${searchQuery}`);
+      new Audio(`${streamApi}${q.data[0].youtubeId}`).load();
+      new Audio(`${streamApi}${q.data[1].youtubeId}`).load();
+
       return q.data as playlistSongs[];
     } else {
       return [];
@@ -74,9 +81,7 @@ function SearchComp() {
     isLoading,
     refetch,
   } = useQuery<playlistSongs[]>(["search", searchQuery], query, {
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60000,
-    refetchOnMount: false,
   });
 
   const artists = async () => {
@@ -90,9 +95,7 @@ function SearchComp() {
   const { data: artistsData, refetch: artistsRefetch } = useQuery<
     suggestedArtists[]
   >(["artistsSearch", searchQuery], artists, {
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60000,
-    refetchOnMount: false,
   });
   const profile = async () => {
     if (searchQuery.length > 0) {
@@ -109,9 +112,7 @@ function SearchComp() {
     ["profileSearch", searchQuery],
     profile,
     {
-      refetchOnWindowFocus: false,
       staleTime: 5 * 60000,
-      refetchOnMount: false,
     }
   );
 
@@ -126,9 +127,7 @@ function SearchComp() {
   const { data: albumData, refetch: albumRefetch } = useQuery<
     searchAlbumsInterface[]
   >(["albumsSearch", searchQuery], albums, {
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60000,
-    refetchOnMount: false,
   });
 
   const playlists = async () => {
@@ -143,9 +142,7 @@ function SearchComp() {
   const { data: playlistsData, refetch: playlistsRefetch } = useQuery<
     SearchPlaylist[]
   >(["PlaylistSearch", searchQuery], playlists, {
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60000,
-    refetchOnMount: false,
   });
 
   useEffect(() => {
@@ -185,29 +182,40 @@ function SearchComp() {
     ]
   );
 
+  const [hide, setHide] = useState<boolean>(false);
   return (
     <>
-      <Header title="Search" />
-      <div className="flex flex-col fade-in items-center space-x-1 ">
+      <div className="flex flex-col  items-center ">
         <div className="flex w-full px-4  -space-x-2">
-          <div className="border rounded-lg rounded-r-none border-r-0 px-2 border-zinc-800">
+          <div className="border rounded-sm rounded-r-none border-r-0 px-2 border-zinc-800">
             <IoSearchOutline
               onClick={clearSearchQuery}
               className=" text-white left-6 mt-2 h-5 w-5"
             />
           </div>
           <Input
+            onFocus={() => setHide(true)}
             ref={s}
             type="text"
             onChange={() => search(1100)}
             placeholder="Artists, Songs, Playlists and More"
-            className="  px-2 relative shadow-none rounded-lg rounded-l-none border-l-0 "
+            className="  px-2 relative shadow-none rounded-sm rounded-l-none border-l-0 "
           />
+          {hide && (
+            <Button
+              onClick={() => setHide(false)}
+              className="w-fit pl-4 pr-1.5 text-red-500"
+              variant={"ghost"}
+            >
+              {" "}
+              Cancel
+            </Button>
+          )}
         </div>
-        {searchQuery.length > 0 && (
+        {searchQuery.length > 0 && hide && (
           <MdCancel
             onClick={clearSearchQuery}
-            className=" absolute fade-in right-6 mt-2 h-5 w-5"
+            className=" absolute  right-[5.5rem] mt-2 h-5 w-5"
           />
         )}
 
@@ -219,14 +227,15 @@ function SearchComp() {
           )}
 
           {RecentSearch &&
+            hide &&
             RecentSearch.length > 0 &&
             searchQuery.length <= 0 && (
               <>
-                <h3 className="text-xs fade-in px-4 text-zinc-500 pt-2 pb-1 ">
+                <h3 className="text-xs px-4 text-zinc-400 font-normal leading-tight  pt-2 pb-1 ">
                   Recently Searched
                 </h3>
-                <div className="h-[63dvh] pb-7 px-4 overflow-scroll">
-                  <div className="flex  fade-in  justify-center flex-col -space-y-1  ">
+                <div className="h-[63dvh] pb-7 px-4 items-center w-full flex-col flex overflow-scroll">
+                  <div className="flex justify-center flex-col -space-y-1  ">
                     {RecentSearch.filter(
                       (r, i, s) =>
                         i === s.findIndex((t) => t.youtubeId == r.youtubeId)
@@ -238,10 +247,10 @@ function SearchComp() {
               </>
             )}
 
-          {searchQuery.length == 0 && (
+          {searchQuery.length == 0 && hide && (
             <>
               {RecentLoading && (
-                <div className="flex fade-in mt-1 px-4 flex-col space-y-3 ">
+                <div className="flex  mt-1 px-4 flex-col space-y-3 ">
                   <SkeletonP />
                   <SkeletonP />
                   <SkeletonP />
@@ -251,7 +260,7 @@ function SearchComp() {
             </>
           )}
 
-          {music && !isLoading && searchQuery.length > 0 && (
+          {music && !isLoading && searchQuery.length > 0 && hide && (
             <>
               <div className="px-4">
                 <SearchToggle
@@ -264,7 +273,7 @@ function SearchComp() {
                   }
                 />
               </div>
-              <div className="h-[63vh] pb-7 px-4 overflow-y-scroll overflow-hidden flex flex-col items-center">
+              <div className="h-[63vh] pb-9 px-4 overflow-y-scroll overflow-hidden flex flex-col items-center w-full">
                 {searchToggle === "Music" &&
                   music.map((r) => {
                     if (r.youtubeId && r.artists) {
@@ -348,6 +357,14 @@ function SearchComp() {
           )}
         </div>
       </div>
+      {!hide && (
+        <div className="px-4 space-y-2 pb-36 leading-tight">
+          <p className="text-zinc-200 text-sm hidden ">Browse all</p>
+          <div className=" grid grid-cols-2 gap-3  pb-5">
+            <BrowseAllCard />
+          </div>
+        </div>
+      )}
     </>
   );
 }

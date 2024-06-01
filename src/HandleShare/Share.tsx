@@ -2,10 +2,13 @@ import { RootState } from "@/Store/Store";
 import { useCallback } from "react";
 import { GoShare } from "react-icons/go";
 import { useSelector } from "react-redux";
-function Share() {
+function Share({ className }: { className?: string }) {
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   const handleShare = useCallback(() => {
+    if (className) {
+      return;
+    }
     if (uid) {
       navigator.share({
         url: window.location.href
@@ -13,12 +16,12 @@ function Share() {
           .replace(uid.substring(uid.length - 4), ""),
       });
     }
-  }, [uid]);
+  }, [uid, className]);
   return (
     <div className="">
       <GoShare
         onClick={handleShare}
-        className="h-8 w-8 animate-fade-left backdrop-blur-md text-white bg-black/30 rounded-full p-1.5"
+        className={`h-8 w-8 animate-fade-left backdrop-blur-md text-white bg-black/30 rounded-full p-1.5 ${className}`}
       />
     </div>
   );

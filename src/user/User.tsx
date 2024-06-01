@@ -1,29 +1,21 @@
 import Share from "@/HandleShare/Share";
-import { playlistSongs, savedPlaylist, savedProfile } from "@/Interface";
+import { savedPlaylist, savedProfile } from "@/Interface";
 import {
   DATABASE_ID,
   FAV_PROFILES,
-  NEW_USER,
   PLAYLIST_COLLECTION_ID,
   db,
 } from "@/appwrite/appwriteConfig";
-// import GoBack from "@/components/Goback";
 import SavedLibraryCard from "@/components/Library/SavedLibraryCard";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Query, Models, Permission, Role, ID } from "appwrite";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { Link, useParams } from "react-router-dom";
 import { prominent } from "color.js";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AiOutlineUserAdd } from "react-icons/ai";
 import { RiTwitterXFill, RiUserUnfollowFill } from "react-icons/ri";
-import socket from "@/socket";
-import { getSpotifyProfile } from "@/API/api";
-import ProgressBar from "@ramonak/react-progress-bar";
-import axios from "axios";
 import { IoLogoInstagram } from "react-icons/io5";
 import { FaSnapchat } from "react-icons/fa";
 import { BsGlobeAmericas } from "react-icons/bs";
@@ -32,9 +24,10 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import useImage from "@/hooks/useImage";
 import { MdAttachMoney } from "react-icons/md";
-import { PiBoxArrowDownLight } from "react-icons/pi";
+
+import useGetUser from "@/hooks/getUser";
+import LiveListening from "./LiveListening";
 
 interface User extends Models.Document {
   name: string;
@@ -44,45 +37,32 @@ interface User extends Models.Document {
   other: string;
   twitter: string;
   paytm: string;
+  bio: string;
 }
 function User({ app }: { app?: boolean }) {
   const { id } = useParams();
+
+  const { user, userLoading } = useGetUser({ id });
   const [color, setColor] = useState<string[]>([]);
-  const getUser = async () => {
-    const user = await db.listDocuments(DATABASE_ID, NEW_USER, [
-      Query.equal("user", [id ? id : ""]),
-      Query.limit(1),
+
+  const loadSavedPlaylist = async () => {
+    const r = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
+      Query.orderDesc("$createdAt"),
+      Query.equal("for", [id || ""]),
     ]);
-
-    const res = await axios.get(
-      `${getSpotifyProfile}${user.documents[0].spotifyId}`
-    );
-    const result = user.documents[0];
-    const code: User[] = res.data;
-
-    const modified = [
-      {
-        name: code[0].name,
-        image: code[0].image,
-        snap: result.snap,
-        insta: result.insta,
-        other: result.other,
-        twitter: result.twitter,
-        paytm: result.paytm,
-      },
-    ];
-
-    return modified as User[];
+    const p = r.documents as unknown as savedPlaylist[];
+    return p;
   };
-  const { data: user, isLoading: userLoading } = useQuery<User[]>(
-    ["user", id],
-    getUser,
+  const { data: savedPlaylist } = useQuery(
+    ["savedPublicPlaylists", id],
+    loadSavedPlaylist,
     {
-      refetchOnMount: false,
-      retry: 5,
-      refetchOnWindowFocus: false,
+      staleTime: Infinity,
     }
   );
+  const [isFavArtist, setIsFavArtist] = useState<boolean>();
+
+  const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   useEffect(() => {
     if (user) {
@@ -94,25 +74,6 @@ function User({ app }: { app?: boolean }) {
       });
     }
   }, [user]);
-  const loadSavedPlaylist = async () => {
-    const r = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("for", [id || ""]),
-    ]);
-    const p = r.documents as unknown as savedPlaylist[];
-    return p;
-  };
-  const { data: savedPlaylist } = useQuery(
-    "savedPublicPlaylists",
-    loadSavedPlaylist,
-    {
-      refetchOnWindowFocus: false,
-      keepPreviousData: true,
-    }
-  );
-  const [isFavArtist, setIsFavArtist] = useState<boolean>();
-
-  const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   const loadIsFav = async () => {
     const r = await db.listDocuments(DATABASE_ID, FAV_PROFILES, [
@@ -132,11 +93,11 @@ function User({ app }: { app?: boolean }) {
     ["checkFavArtist", id],
     loadIsFav,
     {
-      refetchOnWindowFocus: false,
       keepPreviousData: true,
     }
   );
   const { toast } = useToast();
+  const q = useQueryClient();
   const removeFromFav = useCallback(async () => {
     if (isFav) {
       setIsFavArtist(false);
@@ -145,13 +106,14 @@ function User({ app }: { app?: boolean }) {
         .deleteDocument(DATABASE_ID, FAV_PROFILES, isFav[0].$id)
         .catch((error) => {
           toast({
-            title: error.type,
+            description: error.type,
           });
           setIsFavArtist(true);
         });
       refetchFav();
     }
-  }, [isFav, refetchFav, toast]);
+    await q.fetchQuery("savedProfiles");
+  }, [isFav, refetchFav, toast, q]);
 
   const addToFav = useCallback(async () => {
     setIsFavArtist(true);
@@ -169,7 +131,7 @@ function User({ app }: { app?: boolean }) {
         )
         .catch((error) => {
           toast({
-            title: error.type,
+            description: error.type,
           });
           setIsFavArtist(false);
         });
@@ -177,56 +139,8 @@ function User({ app }: { app?: boolean }) {
     } else {
       setIsFavArtist(false);
     }
-  }, [uid, refetchFav, id, toast]);
-
-  const [listening, setListening] = useState<playlistSongs | null>();
-  const [duration, setDuration] = useState<number>(0);
-  const [Progress, setProgress] = useState<number>(0);
-
-  useEffect(() => {
-    if (app) return;
-    socket.connect();
-    function onConnect() {
-      socket.emit("join", { id: id });
-    }
-
-    function setValue(data: playlistSongs) {
-      if (data !== null) {
-        setListening(data);
-      }
-    }
-
-    function handleDuration(data: { id: string; duration: number }) {
-      setDuration(data.duration);
-    }
-    function handleProgress(data: { id: string; progress: number }) {
-      setProgress(data.progress);
-    }
-
-    socket.on("connect", onConnect);
-    socket.on("message", setValue);
-    socket.on("duration", handleDuration);
-    socket.on("progress", handleProgress);
-    return () => {
-      socket.disconnect();
-
-      socket.off("progress", handleProgress);
-      socket.off("duration", handleDuration);
-      socket.off("message", setValue);
-      socket.off("connect", onConnect);
-    };
-  }, [id, app]);
-
-  const formatDuration = useCallback((seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-
-    const formattedMinutes = String(minutes).padStart(2, "0");
-    const formattedSeconds = String(remainingSeconds).padStart(2, "0");
-    return `${formattedMinutes}:${formattedSeconds}`;
-  }, []);
-
-  const c = useImage(listening?.thumbnailUrl || "");
+    await q.fetchQuery("savedProfiles");
+  }, [uid, refetchFav, id, toast, q]);
 
   return (
     <>
@@ -240,43 +154,32 @@ function User({ app }: { app?: boolean }) {
                 {isFavArtist ? (
                   <RiUserUnfollowFill
                     onClick={removeFromFav}
-                    className="h-8 w-8 animate-fade-left backdrop-blur-md mb-2 fade-in  bg-black/30 rounded-full p-1.5"
+                    className="h-8 w-8 animate-fade-left backdrop-blur-md mb-2   bg-black/30 rounded-full p-1.5"
                   />
                 ) : (
                   <AiOutlineUserAdd
                     onClick={addToFav}
-                    className="h-8 w-8 mb-2 backdrop-blur-md fade-in  bg-black/30 rounded-full p-1.5"
+                    className="h-8 w-8 mb-2 backdrop-blur-md   bg-black/30 rounded-full p-1.5"
                   />
                 )}
               </>
             )}
-            {user[0].paytm && (
-              <a href={user[0].paytm} target="blank">
-                <MdAttachMoney className="h-8 w-8  mb-2 backdrop-blur-md fade-in  bg-black/30 rounded-full p-1.5" />
-              </a>
-            )}
+            {user[0].paytm &&
+              user[0].paytm.length > 0 &&
+              user[0].paytm !== "upi://pay?pa=@paytm&pn=PaytmUser" && (
+                <a href={user[0].paytm} target="blank">
+                  <MdAttachMoney className="h-8 w-8  mb-2 backdrop-blur-md   bg-black/30 rounded-full p-1.5" />
+                </a>
+              )}
+
             <Share />
           </>
         )}
       </div>
-      {user && user.length > 0 && (
-        <div className="absolute hidden bottom-2 z-10 left-4 animate-fade-right w-full text-xs font-semibold leading-tight tracking-tight text-zinc-500 space-y-0.5">
-          <a href="https://twitter.com/tanmay11117" target="blank">
-            made by @babyo7_
-          </a>
-        </div>
-      )}
-      {user && user.length > 0 && (
-        <div className="absolute top-24 z-10 bg-black/30 right-3 animate-fade-left flex-col space-y-0.5">
-          <Link target="blank" to={`/box/${id}`}>
-            <PiBoxArrowDownLight className="h-8 w-8 animate-fade-left backdrop-blur-md text-zinc-300 bg-black/30 rounded-full p-1.5" />
-          </Link>
-        </div>
-      )}
 
       <div
         style={{
-          backgroundImage: `linear-gradient(to top, black, ${color[3]}`,
+          backgroundImage: `linear-gradient(to top, black, ${color[1]}`,
         }}
         className={`w-full  flex justify-start items-center px-5 ${
           app ? "pt-[8vh] pb-4" : "pt-[5vh] pb-4"
@@ -287,7 +190,7 @@ function User({ app }: { app?: boolean }) {
             <Skeleton className="h-24 w-24 object-cover rounded-full" />
           ) : (
             <div>
-              <LazyLoadImage
+              <img
                 src={user ? user[0]?.image || "/cache.jpg" : "/cache.jpg"}
                 className="h-24 w-24 animate-fade-right object-cover rounded-full"
               />
@@ -301,22 +204,11 @@ function User({ app }: { app?: boolean }) {
                 {user && user.length > 0 && (
                   <div className=" flex flex-col space-y-1.5">
                     <div>
-                      <h1 className=" truncate -mb-1 animate-fade-right max-w-[50dvw] px-1  font-semibold text-xl">
+                      <h1 className=" truncate -mb-1 animate-fade-right max-w-[50dvw] px-1  font-semibold text-2xl  leading-tight tracking-tight">
                         {user[0]?.name || ""}
                       </h1>
                     </div>
-                    {/* <div className=" animate-fade-right text-xs text-zinc-400 ml-1">
-                    <p>
-                      <span
-                        className="text-white ml-0.5
-                      "
-                      >
-                        1M
-                      </span>{" "}
-                      followers <span className="text-white ml-0.5">7</span>{" "}
-                      following
-                    </p>
-                  </div> */}
+
                     <div className="flex animate-fade-right space-x-1.5 text-sm ml-1">
                       {user[0].insta && (
                         <a target="blank" href={user[0].insta}>
@@ -339,6 +231,13 @@ function User({ app }: { app?: boolean }) {
                         </a>
                       )}
                     </div>
+                    {user[0].bio && (
+                      <div>
+                        <p className=" text-[0.7rem] text-zinc-300 leading-tight tracking-tight ml-1 -mt-1 font-medium">
+                          {user[0].bio}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -352,11 +251,11 @@ function User({ app }: { app?: boolean }) {
       ) : (
         <>
           {savedPlaylist && savedPlaylist.length > 0 && (
-            <h2 className="px-5 mt-6 mb-2.5 animate-fade-right font-semibold leading-tight text-lg">
-              Library
+            <h2 className="px-5 mt-6 mb-2.5 animate-fade-right font-semibold leading-tight text-xl">
+              Playlists
             </h2>
           )}
-          <div className="flex fade-in flex-col px-5">
+          <div className="flex  flex-col px-5">
             <div className=" space-y-3">
               {savedPlaylist &&
                 savedPlaylist
@@ -388,107 +287,7 @@ function User({ app }: { app?: boolean }) {
           </div>
         </>
       )}
-      {user && listening && !app && (
-        <h2 className="px-5 mt-1 mb-2.5 animate-fade-right font-semibold leading-tight text-lg">
-          Listening
-        </h2>
-      )}
-      {user && listening && !app ? (
-        <div className="flex border bg-zinc-100/5 space-x-2  overflow-hidden mb-3 animate-fade-right items-center justify-between  px-2.5 py-2.5 mx-3.5 rounded-xl">
-          <div className="flex w-full animate-fade-right items-center space-x-2">
-            <Link
-              to={`/track/${
-                listening.youtubeId &&
-                listening.youtubeId?.replace(
-                  "https://occasional-clara-babyo777.koyeb.app/?url=https://soundcloud.com/",
-                  ""
-                )
-              }`}
-            >
-              <div className="overflow-hidden rounded-md h-16  w-16 ">
-                <AspectRatio ratio={1 / 1}>
-                  <LazyLoadImage
-                    height="100%"
-                    width="100%"
-                    effect="blur"
-                    src={c ? c : "/cache.jpg"}
-                    alt="Image"
-                    className="rounded-md object-cover w-[100%] h-[100%]"
-                  />
-                </AspectRatio>
-              </div>
-            </Link>
-            <div
-              style={{ color: "white" }}
-              className="flex flex-col w-full  text-xl text-start"
-            >
-              <Link
-                to={`/track/${
-                  listening.youtubeId &&
-                  listening?.youtubeId.replace(
-                    "https://occasional-clara-babyo777.koyeb.app/?url=https://soundcloud.com/",
-                    ""
-                  )
-                }`}
-              >
-                <p className="w-[69dvw] leading-tight  fade-in font-semibold text-lg truncate">
-                  {listening?.title || "Unknown"}
-                </p>
-              </Link>
-              <div
-                style={{ color: "white" }}
-                className="flex  items-center space-x-1"
-              >
-                <Link
-                  to={`/artist/${
-                    listening.artists && listening.artists[0]?.id
-                  }`}
-                >
-                  <p className="text-xs  leading-tight truncate  max-w-[65vw]  font-normal  text-zinc-200">
-                    by{" "}
-                    {(listening.artists && listening.artists[0]?.name) ||
-                      (listening?.artists as unknown as string) ||
-                      "Unknown"}
-                  </p>
-                </Link>
-              </div>
-              <div
-                style={{ color: "white" }}
-                className="flex  items-center space-x-1"
-              ></div>
-              <div className="w-full -mt-0.5">
-                <ProgressBar
-                  className=" mt-1.5 w-full rounded-lg border-none "
-                  height="3px"
-                  animateOnRender={false}
-                  transitionDuration="0"
-                  barContainerClassName="bg-zinc-700  rounded-lg"
-                  isLabelVisible={false}
-                  bgColor={"#7d7d7d" || color[8]}
-                  maxCompleted={duration}
-                  completed={Progress}
-                />
-              </div>
-              <div className=" flex w-full">
-                <p className=" flex items-center w-full font-normal text-zinc-400 justify-between text-[.58rem] -mt-1 -mb-2.5">
-                  <span>{formatDuration(Progress || 0)}</span>
-                  <span>{formatDuration(duration || 0)}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          {user && user.length > 0 && !app && (
-            <h2
-              className={`px-5 mt-4 mb-2.5 animate-fade-right font-semibold leading-tight text-lg  `}
-            >
-              {user && user[0].name} is currently offline.
-            </h2>
-          )}
-        </>
-      )}
+      <LiveListening app={app} id={id} user={user} />
     </>
   );
 }

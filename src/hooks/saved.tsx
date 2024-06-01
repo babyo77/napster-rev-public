@@ -1,11 +1,4 @@
 import { savedPlaylist, savedProfile, suggestedArtists } from "@/Interface";
-import {
-  setPlaylistUrl,
-  setSavedAlbums,
-  setSavedArtists,
-  setSavedPlaylist,
-  setSavedProfile,
-} from "@/Store/Player";
 import { RootState } from "@/Store/Store";
 import {
   ALBUM_COLLECTION_ID,
@@ -16,13 +9,10 @@ import {
   db,
 } from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
-import { useEffect } from "react";
 import { useQuery } from "react-query";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 function useSaved() {
-  const dispatch = useDispatch();
-
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
   const loadSavedPlaylist = async () => {
@@ -34,11 +24,15 @@ function useSaved() {
     const p = r.documents as unknown as savedPlaylist[];
     return p;
   };
-  const { data, isLoading } = useQuery("savedPlaylist", loadSavedPlaylist, {
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-    staleTime: 10000,
-  });
+  const { data: savedPlaylist, isLoading } = useQuery(
+    "savedPlaylist",
+    loadSavedPlaylist,
+    {
+      keepPreviousData: true,
+      refetchOnMount: false,
+      staleTime: Infinity,
+    }
+  );
 
   const loadSavedAlbums = async () => {
     const r = await db.listDocuments(DATABASE_ID, ALBUM_COLLECTION_ID, [
@@ -50,9 +44,9 @@ function useSaved() {
     return p;
   };
   const { data: SavedAlbums } = useQuery("savedAlbums", loadSavedAlbums, {
-    refetchOnWindowFocus: false,
     keepPreviousData: true,
-    staleTime: 10000,
+    refetchOnMount: false,
+    staleTime: Infinity,
   });
   const loadSavedArtists = async () => {
     const r = await db.listDocuments(DATABASE_ID, FAV_ARTIST, [
@@ -64,9 +58,9 @@ function useSaved() {
     return p;
   };
   const { data: SavedArtists } = useQuery("savedArtists", loadSavedArtists, {
-    refetchOnWindowFocus: false,
     keepPreviousData: true,
-    staleTime: 10000,
+    refetchOnMount: false,
+    staleTime: Infinity,
   });
   const loadSavedProfiles = async () => {
     const r = await db.listDocuments(DATABASE_ID, FAV_PROFILES, [
@@ -78,28 +72,12 @@ function useSaved() {
     return p;
   };
   const { data: SavedProfiles } = useQuery("savedProfiles", loadSavedProfiles, {
-    refetchOnWindowFocus: false,
     keepPreviousData: true,
-    staleTime: 10000,
+    refetchOnMount: false,
+    staleTime: Infinity,
   });
 
-  useEffect(() => {
-    dispatch(setSavedPlaylist([]));
-    dispatch(setPlaylistUrl(""));
-    if (data) {
-      if (SavedAlbums) {
-        dispatch(setSavedAlbums(SavedAlbums));
-      }
-      if (SavedArtists) {
-        dispatch(setSavedArtists(SavedArtists));
-      }
-      if (SavedProfiles) {
-        dispatch(setSavedProfile(SavedProfiles));
-      }
-      dispatch(setSavedPlaylist([...data]));
-    }
-  }, [dispatch, data, SavedAlbums, SavedArtists, SavedProfiles]);
-  return { isLoading };
+  return { isLoading, savedPlaylist, SavedArtists, SavedProfiles, SavedAlbums };
 }
 
 export default useSaved;

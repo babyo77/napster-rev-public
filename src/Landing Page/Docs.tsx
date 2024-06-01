@@ -31,7 +31,7 @@ export default function Docs() {
       {logged ? (
         <></>
       ) : (
-        <div className="bg-[09090B] fade-in font-semibold w-full min-h-screen flex justify-center items-center px-9 max-lg:text-4xl max-md:text-4xl text-7xl flex-col space-y-7 text-center max-md:px-4 overflow-hidden fixed -z-10">
+        <div className="bg-[09090B]  font-semibold w-full min-h-screen flex justify-center items-center px-9 max-lg:text-4xl max-md:text-4xl text-7xl flex-col space-y-7 text-center max-md:px-4 overflow-hidden fixed -z-10">
           <Button
             onClick={handleSignIn}
             className="  py-6 animate-fade-up text-xl  max-md:text-base rounded-lg space-x-1"

@@ -1,4 +1,3 @@
-import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Link } from "react-router-dom";
 import { FaCirclePlay } from "react-icons/fa6";
 import { homePagePlaylist } from "@/Interface";
@@ -20,12 +19,11 @@ const Charts: React.FC<{ data: homePagePlaylist[] }> = ({ data }) => {
           <div className="flex  space-x-3.5 px-4 overflow-x-auto  pb-2 no-scrollbar ">
             {data.slice(3).map((p) => (
               <Link to={`/library/${p.url}?c=${p.image}`} key={p.url}>
-                <div className="flex fade-in items-center mt-1  relative  ">
+                <div className="flex  items-center mt-1  relative  ">
                   <div className=" h-32 w-32">
-                    <LazyLoadImage
+                    <img
                       width="100%"
                       height="100%"
-                      effect="blur"
                       src={p.image}
                       alt="Image"
                       className="rounded-lg object-cover h-[100%] w-[100%]"

@@ -55,6 +55,7 @@ interface SearchPlaylist {
   name?: string;
   fromSearch?: boolean;
   playlistId: string;
+  for?: string;
   title: string;
   totalSongs?: number;
   thumbnailUrl: string;

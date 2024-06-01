@@ -1,5 +1,6 @@
 import { albums } from "@/Interface";
-import { LazyLoadImage } from "react-lazy-load-image-component";
+import useImage from "@/hooks/useImage";
+
 import { Link } from "react-router-dom";
 
 const ArtistAlbums: React.FC<albums> = ({
@@ -8,16 +9,17 @@ const ArtistAlbums: React.FC<albums> = ({
   title,
   artistId,
 }) => {
+  const image = useImage(thumbnailUrl);
+
   return (
     <Link to={`/album/${albumId}?id=${artistId}`}>
       <div className="flex items-center  justify-center mt-0.5  px-3">
         <div>
           <div className=" h-36 w-36">
-            <LazyLoadImage
+            <img
               width="100%"
               height="100%"
-              effect="blur"
-              src={thumbnailUrl}
+              src={image ? image : "/cache.jpg"}
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
                 (e.currentTarget.src = "/cache.jpg")
               }

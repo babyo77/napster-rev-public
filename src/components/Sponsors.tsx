@@ -1,5 +1,5 @@
 import { SiGithubsponsors } from "react-icons/si";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { FaSnapchat } from "react-icons/fa6";
 import { FaInstagram } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -30,14 +30,12 @@ function SponsorsComp() {
 
   const { data, isLoading } = useQuery<Sponsors[]>("sponsors", getSponsors, {
     staleTime: Infinity,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
   });
 
   return (
     <Drawer>
       <DrawerTrigger className="w-full animate-fade-up">
-        <p className=" w-full bg-neutral-950 animate-fade-up rounded-xl flex px-5 items-center justify-start py-2.5 mt-3  text-base">
+        <p className=" w-full bg-neutral-950 animate-fade-up rounded-lg flex px-5 items-center justify-start py-2.5 mt-3  text-base">
           <SiGithubsponsors className="mr-2 h-[1.1rem] w-[1.1rem] fill-pink-400" />
 
           <span>Sponsors</span>
@@ -47,13 +45,13 @@ function SponsorsComp() {
         <div className="h-dvh animate-fade-up pb-[6dvh] items-center border-none  justify-center flex flex-col w-full  rounded-2xl">
           <DrawerHeader></DrawerHeader>
           {isLoading && (
-            <div className="py-4 w-full  animate-fade-up rounded-xl flex justify-center flex-col  space-y-2 items-center">
+            <div className="py-4 w-full  animate-fade-up rounded-lg flex justify-center flex-col  space-y-2 items-center">
               <Loader />
             </div>
           )}
           {data && (
             <>
-              <div className=" rounded-xl flex flex-col space-y-2.5">
+              <div className=" rounded-lg flex flex-col space-y-2.5">
                 {data.map((sponsor) => (
                   <div
                     key={sponsor.image}

@@ -7,8 +7,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { encode } from "blurhash";
 import { TbMicrophone2 } from "react-icons/tb";
 import { LiaExchangeAltSolid } from "react-icons/lia";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import Loader from "../Loaders/Loader";
 import { Button } from "../ui/button";
 import { VscMusic } from "react-icons/vsc";
@@ -149,9 +148,7 @@ function PlaylistShareComp({
                 punch={1}
               />
             ) : (
-              <LazyLoadImage
-                effect="blur"
-                visibleByDefault
+              <img
                 loading="lazy"
                 src={cover || "./favicon.jpeg"}
                 width="100%"
@@ -165,15 +162,13 @@ function PlaylistShareComp({
               {ShareSong ? (
                 <div className=" flex flex-col text-left  space-y-2  bg-black/30  py-3 px-3 pt-4">
                   <div className="overflow-hidden flex h-[15.5rem] w-[15.5rem]">
-                    <LazyLoadImage
+                    <img
                       src={cover || "/favicon.jpeg"}
                       width="100%"
-                      effect="blur"
                       height="100%"
                       alt="Image"
                       loading="lazy"
-                      visibleByDefault
-                      className="rounded-xl object-cover h-[100%] w-[100%]"
+                      className="rounded-lg object-cover h-[100%] w-[100%]"
                     />
                   </div>
                   <div className=" break-words ">
@@ -202,7 +197,7 @@ function PlaylistShareComp({
               variant={"secondary"}
               onClick={shareLyrics}
               id="share"
-              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <IoShareOutline className=" h-6 w-6" />
               <p>Share</p>
@@ -210,7 +205,7 @@ function PlaylistShareComp({
             <Button
               variant={"secondary"}
               onClick={() => encodeImageToBlurhash(cover)}
-              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <LiaExchangeAltSolid className=" h-6 w-6" />
               <p>Change BG</p>
@@ -218,7 +213,7 @@ function PlaylistShareComp({
             <Button
               variant={"secondary"}
               onClick={handleCopyLink}
-              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+              className=" text-xs flex animate-fade-up items-center px-2.5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
             >
               <BiLinkAlt className=" h-6 w-6" />
               <p>Copy Link</p>
@@ -227,7 +222,7 @@ function PlaylistShareComp({
               <Button
                 variant={"secondary"}
                 onClick={handleShareSong}
-                className="text-xs fade-in flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-xl space-x-1.5"
+                className="text-xs  flex animate-fade-up items-center px-5 py-2 bg-zinc-900 text-zinc-300 rounded-lg space-x-1.5"
               >
                 {ShareSong ? (
                   <TbMicrophone2 className=" h-6 w-6" />

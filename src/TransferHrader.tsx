@@ -90,7 +90,7 @@ export default function TransferHeader({ data }: { data: spotifyTransfer }) {
   return (
     <>
       <div className=" fixed w-full px-2.5 z-40 animate-fade-down">
-        <Alert className=" fade-in bg-zinc-900 top-3.5 border">
+        <Alert className="  bg-zinc-900 top-3.5 border">
           <AlertDescription>
             <div className="flex w-full flex-col space-y-1.5 items-start">
               <p className="text-zinc-300   font-semibold text-xs animate-fade-right">
@@ -100,7 +100,7 @@ export default function TransferHeader({ data }: { data: spotifyTransfer }) {
                 className=" w-full border-none animate-fade-down"
                 height="4px"
                 isLabelVisible={false}
-                bgColor="#1DD45F"
+                bgColor="red"
                 maxCompleted={data.tracks.length || 0}
                 completed={progress || 0}
               />

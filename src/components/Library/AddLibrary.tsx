@@ -25,10 +25,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Loader from "../Loaders/Loader";
-import { useDispatch, useSelector } from "react-redux";
-import { setCurrentToggle, setSavedPlaylist } from "@/Store/Player";
-import { savedPlaylist } from "@/Interface";
-import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { v4 } from "uuid";
 import {
   Drawer,
@@ -40,6 +37,10 @@ import {
 } from "../ui/drawer";
 import { SpotifyTransfer } from "../SpotifyTransfer";
 import { RootState } from "@/Store/Store";
+import { useQueryClient } from "react-query";
+import { toast } from "../ui/use-toast";
+import { useNavigate } from "react-router-dom";
+import { savedPlaylist } from "@/Interface";
 
 const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
   clone,
@@ -47,9 +48,6 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
 }) => {
   const close = useRef<HTMLButtonElement>(null);
 
-  const dispatch = useDispatch();
-
-  const n = useNavigate();
   const [isSubmit, setIsSubmit] = useState<boolean>();
   const [error, setError] = useState<boolean>();
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -60,7 +58,8 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
     },
   });
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
-
+  const q = useQueryClient();
+  const n = useNavigate();
   useEffect(() => {
     clone && id && form.setValue("link", id);
     !clone && form.setValue("link", `custom${v4()}`);
@@ -74,7 +73,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
           name: "new playlist",
           creator: data.creator,
           link: data.link,
-          for: uid || "default",
+          for: uid,
         };
 
         db.createDocument(
@@ -86,20 +85,22 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
         )
           .then(async () => {
             form.reset();
-            const r = await db.listDocuments(
-              DATABASE_ID,
-              PLAYLIST_COLLECTION_ID,
-              [
-                Query.orderDesc("$createdAt"),
-                Query.equal("for", [uid || "default", "default"]),
-              ]
-            );
-            const p = r.documents as unknown as savedPlaylist[];
-            dispatch(setCurrentToggle("Playlists"));
-            dispatch(setSavedPlaylist(p)), close.current?.click();
+            await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
+              Query.orderDesc("$createdAt"),
+              Query.equal("for", [uid]),
+            ]);
+            close.current?.click();
+            toast({
+              description: "Playlist added to library",
+            });
+            await q.fetchQuery("savedPlaylist");
             clone && n("/library/");
           })
           .catch((error) => {
+            toast({
+              variant: "destructive",
+              description: "error saving playlist",
+            });
             throw new Error(error);
           });
       }
@@ -186,7 +187,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
                 type="submit"
                 variant={"secondary"}
                 disabled={isSubmit || error}
-                className=" py-5 w-full animate-fade-up border bg-neutral-950 rounded-xl"
+                className=" py-5 w-full animate-fade-up border bg-neutral-950 rounded-lg"
               >
                 {isSubmit ? (
                   <Loader size="20" loading={true} />
@@ -206,7 +207,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
               onClick={handleReset}
               variant={"secondary"}
               disabled={isSubmit || error}
-              className=" text-zinc-100 py-5 border bg-neutral-950 animate-fade-up -mt-1.5 w-full rounded-xl"
+              className=" text-zinc-100 py-5 border bg-neutral-950 animate-fade-up -mt-1.5 w-full rounded-lg"
             >
               <p>Close</p>
             </Button>
@@ -215,7 +216,7 @@ const AddLibrary: React.FC<{ clone?: boolean; id?: string }> = ({
             <div className=" animate-fade-up w-full -mt-1">
               <SpotifyTransfer
                 close={close}
-                className=" rounded-xl text-sm bg-green-500 py-3 font-semibold"
+                className=" rounded-lg text-sm bg-green-500 py-3 font-semibold"
               />
             </div>
           )}

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { AspectRatio } from "../ui/aspect-ratio";
 import EditInfo from "./EditInfo";
 import { useQuery } from "react-query";
@@ -6,10 +6,9 @@ import { SearchPlaylist, savedPlaylist } from "@/Interface";
 import axios from "axios";
 import SkeletonP from "./SkeletonP";
 import { SearchPlaylistApi } from "@/API/api";
-import { useSelector } from "react-redux";
-import { RootState } from "@/Store/Store";
 import useImage from "@/hooks/useImage";
 import React from "react";
+import useLibrary from "@/hooks/useLibrary";
 function SavedLibraryCardComp({
   author,
   link,
@@ -36,15 +35,16 @@ function SavedLibraryCardComp({
     {
       retryOnMount: false,
       retry: 0,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+
       staleTime: 60 * 60000,
     }
   );
-
+  const location = useLocation();
   const c = useImage((p && p[0]?.thumbnailUrl) || data?.image || "");
   const c1 = useImage(data?.image || "");
-  const uid = useSelector((state: RootState) => state.musicReducer.uid);
+  const { uid } = useLibrary({
+    id: data.link.startsWith("custom") ? "custom" + data.$id : link,
+  });
   return (
     <div className="flex animate-fade-right space-x-2.5 items-center justify-between">
       {p ? (
@@ -58,7 +58,7 @@ function SavedLibraryCardComp({
           >
             <div
               className={`overflow-hidden  space-y-2 ${
-                className ? "h-[3.3rem] w-[3.3rem]" : "h-14 w-14 "
+                className ? "h-[3.7rem] w-[3.7rem]" : "h-[3.7rem] w-[3.7rem] "
               } -md`}
             >
               <AspectRatio ratio={1 / 1} className=" -md">
@@ -78,7 +78,7 @@ function SavedLibraryCardComp({
               <p
                 className={` ${
                   className ? "text-lg w-[70vw]" : "text-lg w-[59vw]"
-                } font-medium fade-in truncate`}
+                }   truncate`}
               >
                 {author || data.creator || "NapsterDrx."}
               </p>
@@ -87,7 +87,13 @@ function SavedLibraryCardComp({
               </p>
             </div>
           </Link>
-          {uid == f && <EditInfo id={id} f={f} />}
+          {location.pathname !== `/profile/${uid}` && (
+            <>
+              {location.pathname !== `/playlist/${uid}` && (
+                <>{uid == f && <EditInfo id={id} f={f} />}</>
+              )}
+            </>
+          )}
         </>
       ) : (
         <>
@@ -97,7 +103,7 @@ function SavedLibraryCardComp({
                 to={`/library/${"custom" + data.$id}`}
                 className="flex space-x-2.5 items-center justify-between"
               >
-                <div className="overflow-hidden h-14 -sm w-14 space-y-2">
+                <div className="overflow-hidden h-[3.7rem] -sm w-[3.7rem] space-y-2">
                   <AspectRatio ratio={1 / 1}>
                     <img
                       height="100%"
@@ -112,15 +118,22 @@ function SavedLibraryCardComp({
                   </AspectRatio>
                 </div>
                 <div className="flex flex-col   text-start">
-                  <p className="w-[59vw]  text-lg   fade-in truncate">
+                  <p className="w-[59vw]  text-lg     truncate">
                     {data.creator || "NapsterDrx."}
                   </p>
-                  <p className="-mt-0.5  text-xs w-[50vw] truncate">
+                  <p className="-mt-0.5  text-xs w-[50vw] text-zinc-400 truncate">
                     {data.name || "Unknown"}
                   </p>
                 </div>
               </Link>
-              {uid == f && <EditInfo id={data.$id || ""} f={f} />}
+
+              {location.pathname !== `/profile/${uid}` && (
+                <>
+                  {location.pathname !== `/playlist/${uid}` && (
+                    <>{uid == f && <EditInfo id={id} f={f} />}</>
+                  )}
+                </>
+              )}
             </>
           )}
         </>

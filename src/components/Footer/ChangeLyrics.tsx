@@ -2,7 +2,7 @@ import { RootState } from "@/Store/Store";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@radix-ui/react-aspect-ratio";
 import { useCallback, useState } from "react";
-import { LazyLoadImage } from "react-lazy-load-image-component";
+
 import { useSelector } from "react-redux";
 import {
   Drawer,
@@ -44,7 +44,7 @@ export function ChangeLyrics({
         <div className=" flex  space-x-2 items-center bg-black/30 py-3 px-3">
           <div className="overflow-hidden flex h-[3.3rem] w-[3.3rem]">
             <AspectRatio ratio={1 / 1}>
-              <LazyLoadImage
+              <img
                 src={
                   playlist[currentIndex].thumbnailUrl.replace(
                     "w120-h120",
@@ -52,10 +52,8 @@ export function ChangeLyrics({
                   ) || "/favicon.jpeg"
                 }
                 width="100%"
-                effect="blur"
                 height="100%"
                 alt="Image"
-                visibleByDefault
                 loading="lazy"
                 className="rounded-lg object-cover h-[100%] w-[100%]"
               />
@@ -86,7 +84,7 @@ export function ChangeLyrics({
               <DrawerClose key={index}>
                 <p
                   onClick={() => handleSelect(index)}
-                  className="text-left bg-zinc-900/70 px-4 py-2 rounded-xl"
+                  className="text-left bg-zinc-900/70 px-4 py-2 rounded-lg"
                   key={index}
                 >
                   {lyrics.lyrics}

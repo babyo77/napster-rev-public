@@ -1,7 +1,7 @@
 import { FaPlay } from "react-icons/fa6";
 import { IoIosArrowBack, IoMdNotificationsOutline } from "react-icons/io";
 import { NavLink, useParams } from "react-router-dom";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useDispatch, useSelector } from "react-redux";
 import {
   SetPlaylistOrAlbum,
@@ -22,8 +22,7 @@ import GoBack from "@/components/Goback";
 import { Button } from "@/components/ui/button";
 import Songs from "@/components/Library/Songs";
 import { RxShuffle } from "react-icons/rx";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { useInView } from "react-intersection-observer";
 import { FiShare } from "react-icons/fi";
 import { GoShare } from "react-icons/go";
@@ -39,7 +38,6 @@ function TuneBoxComp() {
   const { id } = useParams();
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
   const [offset, setOffset] = useState<string>();
-  const [pDetails, setPDetails] = useState<playlistSongs[]>();
 
   const getPlaylistDetails = async () => {
     const r = await db.listDocuments(DATABASE_ID, TUNEBOX, [
@@ -65,7 +63,6 @@ function TuneBoxComp() {
       title: doc.title,
       thumbnailUrl: doc.thumbnailUrl,
     }));
-    setPDetails(modified);
     return modified as unknown as likedSongs[];
   };
 
@@ -77,10 +74,11 @@ function TuneBoxComp() {
     isLoading: pLoading,
     isError: pError,
     refetch: pRefetch,
+    data: pDetails,
   } = useQuery<likedSongs[]>(["tuneboxSongsDetails", id], getPlaylistDetails, {
     retry: 0,
     staleTime: 1000,
-    refetchOnWindowFocus: false,
+    keepPreviousData: true,
   });
   const [notification, setNotification] = useState<boolean>(true);
   const getKey = useCallback(async () => {
@@ -184,7 +182,7 @@ function TuneBoxComp() {
       }
     }
   }, [dispatch, isPlaying, id, pDetails]);
-
+  const q = useQueryClient();
   useEffect(() => {
     if (inView && uid) {
       if (id && pDetails && offset) {
@@ -192,7 +190,7 @@ function TuneBoxComp() {
           Query.orderDesc("$createdAt"),
           Query.equal("for", [id || uid]),
           Query.cursorAfter(offset),
-        ]).then((r) => {
+        ]).then(async (r) => {
           const lastId = r.documents[r.documents.length - 1].$id;
 
           setOffset(lastId);
@@ -210,12 +208,14 @@ function TuneBoxComp() {
             title: doc.title,
             thumbnailUrl: doc.thumbnailUrl,
           }));
-          setPDetails((prev) => prev && [...prev, ...modified]);
-          return modified as unknown as likedSongs[];
+          await q.setQueryData(["tuneboxSongsDetails", id], (prev) => [
+            ...(prev as playlistSongs[]),
+            ...modified,
+          ]);
         });
       }
     }
-  }, [inView, id, pDetails, offset, uid]);
+  }, [inView, id, pDetails, offset, uid, q]);
 
   const handleShare = () => {
     navigator.share({
@@ -229,8 +229,7 @@ function TuneBoxComp() {
         <div className=" relative  w-full">
           <div className="fixed h-[90dvh] w-full px-4 flex justify-center flex-col items-center space-y-2.5">
             <div className="h-[60vw] w-[60vw]">
-              <LazyLoadImage
-                effect="blur"
+              <img
                 width="100%"
                 height="100%"
                 src="/tunebox.jpg"
@@ -249,7 +248,7 @@ function TuneBoxComp() {
               <Button
                 onClick={handleShare}
                 variant={"secondary"}
-                className=" rounded-xl border bg-neutral-950 animate-fade-up text-xl space-x-1 py-6 font-normal p-6"
+                className=" rounded-lg border bg-neutral-950 animate-fade-up text-xl space-x-1 py-6 font-normal p-6"
               >
                 <FiShare />
 
@@ -291,8 +290,7 @@ function TuneBoxComp() {
               )}
             </div>
             <div className="h-56 w-56">
-              <LazyLoadImage
-                effect="blur"
+              <img
                 width="100%"
                 height="100%"
                 src="/tunebox.jpg"
@@ -310,7 +308,7 @@ function TuneBoxComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[13dvw]]"
+                  className="text-lg py-6 animate-fade-down text-red-500 shadow-none bg-neutral-900 rounded-md px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -319,7 +317,7 @@ function TuneBoxComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down  text-red-500 shadow-none bg-neutral-900 rounded-md px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle
@@ -327,7 +325,7 @@ function TuneBoxComp() {
               </div>
             </div>
           </div>
-          <div className="py-3 -mt-[2vh] pb-[8.5rem]">
+          <div className="py-3 -mt-[2vh] pb-[9.4rem]">
             {pDetails.map((data, i) => (
               <div key={data.youtubeId + i} ref={ref}>
                 <Songs

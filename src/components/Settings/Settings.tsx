@@ -8,7 +8,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { SpotifyTransfer } from "../SpotifyTransfer";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Token } from "../Token";
 import { DialogClose } from "../ui/dialog";
 import { RootState } from "@/Store/Store";
@@ -20,16 +20,18 @@ import authService, {
   db,
 } from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { setUser } from "@/Store/Player";
 import { PiUserSwitch } from "react-icons/pi";
 import { IoHelpBuoySharp } from "react-icons/io5";
-import { MdOutlineDownloading } from "react-icons/md";
+import { MdCached } from "react-icons/md";
 import { SponsorsComp } from "../Sponsors";
 import { useNavigate } from "react-router-dom";
 import { LinkAccount } from "./linkAccount";
 import SleepTimer from "./sleeptimer";
+import { toast } from "../ui/use-toast";
+import { LiaExternalLinkAltSolid } from "react-icons/lia";
 
 function SettingsComp() {
   const close = useRef<HTMLButtonElement>(null);
@@ -90,14 +92,52 @@ function SettingsComp() {
   };
 
   const { data: imSrc } = useQuery("dpImage", handleImage, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: Infinity,
   });
+  const [cache, setCache] = useState<StorageEstimate | null>(null);
+  useEffect(() => {
+    if ("storage" in navigator && "estimate" in navigator.storage) {
+      navigator.storage.estimate().then((estimate) => {
+        setCache(estimate);
+      });
+    }
+  }, []);
+  const formatBytes = useCallback((bytes: number) => {
+    if (bytes < 1024) {
+      return bytes + " bytes";
+    } else if (bytes < 1024 * 1024) {
+      return (bytes / 1024).toFixed(2) + " KB";
+    } else if (bytes < 1024 * 1024 * 1024) {
+      return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    } else {
+      return (bytes / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+    }
+  }, []);
+  const clearCache = async () => {
+    try {
+      caches.delete("audio");
+      setCache((prev) => prev && { ...prev, usage: 0 });
+      toast({
+        description: "Cache Cleared ",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        description: "Error While Clearing Cache ",
+      });
+    }
+  };
+  const q = useQueryClient();
+  const [version, setVersion] = useState<string>("Version - 1.2.17 beta");
+  useEffect(() => {
+    q.fetchQuery(["news"]).then((data) =>
+      setVersion((data as { version: string })?.version)
+    );
+  }, [q]);
   return (
     <Drawer>
       <DrawerTrigger>
-        {imSrc && imSrc[0].image.length > 0 ? (
+        {imSrc && imSrc[0].image && imSrc[0].image.length > 0 ? (
           <Avatar className="animate-fade-left h-9 w-9 p-0 m-0 -mr-0.5">
             <AvatarImage
               className="rounded-full object-cover h-[100%] w-[100%]"
@@ -121,36 +161,58 @@ function SettingsComp() {
           twitter={imSrc && imSrc[0].twitter}
           insta={imSrc && imSrc[0].insta}
           other={imSrc && imSrc[0].other}
+          bio={imSrc && imSrc[0].bio}
           paytm={
             imSrc &&
+            imSrc[0].paytm &&
+            imSrc[0].paytm.length > 0 &&
             imSrc[0].paytm
               .replace("upi://pay?pa=", "")
               .replace("@paytm&pn=PaytmUser", "")
           }
         />
+        {/* <DrawerClose>
+          <div className="animate-fade-up">
+            <Link
+              to={"/downloads"}
+              className=" animate-fade-up bg-neutral-950 rounded-lg py-2.5 mt-3  flex px-4 text-base items-center space-x-1"
+            >
+              <LiaDownloadSolid className="h-5 w-5" />
+              <span>Downloads</span>
+            </Link>
+          </div>
+        </DrawerClose> */}
         <SleepTimer />
+        {!track && <SpotifyTransfer close={close} />}
         {/iPhone/i.test(navigator.userAgent) && (
           <div className="animate-fade-up">
             <p
               onClick={handleLoadPlaylist}
-              className=" rounded-xl py-2.5 mt-3 animate-fade-up  flex text-start   px-4  text-base items-center space-x-1 bg-neutral-950"
+              className=" rounded-lg py-2.5 mt-3 animate-fade-up  flex text-start   px-4  text-base items-center space-x-1 bg-neutral-950"
             >
-              <MdOutlineDownloading className="h-6 w-6" />
-              <span>Load Playlist</span>
+              <LiaExternalLinkAltSolid className="h-6 w-6" />
+              <span>Load External Link ( IOS )</span>
             </p>
           </div>
         )}
         <SponsorsComp />
-        {!track && <SpotifyTransfer close={close} />}
+
         <div className="animate-fade-up">
           <p
-            onClick={() =>
-              (window.location.href = "mailto:yfw111realone@gmail.com")
-            }
-            className=" animate-fade-up bg-neutral-950 rounded-xl py-2.5 mt-3  flex px-4 text-base items-center space-x-1"
+            onClick={() => window.open("https://www.instagram.com/babyo7_/")}
+            className=" animate-fade-up bg-neutral-950 rounded-lg py-2.5 mt-3  flex px-4 text-base items-center space-x-1"
           >
             <IoHelpBuoySharp className="h-5 w-5" />
             <span>Feedback & Suggestion</span>
+          </p>
+        </div>
+        <div className="animate-fade-up">
+          <p
+            onClick={clearCache}
+            className=" rounded-lg py-2.5 mt-3 animate-fade-up  flex text-start   px-4  text-base items-center space-x-1 bg-neutral-950"
+          >
+            <MdCached className="h-6 w-6" />
+            <span>{formatBytes(cache?.usage || 0)} Cache</span>
           </p>
         </div>
         <DialogClose ref={close}></DialogClose>
@@ -160,7 +222,7 @@ function SettingsComp() {
             <div className="w-full ">
               <p
                 onClick={handleSwitch}
-                className="  font-medium bg-neutral-950 rounded-xl animate-fade-up  py-2.5 mt-3 flex justify-center  text-base items-center space-x-1"
+                className="  font-medium bg-neutral-950 rounded-lg animate-fade-up  py-2.5 mt-3 flex justify-center  text-base items-center space-x-1"
               >
                 <PiUserSwitch className="h-5 w-5" />
                 <span>Switch Account</span>
@@ -168,7 +230,7 @@ function SettingsComp() {
             </div>
           </div>
           <span className="text-xs text-zinc-300 animate-fade-up">
-            Version - 1.2.17 beta
+            {version}
           </span>
         </DrawerFooter>
       </DrawerContent>

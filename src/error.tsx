@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect } from "react";
-import { useLocation, useRouteError } from "react-router-dom";
+import { Navigate, useLocation, useRouteError } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState } from "./Store/Store";
 
@@ -10,6 +10,8 @@ function ErrorElement() {
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
   useEffect(() => {
     if (error) {
+      alert("Something Went Wrong");
+      window.location.reload();
       try {
         axios.get(
           `https://api.telegram.org/bot6178294062:AAEi72UVOgyEm_RhZqilO_ANsKcRcW06C-0/sendMessage?chat_id=5356614395&text=${encodeURIComponent(
@@ -26,6 +28,9 @@ function ErrorElement() {
       }
     }
   }, [error, location, uid]);
+  if (error) {
+    return <Navigate to={"/"} />;
+  }
   return (
     <div className="flex text-center leading-tight tracking-tight text-xl px-5 h-screen justify-center items-center">
       <p>

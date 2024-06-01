@@ -12,9 +12,9 @@ import {
   setPlaylist,
 } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
-import Loader from "./Loaders/Loader";
 import authService, {
   ADD_TO_LIBRARY,
+  BROWSE_ALL,
   DATABASE_ID,
   EDITS,
   INSIGHTS,
@@ -30,29 +30,31 @@ import {
   GetAlbumSongs,
   GetPlaylistHundredSongsApi,
   SuggestionSearchApi,
-  streamApi,
 } from "@/API/api";
 import { Query } from "appwrite";
-import { useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { v4 } from "uuid";
 import useSaved from "@/hooks/saved";
+import { BrowseItem } from "@/BrowseAll/BrowseAllCard";
+interface LoaderData {
+  isStandalone: boolean;
+  isDesktop: boolean;
+  isiPad: boolean;
+}
 
 function Check() {
   const dispatch = useDispatch();
-  const [check, setCheck] = useState<boolean>(true);
-  const [isStandalone, setIsStandalone] = useState<boolean>(true);
-
-  const [online, setOnline] = useState<boolean>();
-  const [isiPad, setIsIpad] = useState<boolean>();
-  const [isDesktop, setDesktop] = useState<boolean>();
+  const { isStandalone, isDesktop, isiPad } = useLoaderData() as LoaderData;
 
   useEffect(() => {
-    const isDesktop = window.innerWidth > 786;
-    const isiPad = navigator.userAgent.match(/iPad/i) !== null;
+    dispatch(setIsIphone(isStandalone));
+  }, [isStandalone, dispatch]);
+
+  const [online, setOnline] = useState<boolean>();
+
+  useEffect(() => {
     const online = navigator.onLine;
-    setIsIpad(isiPad);
     setOnline(online);
-    setDesktop(isDesktop);
   }, []);
 
   const isStandaloneWep = useSelector(
@@ -60,22 +62,17 @@ function Check() {
   );
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
-  const [lastPlayed, setLastPlayed] = useState(false);
   const getLastPlayed = async () => {
     const lastPlayed = await db.getDocument(
       DATABASE_ID,
       LAST_PLAYED,
       uid || ""
     );
-    if (lastPlayed) {
-      setLastPlayed(false);
-    }
+
     return lastPlayed as unknown as lastPlayed;
   };
 
   const { data } = useQuery<lastPlayed>("lastPlayedSongs", getLastPlayed, {
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
     staleTime: Infinity,
   });
 
@@ -162,14 +159,13 @@ function Check() {
     }
   };
 
-  const { refetch, data: playlistSongs } = useQuery<playlistSongs[]>(
+  const { refetch } = useQuery<playlistSongs[]>(
     ["playlist", data?.playlisturl],
     getPlaylist,
     {
       retry: 5,
       enabled: false,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+
       staleTime: 60 * 60000,
     }
   );
@@ -179,8 +175,7 @@ function Check() {
     {
       retry: 5,
       enabled: false,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
+
       staleTime: 60 * 60000,
     }
   );
@@ -299,9 +294,8 @@ function Check() {
     {
       retry: 5,
       enabled: false,
-      refetchOnMount: false,
+
       staleTime: 1000,
-      refetchOnWindowFocus: false,
     }
   );
   const { refetch: editSong } = useQuery<likedSongs[]>(
@@ -310,9 +304,8 @@ function Check() {
     {
       retry: 5,
       enabled: false,
-      refetchOnMount: false,
+
       staleTime: 1000,
-      refetchOnWindowFocus: false,
     }
   );
   const { refetch: tuneboxSong } = useQuery<likedSongs[]>(
@@ -321,9 +314,8 @@ function Check() {
     {
       retry: 5,
       enabled: false,
-      refetchOnMount: false,
+
       staleTime: 1000,
-      refetchOnWindowFocus: false,
     }
   );
 
@@ -340,9 +332,8 @@ function Check() {
     {
       retry: 5,
       enabled: false,
-      refetchOnMount: false,
+
       staleTime: 5 * 6000,
-      refetchOnWindowFocus: false,
     }
   );
   const playlist = useSelector((state: RootState) => state.musicReducer.queue);
@@ -356,14 +347,9 @@ function Check() {
     const p = r.documents as unknown as likedSongs[];
     return p;
   };
-  const { status: RecentSearch } = useQuery<likedSongs[]>(
-    "recentSearch",
-    loadRecentSearch,
-    {
-      refetchOnWindowFocus: false,
-      keepPreviousData: true,
-    }
-  );
+  useQuery<likedSongs[]>("recentSearch", loadRecentSearch, {
+    keepPreviousData: true,
+  });
 
   useSaved();
 
@@ -405,44 +391,38 @@ function Check() {
     album,
   ]);
   useEffect(() => {
-    const divId = localStorage.getItem("$d_id_");
-    if (!divId) {
-      localStorage.setItem("$d_id_", v4());
-    }
-    if (divId && online) {
-      const savedPlaylistData = localStorage.getItem(divId);
-      const savedIndex = localStorage.getItem("$cu_idx");
-      const savedNavigator = localStorage.getItem("_nv_nav");
+    if (online) {
+      const divId = localStorage.getItem("$d_id_");
+      if (!divId) {
+        localStorage.setItem("$d_id_", v4());
+      }
+      if (divId && online) {
+        const savedPlaylistData = localStorage.getItem(divId);
+        const savedIndex = localStorage.getItem("$cu_idx");
+        const savedNavigator = localStorage.getItem("_nv_nav");
 
-      if (
-        savedPlaylistData &&
-        savedPlaylistData.length > 0 &&
-        savedIndex &&
-        savedIndex &&
-        savedNavigator
-      ) {
-        const playlist = JSON.parse(savedPlaylistData);
+        if (
+          savedPlaylistData &&
+          savedPlaylistData.length > 0 &&
+          savedIndex &&
+          savedIndex &&
+          savedNavigator
+        ) {
+          const playlist = JSON.parse(savedPlaylistData);
 
-        new Audio(`${streamApi}${playlist[0].youtubeId}`).load();
-        dispatch(setPlaylist(playlist));
-        dispatch(SetQueue(playlist));
-        dispatch(SetPlaylistOrAlbum(savedNavigator));
-        dispatch(setCurrentIndex(parseInt(savedIndex)));
+          dispatch(setPlaylist(playlist));
+          dispatch(SetQueue(playlist));
+          dispatch(SetPlaylistOrAlbum(savedNavigator));
+          dispatch(setCurrentIndex(parseInt(savedIndex)));
+        } else {
+          setData();
+        }
       } else {
         setData();
       }
-    } else {
-      setData();
     }
-
-    const isStandalone = window.matchMedia(
-      "(display-mode: standalone)"
-    ).matches;
-    dispatch(setIsIphone(isStandalone));
-    setIsStandalone(isStandalone);
-
-    setCheck(false);
   }, [dispatch, online, setData]);
+
   useEffect(() => {
     if (data) {
       dispatch(setPlayingPlaylistUrl(data.playlisturl));
@@ -461,9 +441,15 @@ function Check() {
     }
   }, [dispatch]);
 
-  useEffect(() => {
-    console.log(RecentSearch);
-  }, [RecentSearch]);
+  const browseAll = async () => {
+    const res = await db.listDocuments(DATABASE_ID, BROWSE_ALL);
+    return res.documents as BrowseItem[];
+  };
+
+  useQuery<BrowseItem[]>(["BrowseAll"], browseAll, {
+    refetchOnMount: false,
+    staleTime: Infinity,
+  });
 
   useEffect(() => {
     if (playlist.length == 1 && online) {
@@ -489,17 +475,7 @@ function Check() {
     return <App />;
   }
 
-  return (
-    <>
-      {check && online && !lastPlayed && !playlistSongs ? (
-        <div className="load flex justify-center items-center h-screen">
-          <Loader />
-        </div>
-      ) : (
-        <Desktop />
-      )}
-    </>
-  );
+  return <Desktop />;
 }
 
 export default Check;

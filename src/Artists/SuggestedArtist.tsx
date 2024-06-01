@@ -1,5 +1,6 @@
 import { suggestedArtists } from "@/Interface";
-import { LazyLoadImage } from "react-lazy-load-image-component";
+import useImage from "@/hooks/useImage";
+
 import { Link } from "react-router-dom";
 
 const SuggestedArtist: React.FC<suggestedArtists> = ({
@@ -7,6 +8,7 @@ const SuggestedArtist: React.FC<suggestedArtists> = ({
   name,
   artistId,
 }) => {
+  const image = useImage(thumbnailUrl);
   return (
     <Link to={`/artist/${artistId}`}>
       <div
@@ -15,11 +17,13 @@ const SuggestedArtist: React.FC<suggestedArtists> = ({
       >
         <div>
           <div className=" h-20 w-20 mb-1">
-            <LazyLoadImage
+            <img
               width="100%"
               height="100%"
-              effect="blur"
-              src={thumbnailUrl}
+              src={image ? image : "/cache.jpg"}
+              onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
+                (e.currentTarget.src = "/cache.jpg")
+              }
               alt="Image"
               className="rounded-full animate-fade-right object-cover h-[100%] w-[100%]"
             />

@@ -1,7 +1,6 @@
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { Button } from "./ui/button";
 
-import "react-lazy-load-image-component/src/effects/blur.css";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "./ui/input";
 import axios from "axios";
@@ -50,8 +49,6 @@ function SpotifyTransfer({
     getTracksInfo,
     {
       enabled: false,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
     }
   );
 
@@ -77,7 +74,7 @@ function SpotifyTransfer({
         <p
           className={` ${
             className ? " justify-center bg-neutral-950" : "px-4"
-          } animate-fade-up bg-neutral-950 rounded-xl flex items-center space-x-1  py-2.5 mt-3  w-full text-base`}
+          } animate-fade-up bg-neutral-950 rounded-lg flex items-center space-x-1  py-2.5 mt-3  w-full text-base`}
         >
           <BiImport className="h-5 w-5" />
           <span>Import from Spotify</span>
@@ -112,7 +109,7 @@ function SpotifyTransfer({
                     <Button
                       type="submit"
                       variant={"secondary"}
-                      className=" w-full py-5 border bg-neutral-950 animate-fade-up  rounded-xl"
+                      className=" w-full py-5 border bg-neutral-950 animate-fade-up  rounded-lg"
                     >
                       Import
                     </Button>
@@ -121,12 +118,12 @@ function SpotifyTransfer({
 
                 <DrawerClose
                   ref={ref}
-                  className="w-full rounded-xl border mt-2 bg-none  p-0"
+                  className="w-full rounded-lg border mt-2 bg-none  p-0"
                 >
                   <Button
                     asChild
                     variant={"secondary"}
-                    className=" w-full py-5 bg-neutral-950 animate-fade-up rounded-xl"
+                    className=" w-full py-5 bg-neutral-950 animate-fade-up rounded-lg"
                   >
                     <p>Close</p>
                   </Button>

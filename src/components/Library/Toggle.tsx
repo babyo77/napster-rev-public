@@ -1,6 +1,7 @@
 import { setCurrentToggle } from "@/Store/Player";
 import { RootState } from "@/Store/Store";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import useSaved from "@/hooks/saved";
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -18,26 +19,29 @@ export function ToggleLibrary() {
     dispatch(setCurrentToggle(value || "Playlists"));
   };
 
-  const savedAlbums = useSelector(
-    (state: RootState) => state.musicReducer.savedAlbums
-  );
-  const savedArtists = useSelector(
-    (state: RootState) => state.musicReducer.savedArtists
-  );
-  const savedProfiles = useSelector(
-    (state: RootState) => state.musicReducer.savedProfile
-  );
+  const { SavedAlbums, SavedArtists, SavedProfiles } = useSaved();
 
   useEffect(() => {
-    if (currentToggle === "Artists") {
-      ArtistsRef.current?.click();
-    } else if (currentToggle === "Albums") {
-      AlbumsRef.current?.click();
-    } else if (currentToggle === "Playlists") {
-      PlaylistRef.current?.click();
-    } else if (currentToggle === "Profiles") {
+    if (SavedArtists?.length == 0 || SavedProfiles?.length == 0) {
       ProfileRef.current?.click();
     }
+  }, [SavedProfiles, SavedArtists]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (currentToggle === "Artists") {
+        ArtistsRef.current?.click();
+      }
+      if (currentToggle === "Albums") {
+        AlbumsRef.current?.click();
+      }
+      if (currentToggle === "Playlists") {
+        PlaylistRef.current?.click();
+      }
+      if (currentToggle === "Profiles") {
+        ProfileRef.current?.click();
+      }
+    }, 1000);
+    return () => clearTimeout(t);
   }, [currentToggle]);
 
   return (
@@ -47,7 +51,7 @@ export function ToggleLibrary() {
     >
       <ToggleGroupItem
         ref={PlaylistRef}
-        className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+        className=" rounded-2xl animate-fade-right  text-xs font-normal p-0 m-0 px-4 h-fit py-1.5"
         variant={"outline"}
         value="Playlists"
         aria-label="Playlists"
@@ -56,10 +60,10 @@ export function ToggleLibrary() {
         Playlists
       </ToggleGroupItem>
 
-      {savedAlbums.length > 0 && (
+      {SavedAlbums && SavedAlbums?.length > 0 && (
         <ToggleGroupItem
           ref={AlbumsRef}
-          className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl animate-fade-right  text-xs font-normal p-0 m-0 px-4 h-fit py-1.5"
           variant={"outline"}
           value="Albums"
           aria-label="Albums"
@@ -68,10 +72,10 @@ export function ToggleLibrary() {
           Albums
         </ToggleGroupItem>
       )}
-      {savedArtists.length > 0 && (
+      {SavedArtists && SavedArtists?.length > 0 && (
         <ToggleGroupItem
           ref={ArtistsRef}
-          className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl animate-fade-right  text-xs font-normal p-0 m-0 px-4 h-fit py-1.5"
           variant={"outline"}
           value="Artists"
           aria-label="Artists"
@@ -80,10 +84,10 @@ export function ToggleLibrary() {
           Artists
         </ToggleGroupItem>
       )}
-      {savedProfiles.length > 0 && (
+      {SavedProfiles && SavedProfiles?.length > 0 && (
         <ToggleGroupItem
           ref={ProfileRef}
-          className=" rounded-2xl animate-fade-right fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl animate-fade-right  text-xs font-normal p-0 m-0 px-4 h-fit py-1.5"
           variant={"outline"}
           value="Profiles"
           aria-label="Profiles"

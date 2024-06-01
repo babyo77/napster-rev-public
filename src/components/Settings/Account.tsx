@@ -1,4 +1,3 @@
-import "react-lazy-load-image-component/src/effects/blur.css";
 import {
   Drawer,
   DrawerClose,
@@ -23,7 +22,6 @@ import Loader from "../Loaders/Loader";
 import { DialogTitle } from "../ui/dialog";
 import axios from "axios";
 import { getUserApi } from "@/API/api";
-import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Avatar, AvatarImage } from "../ui/avatar";
 import { setUser } from "@/Store/Player";
 import { RiLinkM } from "react-icons/ri";
@@ -101,34 +99,31 @@ function AccountComp({
             }
           );
           await authService.updateName(code.name).catch(() => {
+            localStorage.setItem("n", code.name);
             setSync(false);
           });
         }
         setSync(false);
         q.refetchQueries("dpImage");
+
         return result.documents[0] as user;
       }
     } else {
       setSync(false);
-
       return null;
     }
   }, [uid, q]);
 
   const { data, isLoading, refetch } = useQuery<user | null>(
-    ["user", uid],
+    ["userDetails", uid],
     getUser,
     {
-      refetchOnWindowFocus: false,
-      staleTime: 60000,
-      onSuccess(data) {
-        data == undefined && refetch();
-      },
+      staleTime: Infinity,
     }
   );
 
   const profile = useRef<HTMLInputElement>(null);
-  const [verify, setVerify] = useState<string>();
+  const [verify, setVerify] = useState<string>("");
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -193,11 +188,12 @@ function AccountComp({
   }, [uid]);
 
   const c = useImage(image ? image : "/cache.jpg");
+  const c1 = useImage(data && data.image ? data.image : "/cache.jpg");
   return (
     <Drawer>
       <DrawerTrigger className=" w-full animate-fade-up">
         <p
-          className={`rounded-xl bg-neutral-950 py-2 animate-fade-up flex text-base ${className} space-x-2 items-center flex`}
+          className={`rounded-lg bg-neutral-950 py-2 animate-fade-up flex text-base ${className} space-x-2 items-center flex`}
         >
           <Avatar className=" h-7  w-7 p-0 m-0 -mr-0.5">
             <AvatarImage
@@ -221,9 +217,8 @@ function AccountComp({
               data.name.trim() !== "" && (
                 <>
                   <Avatar className="w-40 h-40 animate-fade-down ">
-                    <LazyLoadImage
-                      effect="blur"
-                      src={data?.image}
+                    <img
+                      src={c1 ? c1 : "/cache.jpg"}
                       className=" rounded-full object-cover h-[100%] w-[100%]"
                     />
                   </Avatar>
@@ -247,9 +242,9 @@ function AccountComp({
                 </>
               )}
             {data &&
-              !verify &&
-              data.image.length == 0 &&
-              data.name.length == 0 && (
+              verify.length == 0 &&
+              data?.image?.length == 0 &&
+              data?.name?.length == 0 && (
                 <>
                   <DrawerHeader>
                     <DialogTitle className=" text-2xl animate-fade-down font-semibold -mb-1">
@@ -268,17 +263,17 @@ function AccountComp({
                     <Button
                       type="submit"
                       variant={"secondary"}
-                      className=" w-full py-5 animate-fade-up border bg-neutral-950 rounded-xl"
+                      className=" w-full py-5 animate-fade-up border bg-neutral-950 rounded-lg"
                     >
                       Continue
                     </Button>
                   </form>
 
-                  <DrawerClose className="w-full rounded-xl border-none mt-2 bg-none  p-0">
+                  <DrawerClose className="w-full rounded-lg border-none mt-2 bg-none  p-0">
                     <Button
                       asChild
                       variant={"secondary"}
-                      className=" w-full py-5 animate-fade-up border bg-neutral-950 rounded-xl"
+                      className=" w-full py-5 animate-fade-up border bg-neutral-950 rounded-lg"
                     >
                       <p>Close</p>
                     </Button>
@@ -288,23 +283,22 @@ function AccountComp({
 
             {verify && !loading && (
               <>
-                <h2 className="text-zinc-100 animate-fade-down text-2xl font-bold mb-1 ">
+                <h2 className="text-zinc-100 text-center w-full animate-fade-down text-2xl font-bold mb-1 ">
                   Verify it's Your Account
                 </h2>
-                <div className="prose flex flex-col  animate-fade-up  font-semibold items-start text-zinc-300">
+                <div className="text-left w-full py-0.5 px-4 flex flex-col  animate-fade-up  font-semibold items-start text-zinc-300">
                   <ul className="text-base">
-                    <li>Open Spotify on your device.</li>
-                    <li>Go to Your Playlists</li>
-                    <li>Tap "Create Playlist" and name it "Napster".</li>
-
-                    <li>Tap "Save" or "Create".</li>
+                    <li>1. Open Spotify on your device.</li>
+                    <li>2. Go to Your Playlists</li>
+                    <li>3. Tap "Create Playlist" and name it "Napster".</li>
+                    <li>4. Tap "Save" or "Create".</li>
                   </ul>
                 </div>
                 <Button
                   onClick={handleVerify}
                   variant={"secondary"}
                   asChild
-                  className=" animate=fade-up w-full border bg-neutral-950 py-5 mt-3 text-lg animate-fade-up rounded-xl"
+                  className=" animate=fade-up w-full border bg-neutral-950 py-5 mt-3 text-lg animate-fade-up rounded-lg"
                 >
                   <p>Verify</p>
                 </Button>
@@ -312,7 +306,7 @@ function AccountComp({
                   onClick={() => (refetch(), setVerify(""))}
                   variant={"secondary"}
                   asChild
-                  className=" w-full py-5 mt-1.5 text-lg border bg-neutral-950 animate-fade-up rounded-xl"
+                  className=" w-full py-5 mt-1.5 text-lg border bg-neutral-950 animate-fade-up rounded-lg"
                 >
                   <p>Cancel</p>
                 </Button>

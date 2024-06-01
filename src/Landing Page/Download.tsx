@@ -37,16 +37,16 @@ export default function Download() {
       <DialogTrigger className="p-0 m-0 flex">
         <Button
           asChild
-          className=" text-2xl py-6 max-md:text-base   rounded-lg space-x-1"
+          className=" text-xl py-6 max-md:text-base hover:bg-zinc-950 text-zinc-300 bg-transparent border rounded-xl space-x-1"
         >
           <div>
             <RiDownloadLine />
-            <p title="install pwa app">Install app</p>
+            <p title="install pwa app font-normal">Install app</p>
           </div>
         </Button>
       </DialogTrigger>
       <DialogContent
-        className={`border-none bg-[#09090B] rounded-xl  justify-center  flex gap-4 py-11 pb-7  w-fit max-md:w-[77dvw] ${
+        className={`border rounded-lg  justify-center  flex gap-4 py-11 pb-7  w-fit max-md:w-[77dvw] ${
           !ios ? "px-16" : "px-11"
         }  max-md:flex-wrap `}
       >
@@ -56,7 +56,7 @@ export default function Download() {
               <div
                 onClick={() => (SetIos((prev) => !prev), SetAndroid(false))}
                 title="ios"
-                className="flex animate-fade-right text-9xl text-zinc-300 hover:text-zinc-100 hover:scale-105 transition-all duration-300 cursor-pointer bg-white/10 shadow-md  p-5 rounded-xl "
+                className="flex animate-fade-right text-9xl text-zinc-300 hover:text-zinc-100 hover:scale-105 transition-all duration-300 cursor-pointer border shadow-md  p-5 rounded-xl "
               >
                 <FaApple />
               </div>
@@ -66,7 +66,7 @@ export default function Download() {
             <>
               <div
                 title="ios"
-                className="flex  animate-fade-up text-7xl text-zinc-300 hover:text-zinc-100 hover:scale-105 transition-all duration-300 cursor-pointer bg-white/10 shadow-md  p-5 max-md:p-4 rounded-xl "
+                className="flex  border border-zinc-800 animate-fade-up text-7xl text-zinc-300 hover:text-zinc-100 hover:scale-105 transition-all duration-300 cursor-pointer  shadow-md  p-5 max-md:p-4 rounded-lg "
               >
                 <QRCodeSVG
                   className="animate-rotate-x animate-once animate-duration-1000 animate-ease-in-out"
@@ -89,7 +89,7 @@ export default function Download() {
               <div
                 onClick={() => (SetIos((prev) => !prev), SetAndroid(true))}
                 title="android"
-                className="flex text-9xl animate-fade-left text-zinc-300 hover:text-zinc-100 hover:scale-105 transition-all duration-300 cursor-pointer bg-white/10 shadow-md  p-5 rounded-xl "
+                className="flex text-9xl animate-fade-left text-zinc-300 hover:text-zinc-100 hover:scale-105 transition-all duration-300 cursor-pointer border shadow-md  p-5 rounded-xl "
               >
                 <MdOutlineAndroid />
               </div>

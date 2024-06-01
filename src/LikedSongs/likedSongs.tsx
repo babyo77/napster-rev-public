@@ -1,172 +1,68 @@
 import { FaPlay } from "react-icons/fa6";
 import { useParams } from "react-router-dom";
-import { useQuery } from "react-query";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  SetPlaylistOrAlbum,
-  isLoop,
-  play,
-  setCurrentIndex,
-  setPlayingPlaylistUrl,
-  setPlaylist,
-  shuffle,
-} from "@/Store/Player";
-import React, { useCallback, useEffect, useState } from "react";
-import { RootState } from "@/Store/Store";
-import authService, {
-  DATABASE_ID,
-  LIKE_SONG,
-  db,
-} from "@/appwrite/appwriteConfig";
+import { useQueryClient } from "react-query";
+import React, { useEffect } from "react";
+import { DATABASE_ID, LIKE_SONG, db } from "@/appwrite/appwriteConfig";
 import { Query } from "appwrite";
-import { likedSongs, playlistSongs } from "@/Interface";
+import { likedSongs } from "@/Interface";
 import Loader from "@/components/Loaders/Loader";
 import GoBack from "@/components/Goback";
 import { Button } from "@/components/ui/button";
 import Songs from "@/components/Library/Songs";
 import { RxShuffle } from "react-icons/rx";
-import { RiFocus3Line } from "react-icons/ri";
 import Share from "@/HandleShare/Share";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 import { useInView } from "react-intersection-observer";
 import NotFound from "@/components/404";
+
+import useLikedSongs from "@/hooks/useLikedSongs";
 function LikedSongComp() {
   const { ref, inView } = useInView({
     threshold: 0,
     rootMargin: "0px 0px 100px 0px",
   });
-  const dispatch = useDispatch();
+
   const { id } = useParams();
 
-  const currentIndex = useSelector(
-    (state: RootState) => state.musicReducer.currentIndex
-  );
-  const playingPlaylistUrl = useSelector(
-    (state: RootState) => state.musicReducer.playingPlaylistUrl
-  );
-
-  const playlist = useSelector(
-    (state: RootState) => state.musicReducer.playlist
-  );
-
-  const [offset, setOffset] = useState<string>();
-  const [pDetails, setPDetails] = useState<playlistSongs[]>();
-
-  const getPlaylistDetails = async () => {
-    const uid = (await authService.getAccount()).$id;
-    const r = await db.listDocuments(DATABASE_ID, LIKE_SONG, [
-      Query.orderDesc("$createdAt"),
-      Query.equal("for", [id || uid]),
-      Query.limit(150),
-    ]);
-
-    const lastId = r.documents[r.documents.length - 1].$id;
-
-    setOffset(lastId);
-
-    const modified = r.documents.map((doc) => ({
-      $id: doc.$id,
-      for: doc.for,
-      youtubeId: doc.youtubeId,
-      artists: [
-        {
-          id: doc.artists[0],
-          name: doc.artists[1],
-        },
-      ],
-      title: doc.title,
-      thumbnailUrl: doc.thumbnailUrl,
-    }));
-    setPDetails(modified);
-    return modified as unknown as likedSongs[];
-  };
-
-  const isPlaying = useSelector(
-    (state: RootState) => state.musicReducer.isPlaying
-  );
-
   const {
-    isLoading: pLoading,
-    isError: pError,
-    refetch: pRefetch,
-  } = useQuery<likedSongs[]>(["likedSongsDetails", id], getPlaylistDetails, {
-    retry: 0,
-    staleTime: 1000,
-    refetchOnWindowFocus: false,
-  });
-  const handleShufflePlay = useCallback(async () => {
-    if (pDetails) {
-      dispatch(shuffle(pDetails));
-      dispatch(setCurrentIndex(0));
-      dispatch(setPlayingPlaylistUrl(id || ""));
-      dispatch(SetPlaylistOrAlbum("liked"));
-      if (pDetails.length == 1) {
-        dispatch(isLoop(true));
-      } else {
-        dispatch(isLoop(false));
-      }
-      if (!isPlaying) {
-        dispatch(play(true));
-      }
-    }
-  }, [dispatch, pDetails, isPlaying, id]);
-  const handlePlay = useCallback(() => {
-    if (pDetails) {
-      dispatch(setPlaylist(pDetails));
-      dispatch(setCurrentIndex(0));
-      dispatch(setPlayingPlaylistUrl(id || ""));
-      dispatch(SetPlaylistOrAlbum("liked"));
-      if (pDetails.length == 1) {
-        dispatch(isLoop(true));
-      } else {
-        dispatch(isLoop(false));
-      }
-      if (!isPlaying) {
-        dispatch(play(true));
-      }
-    }
-  }, [dispatch, isPlaying, id, pDetails]);
+    pDetails,
+    pError,
+    pLoading,
+    pRefetch,
+    uid,
+    handlePlay,
+    handleShufflePlay,
+  } = useLikedSongs({ id });
 
-  const handleFocus = useCallback(() => {
-    const toFocus = document.getElementById(playlist[currentIndex].youtubeId);
-    toFocus?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [currentIndex, playlist]);
-
+  const q = useQueryClient();
   useEffect(() => {
-    authService.getAccount().then((account) => {
-      const uid = account.$id;
-      if (inView) {
-        if (id && pDetails && offset) {
-          db.listDocuments(DATABASE_ID, LIKE_SONG, [
-            Query.orderDesc("$createdAt"),
-            Query.equal("for", [id || uid]),
-            Query.cursorAfter(offset),
-          ]).then((r) => {
-            const lastId = r.documents[r.documents.length - 1].$id;
-
-            setOffset(lastId);
-
-            const modified = r.documents.map((doc) => ({
-              $id: doc.$id,
-              for: doc.for,
-              youtubeId: doc.youtubeId,
-              artists: [
-                {
-                  id: doc.artists[0],
-                  name: doc.artists[1],
-                },
-              ],
-              title: doc.title,
-              thumbnailUrl: doc.thumbnailUrl,
-            }));
-            setPDetails((prev) => prev && [...prev, ...modified]);
-            return modified as unknown as likedSongs[];
-          });
-        }
+    if (inView && uid) {
+      if (id && pDetails) {
+        db.listDocuments(DATABASE_ID, LIKE_SONG, [
+          Query.orderDesc("$createdAt"),
+          Query.equal("for", [id || uid]),
+          Query.cursorAfter(pDetails[pDetails.length - 1].$id),
+        ]).then(async (r) => {
+          const modified = r.documents.map((doc) => ({
+            $id: doc.$id,
+            for: doc.for,
+            youtubeId: doc.youtubeId,
+            artists: [
+              {
+                id: doc.artists[0],
+                name: doc.artists[1],
+              },
+            ],
+            title: doc.title,
+            thumbnailUrl: doc.thumbnailUrl,
+          }));
+          await q.setQueryData(["likedSongsDetails", id], (prev) => [
+            ...(prev as likedSongs[]),
+            ...modified,
+          ]);
+        });
       }
-    });
-  }, [inView, id, pDetails, offset]);
+    }
+  }, [inView, id, pDetails, q, uid]);
 
   return (
     <div className=" flex flex-col items-center">
@@ -182,21 +78,15 @@ function LikedSongComp() {
         </div>
       )}
       {pDetails && pDetails.length == 0 && <NotFound />}
-      {pDetails && (
+      {pDetails && pDetails.length > 1 && (
         <>
           <div className="flex w-screen h-[25rem] justify-center pt-[6vh] relative ">
             <GoBack />
             <div className="absolute top-4 z-10 right-3 flex-col space-y-0.5">
-              {playingPlaylistUrl == id && (
-                <div className="" onClick={handleFocus}>
-                  <RiFocus3Line className="h-8 w-8 fade-in mb-2  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
-                </div>
-              )}
-              <Share />
+              <Share className=" text-zinc-400" />
             </div>
             <div className="h-56  w-56">
-              <LazyLoadImage
-                effect="blur"
+              <img
                 width="100%"
                 height="100%"
                 src="/liked.webp"
@@ -214,7 +104,7 @@ function LikedSongComp() {
                   onClick={handlePlay}
                   type="button"
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[13dvw]"
+                  className="text-lg py-6 animate-fade-down text-red-500 shadow-none bg-neutral-900 rounded-md px-[13dvw]"
                 >
                   <FaPlay className="mr-2" />
                   Play
@@ -223,7 +113,7 @@ function LikedSongComp() {
                   type="button"
                   onClick={handleShufflePlay}
                   variant={"secondary"}
-                  className="text-lg py-6  animate-fade-down   shadow-none bg-zinc-800 rounded-lg px-[12dvw]"
+                  className="text-lg py-6  animate-fade-down  text-red-500 shadow-none bg-neutral-900 rounded-md px-[12dvw]"
                 >
                   <RxShuffle className="mr-2" />
                   Shuffle
@@ -231,7 +121,7 @@ function LikedSongComp() {
               </div>
             </div>
           </div>
-          <div className="py-3 -mt-[2vh] pb-[8.5rem]">
+          <div className="py-3 -mt-[2vh]  pb-[9.4rem]">
             {pDetails.map((data, i) => (
               <div key={data.youtubeId + i} ref={ref}>
                 <Songs

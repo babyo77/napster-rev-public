@@ -1,8 +1,7 @@
 import { homePagePlaylist } from "@/Interface";
-import { LazyLoadImage } from "react-lazy-load-image-component";
+
 import { Link } from "react-router-dom";
 import { Skeleton } from "../ui/skeleton";
-import "react-lazy-load-image-component/src/effects/blur.css";
 
 function Artist({ data }: { data: homePagePlaylist[] }) {
   return (
@@ -22,13 +21,12 @@ function Artist({ data }: { data: homePagePlaylist[] }) {
           <div className="flex  space-x-3 px-4 overflow-x-auto pb-1  items-center">
             {data.map((artist) => (
               <Link to={`/artist/${artist.url}`} key={artist.url}>
-                <div className="flex fade-in items-center mt-0.5 overflow-x-scroll  ">
+                <div className="flex  items-center mt-0.5 overflow-x-scroll  ">
                   <div>
                     <div className=" h-20 w-20 mb-1">
-                      <LazyLoadImage
+                      <img
                         width="100%"
                         height="100%"
-                        effect="blur"
                         src={artist.image}
                         alt="Image"
                         className="rounded-full object-cover h-[100%] w-[100%]"

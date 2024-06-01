@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { AspectRatio } from "../ui/aspect-ratio";
-import { LazyLoadImage } from "react-lazy-load-image-component";
+
 import { GetTrack, sendNotificationApi } from "@/API/api";
 import { playlistSongs } from "@/Interface";
 import { FiSend } from "react-icons/fi";
@@ -85,11 +85,10 @@ function TuneSongComp({
       <div onClick={handlePlay} className="  flex space-x-2">
         <div className="h-12 w-12 space-y-2">
           <AspectRatio ratio={1 / 1}>
-            <LazyLoadImage
+            <img
               src={c ? c : "/cache.jpg"}
               width="100%"
               height="100%"
-              effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>

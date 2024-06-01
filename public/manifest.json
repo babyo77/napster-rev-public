@@ -24,8 +24,25 @@
       "type": "image/png"
     }
   ],
-  "start_url": "https://napster-drx.vercel.app/?utm_source=pwa_install",
-  "scope": "https://napster-drx.vercel.app/",
+  "shortcuts": [
+    {
+      "name": "Search",
+      "description": "Search Music",
+      "url": "/search"
+    },
+    {
+      "name": "library",
+      "description": "Open Library",
+      "url": "/library"
+    },
+    {
+      "name": "Tunes",
+      "description": "Explore Tunes",
+      "url": "/share-play"
+    }
+  ],
+  "start_url": "/?utm_source=pwa_install",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000"

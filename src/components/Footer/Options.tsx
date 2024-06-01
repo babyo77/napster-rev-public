@@ -8,144 +8,45 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCallback } from "react";
-import { playlistSongs, savedPlaylist } from "@/Interface";
+
+import { playlistSongs } from "@/Interface";
 import { BiDotsHorizontalRounded } from "react-icons/bi";
 import { IoAddSharp } from "react-icons/io5";
-import { v4 as uuidv4 } from "uuid";
-import {
-  ADD_TO_LIBRARY,
-  DATABASE_ID,
-  ID,
-  PLAYLIST_COLLECTION_ID,
-  db,
-} from "@/appwrite/appwriteConfig";
-import { Permission, Query, Role } from "appwrite";
-import { useQuery } from "react-query";
+
 import Loader from "../Loaders/Loader";
 import { LiaDownloadSolid } from "react-icons/lia";
-import { downloadApi } from "@/API/api";
 import ShareLyrics from "./Share";
-import { RootState } from "@/Store/Store";
-import { useSelector } from "react-redux";
-import { useToast } from "../ui/use-toast";
+
 import { DropdownMenuTriggerProps } from "@radix-ui/react-dropdown-menu";
+import useDownload from "../Library/download";
+
+import useOptions from "../Library/useoptions";
+import { IoIosRemoveCircleOutline } from "react-icons/io";
+import { useCallback, useRef, useState } from "react";
 
 interface option extends DropdownMenuTriggerProps {
   id?: string;
   music: playlistSongs;
 }
 function Options({ music, id, ...props }: option) {
-  const uid = useSelector((state: RootState) => state.musicReducer.uid);
-  const { toast } = useToast();
+  const { handleAdd, handleLibrary, handlePlaylist, isLoading, data } =
+    useOptions({ music, id });
+  const [downloaded, setDownloaded] = useState<boolean>(false);
 
-  const handleAdd = useCallback(
-    async (playlistId: string, show?: boolean) => {
-      if (uid) {
-        const r = await db.listDocuments(DATABASE_ID, ADD_TO_LIBRARY, [
-          Query.orderDesc("$createdAt"),
-          Query.equal("for", [uid]),
-          Query.equal("youtubeId", [music.youtubeId]),
-          Query.equal("playlistId", [playlistId]),
-          Query.limit(999),
-        ]);
-
-        if (r.total > 0) {
-          return;
-        }
-        if (uid) {
-          db.createDocument(
-            DATABASE_ID,
-            ADD_TO_LIBRARY,
-            ID.unique(),
-            {
-              for: uid,
-              youtubeId: music.youtubeId,
-              artists: [music.artists[0].id, music.artists[0].name],
-              title: music.title,
-              thumbnailUrl: music.thumbnailUrl,
-              playlistId: playlistId,
-              index: r.total + 1,
-            },
-            [
-              Permission.update(Role.user(uid)),
-              Permission.delete(Role.user(uid)),
-            ]
-          ).then(() => {
-            toast({
-              title: "Added to playlist",
-            });
-            if (show) return;
-          });
-        }
-      }
-    },
-    [music, uid, toast]
-  );
-
-  const handleLibrary = useCallback(async () => {
-    if (uid) {
-      db.createDocument(
-        DATABASE_ID,
-        PLAYLIST_COLLECTION_ID,
-        ID.unique(),
-        {
-          name: music.title,
-          creator: music.artists[0].name || "unknown",
-          link: "custom" + uuidv4(),
-          image: music.thumbnailUrl,
-          for: uid,
-        },
-        [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
-      ).then((d) => {
-        handleAdd(d.$id);
-        toast({
-          title: "Added to new Library",
-        });
-      });
+  const { handleDownload, handleRemoveDownload, isDownload } = useDownload({
+    music,
+    setDownloaded,
+  });
+  const shareSong = useRef<HTMLButtonElement>(null);
+  const handleClick = useCallback(() => {
+    if (shareSong.current) {
+      shareSong.current.click();
     }
-  }, [music, handleAdd, uid, toast]);
-  const loadSavedPlaylist = async () => {
-    const r = await db.listDocuments(DATABASE_ID, PLAYLIST_COLLECTION_ID, [
-      Query.orderDesc("$createdAt"),
-      Query.notEqual("$id", [id?.replace("custom", "") || ""]),
-      Query.startsWith("link", "custom"),
-      Query.equal("for", [uid || "default"]),
-      Query.limit(999),
-    ]);
-    const p = r.documents as unknown as savedPlaylist[];
-    return p;
-  };
-  const { data, isLoading, refetch } = useQuery(
-    "savedPlaylistToAdd",
-    loadSavedPlaylist,
-    {
-      refetchOnWindowFocus: false,
-      enabled: false,
-      staleTime: Infinity,
-      keepPreviousData: true,
-    }
-  );
-
-  const handlePlaylist = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
-
-  const handleDownload = useCallback(() => {
-    const link = document.createElement("a");
-    link.style.display = "none";
-    link.target = "_blank";
-    link.href = music.youtubeId.startsWith("http")
-      ? `${music.youtubeId}&file=${music.title}`
-      : `${downloadApi}${music.youtubeId}&file=${music.title}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [music.youtubeId, music.title]);
-
+  }, []);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        onClick={isDownload}
         className="m-0 p-1.5 flex  justify-center items-center bg-zinc-900 rounded-full"
         {...props}
       >
@@ -171,8 +72,10 @@ function Options({ music, id, ...props }: option) {
 
           <div className="h-[.05rem] w-full bg-zinc-300/10 "></div>
           <div className="flex items-center justify-between space-x-2 pl-2 pb-1 pr-0.5">
-            <p className="text-base">Share Song</p>
-            <ShareLyrics size className="h-3 w-3" />
+            <p onClick={handleClick} className="text-base">
+              Share Song
+            </p>
+            <ShareLyrics ref={shareSong} size className="h-3 w-3" />
           </div>
 
           <DropdownMenuPortal>
@@ -211,14 +114,29 @@ function Options({ music, id, ...props }: option) {
             </DropdownMenuSubContent>
           </DropdownMenuPortal>
         </DropdownMenuSub>
-        <div className="h-[.05rem] w-full bg-zinc-300/10 "></div>
-        <DropdownMenuItem
-          onClick={handleDownload}
-          className="flex items-center justify-between space-x-2"
-        >
-          <p className="text-base">Download</p>
-          <LiaDownloadSolid className="h-5 w-5" />
-        </DropdownMenuItem>
+        {downloaded && downloaded ? (
+          <>
+            <div className="h-[.05rem] w-full bg-zinc-300/10 "></div>
+            <DropdownMenuItem
+              onClick={handleRemoveDownload}
+              className="flex items-center justify-between space-x-2"
+            >
+              <p className="text-base">Remove Download</p>
+              <IoIosRemoveCircleOutline className="h-5 w-5" />
+            </DropdownMenuItem>
+          </>
+        ) : (
+          <>
+            <div className="h-[.05rem] w-full bg-zinc-300/10 "></div>
+            <DropdownMenuItem
+              onClick={handleDownload}
+              className="flex items-center justify-between space-x-2"
+            >
+              <p className="text-base">Download</p>
+              <LiaDownloadSolid className="h-5 w-5" />
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

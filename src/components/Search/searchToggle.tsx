@@ -53,7 +53,7 @@ export function SearchToggle({
       {Music && (
         <ToggleGroupItem
           ref={MusicRef}
-          className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl  text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
           variant={"outline"}
           value="Music"
           aria-label="Music"
@@ -65,7 +65,7 @@ export function SearchToggle({
       {Artist && (
         <ToggleGroupItem
           ref={ArtistRef}
-          className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl  text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
           variant={"outline"}
           value="Artists"
           aria-label="Artists"
@@ -77,7 +77,7 @@ export function SearchToggle({
       {Playlists && (
         <ToggleGroupItem
           ref={PlaylistRef}
-          className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl  text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
           variant={"outline"}
           value="Playlists"
           aria-label="Playlists"
@@ -89,7 +89,7 @@ export function SearchToggle({
       {Albums && (
         <ToggleGroupItem
           ref={AlbumsRef}
-          className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl  text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
           variant={"outline"}
           value="Albums"
           aria-label="Albums"
@@ -101,7 +101,7 @@ export function SearchToggle({
       {Profile && (
         <ToggleGroupItem
           ref={ProfileRef}
-          className=" rounded-2xl fade-in text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
+          className=" rounded-2xl  text-xs font-normal p-0 m-0 px-3.5 h-fit py-1.5"
           variant={"outline"}
           value="Profile"
           aria-label="Profile"

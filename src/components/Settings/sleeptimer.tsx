@@ -27,7 +27,7 @@ function SleepTimer() {
       }, time * 1000);
       dispatch(SetSleepTimer(timer));
       toast({
-        title: `Timer set  for ${e.currentTarget.textContent}`,
+        description: `Timer set  for ${e.currentTarget.textContent}`,
       });
       return () => {
         dispatch(SetSleepTimer(null));
@@ -42,7 +42,7 @@ function SleepTimer() {
       clearTimeout(timer);
       dispatch(SetSleepTimer(null));
       toast({
-        title: `Sleep timer removed`,
+        description: `Sleep timer removed`,
         variant: "destructive",
       });
     }
@@ -51,7 +51,7 @@ function SleepTimer() {
     <Drawer>
       <DrawerTrigger>
         <div className="animate-fade-up">
-          <p className=" rounded-xl py-2.5 mt-3 animate-fade-up  flex text-start   px-4  text-base items-center space-x-1 bg-neutral-950">
+          <p className=" rounded-lg py-2.5 mt-3 animate-fade-up  flex text-start   px-4  text-base items-center space-x-1 bg-neutral-950">
             <LuTimer className="h-6 w-6" />
             <span>Sleep Timer</span>
           </p>
@@ -64,7 +64,7 @@ function SleepTimer() {
             <Button
               onClick={(e) => handleTimer(600, e)}
               variant={"secondary"}
-              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-xl"
+              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-lg"
             >
               10 min
             </Button>
@@ -73,7 +73,7 @@ function SleepTimer() {
             <Button
               onClick={(e) => handleTimer(900, e)}
               variant={"secondary"}
-              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-xl"
+              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-lg"
             >
               15 min
             </Button>
@@ -82,7 +82,7 @@ function SleepTimer() {
             <Button
               onClick={(e) => handleTimer(1800, e)}
               variant={"secondary"}
-              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-xl"
+              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-lg"
             >
               30 min
             </Button>
@@ -91,7 +91,7 @@ function SleepTimer() {
             <Button
               onClick={(e) => handleTimer(2700, e)}
               variant={"secondary"}
-              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-xl"
+              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-lg"
             >
               45 min
             </Button>
@@ -100,7 +100,7 @@ function SleepTimer() {
             <Button
               onClick={(e) => handleTimer(3600, e)}
               variant={"secondary"}
-              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-xl"
+              className="bg-neutral-950 py-5 tracking-tight leading-tight rounded-lg"
             >
               1 hour
             </Button>
@@ -110,7 +110,7 @@ function SleepTimer() {
               onClick={clearTime}
               variant={"destructive"}
               disabled={timer ? false : true}
-              className="bg-red-700 py-5 tracking-tight leading-tight rounded-xl"
+              className="bg-red-700 py-5 tracking-tight leading-tight rounded-lg"
             >
               Turn off Sleep Timer
             </Button>

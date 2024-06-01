@@ -1,7 +1,6 @@
 import { AspectRatio } from "../ui/aspect-ratio";
 import { useCallback } from "react";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import {
@@ -9,6 +8,7 @@ import {
   play,
   setCurrentArtistId,
   setCurrentIndex,
+  setPlayingPlaylistUrl,
   setPlaylist,
 } from "@/Store/Player";
 import { artists, playlistSongs } from "@/Interface";
@@ -51,8 +51,6 @@ function FeedSong({
     ["suggestedFeed", id],
     getSuggestedSongs,
     {
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
       staleTime: 5 * 60000,
     }
   );
@@ -89,6 +87,7 @@ function FeedSong({
       dispatch(setPlaylist(data));
       dispatch(setCurrentIndex(0));
       dispatch(SetPlaylistOrAlbum("suggested"));
+      dispatch(setPlayingPlaylistUrl(""));
     }
     dispatch(setCurrentArtistId(artistId));
     dispatch(SetPlaylistOrAlbum("suggested"));
@@ -118,19 +117,18 @@ function FeedSong({
   return (
     <div className="flex  animate-fade-up flex-col py-2 space-y-2 ">
       <div className="overflow-hidden  space-y-2">
-        <AspectRatio ratio={4 / 5} className=" rounded-xl overflow-hidden">
-          <LazyLoadImage
+        <AspectRatio ratio={1 / 1} className=" rounded-md overflow-hidden">
+          <img
             onClick={handlePlay}
             src={c ? c : "/cache.jpg"}
             width="100%"
             height="100%"
-            effect="blur"
             alt="Image"
             loading="lazy"
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
               (e.currentTarget.src = "/cache.jpg")
             }
-            className="rounded-xl object-cover object-center h-[100%] w-[100%]"
+            className="rounded-md object-cover object-center h-[100%] w-[100%]"
           />
         </AspectRatio>
       </div>
@@ -142,7 +140,7 @@ function FeedSong({
               playlist[currentIndex]?.youtubeId == audio &&
               currentIndex == 0 &&
               "text-red-500"
-            }  truncate text-2xl leading-tight tracking-tighter font-semibold`}
+            }  truncate text-2xl leading-tight font-semibold`}
           >
             {title}
           </p>

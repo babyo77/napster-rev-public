@@ -1,5 +1,3 @@
-import { MdOutlineEdit } from "react-icons/md";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -29,9 +27,7 @@ import {
   RefetchQueryFilters,
   useQueryClient,
 } from "react-query";
-import { LazyLoadImage } from "react-lazy-load-image-component";
 import { SearchPlaylist } from "@/Interface";
-import "react-lazy-load-image-component/src/effects/blur.css";
 import {
   Drawer,
   DrawerClose,
@@ -40,6 +36,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "../ui/drawer";
+import { RiEditBoxLine } from "react-icons/ri";
 
 const FormSchema = z.object({
   Playlist: z.string().min(2, {
@@ -91,12 +88,14 @@ export function EditCustomPlaylist({
     db.updateDocument(DATABASE_ID, PLAYLIST_COLLECTION_ID, id, {
       ...info,
     }).then(
-      () => (
+      async () => (
         form.setValue("Playlist", data.Playlist),
         form.setValue("creator", data.creator),
         setIsSubmit(false),
         close.current?.click(),
-        q.fetchQuery(["playlistDetails", "custom" + id])
+        await q.fetchQuery("savedPlaylist"),
+        await q.fetchQuery(["playlistDetails", "custom" + id]),
+        await q.fetchQuery(["SavedPlaylistDetails", id])
       )
     );
   }
@@ -120,7 +119,9 @@ export function EditCustomPlaylist({
                 thumbnailUrl.split("/files/")[1].split("/")[0]
               );
               setIsLoading(false);
-              reload();
+              await q.fetchQuery("savedPlaylist");
+              await q.fetchQuery(["SavedPlaylistDetails", id]);
+              await reload();
             });
           }
         }
@@ -128,16 +129,16 @@ export function EditCustomPlaylist({
         alert((error as Error).message);
       }
     },
-    [id, reload, thumbnailUrl]
+    [id, reload, thumbnailUrl, q]
   );
   return (
     <Drawer>
       <DrawerTrigger>
         <div className="">
-          <MdOutlineEdit className="h-8 w-8 animate-fade-left  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
+          <RiEditBoxLine className="h-8 w-8 animate-fade-left  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
         </div>
       </DrawerTrigger>
-      <DrawerContent className="h-[100dvh] rounded-xl flex justify-center flex-col items-center ">
+      <DrawerContent className="h-[100dvh] rounded-lg flex justify-center flex-col items-center ">
         <div className="h-dvh items-center border-none px-5 justify-center flex flex-col w-full  rounded-2x">
           <DrawerHeader>
             <DrawerTitle className="text-2xl animate-fade-down font-semibold -mb-2.5">
@@ -164,8 +165,7 @@ export function EditCustomPlaylist({
                   </div>
                 ) : (
                   <div className=" animate-fade-down h-80 px-0.5 w-full">
-                    <LazyLoadImage
-                      effect="blur"
+                    <img
                       width="100%"
                       height="100%"
                       src={image}
@@ -215,7 +215,7 @@ export function EditCustomPlaylist({
               <div className=" space-y-2 flex flex-col">
                 <Button
                   type="submit"
-                  className=" rounded-xl border bg-neutral-950 animate-fade-up"
+                  className=" rounded-lg border bg-neutral-950 animate-fade-up"
                   variant={"secondary"}
                   disabled={isSubmit}
                 >
@@ -231,7 +231,7 @@ export function EditCustomPlaylist({
                     ref={close}
                     type="button"
                     variant={"secondary"}
-                    className="w-full border bg-neutral-950  rounded-xl animate-fade-up"
+                    className="w-full border bg-neutral-950  rounded-lg animate-fade-up"
                   >
                     <p>Close</p>
                   </Button>

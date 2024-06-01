@@ -1,4 +1,3 @@
-import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Input } from "../ui/input";
 import { IoSearchOutline } from "react-icons/io5";
 import { useCallback, useRef, useState } from "react";
@@ -39,8 +38,6 @@ function Box() {
     query,
     {
       enabled: false,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
     }
   );
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -78,9 +75,7 @@ function Box() {
     ["user", id],
     getUser,
     {
-      refetchOnMount: false,
       retry: 5,
-      refetchOnWindowFocus: false,
     }
   );
 
@@ -91,9 +86,7 @@ function Box() {
     ]);
     return res.documents;
   }, [id]);
-  const { data: notify } = useQuery("notify", getKey, {
-    refetchOnWindowFocus: false,
-  });
+  const { data: notify } = useQuery("notify", getKey, {});
 
   return (
     <div
@@ -112,13 +105,16 @@ function Box() {
                 <div className=" flex items-center space-x-2">
                   <div>
                     <Link to={`/user/${id}`}>
-                      <LazyLoadImage
+                      <img
                         alt="user"
                         className=" rounded-full object-cover h-12 w-12"
                         src={user[0].image || "/newfavicon.jpg"}
                         width={50}
                         height={50}
                         loading="lazy"
+                        onError={(
+                          e: React.SyntheticEvent<HTMLImageElement, Event>
+                        ) => (e.currentTarget.src = "/cache.jpg")}
                       />
                     </Link>
                   </div>
@@ -144,7 +140,7 @@ function Box() {
               </div>
 
               <div className="flex w-full  -space-x-2 animate-fade-up">
-                <div className="border  bg-none rounded-xl rounded-r-none border-r-0 px-2 border-neutral-800/80">
+                <div className="border  bg-none rounded-lg rounded-r-none border-r-0 px-2 border-neutral-800/80">
                   <IoSearchOutline className=" mt-2 h-5 w-5" />
                 </div>
                 <Input
@@ -152,7 +148,7 @@ function Box() {
                   ref={searchQuery}
                   onChange={handleChange}
                   placeholder="Search track and send"
-                  className="  px-2 relative  font-medium bg-none placeholder:text-white/70   border-neutral-800/80 tracking-tight leading-tight rounded-xl rounded-l-none border-l-0 text-zinc-200 "
+                  className="  px-2 relative  font-medium bg-none placeholder:text-white/70   border-neutral-800/80 tracking-tight leading-tight rounded-lg rounded-l-none border-l-0 text-zinc-200 "
                 />
               </div>
               <div key={user[0].$id}>

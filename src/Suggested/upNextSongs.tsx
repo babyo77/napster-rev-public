@@ -1,6 +1,5 @@
 import { useCallback } from "react";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import {
@@ -10,6 +9,7 @@ import {
   setCurrentArtistId,
   setCurrentIndex,
   setIsLikedSong,
+  setNextQueue,
   setPlayingPlaylistUrl,
   setPlaylist,
 } from "@/Store/Player";
@@ -113,12 +113,20 @@ function UpNextSongs({
     transform: CSS.Transform.toString(transform),
   };
 
+  const nextQueue = useSelector(
+    (state: RootState) => state.musicReducer.nextQueue
+  );
   const handleDelete = useCallback(() => {
     //@ts-expect-error:added custom id
     const index = playlist.findIndex((i) => i.id == id);
     playlist.splice(index, 1);
     dispatch(setPlaylist(playlist));
-  }, [id, playlist, dispatch]);
+    if (nextQueue !== 0) {
+      dispatch(setNextQueue(nextQueue - 1));
+    } else {
+      dispatch(setNextQueue(0));
+    }
+  }, [id, playlist, dispatch, nextQueue]);
 
   const c = useImage(cover);
   return (
@@ -127,7 +135,9 @@ function UpNextSongs({
       style={style}
       className={` ${
         isDragging ? "bg-zinc-900 -md" : ""
-      } flex  py-2 space-x-2  px-1.5 items-center`}
+      } flex  py-2 space-x-2  px-1.5 items-center ${
+        id < currentIndex || id >= currentIndex + 17 ? "hidden" : ""
+      }`}
     >
       {!album ? (
         <div
@@ -136,11 +146,10 @@ function UpNextSongs({
           className="overflow-hidden h-12 w-12 space-y-2"
         >
           <AspectRatio ratio={1 / 1}>
-            <LazyLoadImage
+            <img
               src={c || ""}
               width="100%"
               height="100%"
-              effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>

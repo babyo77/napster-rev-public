@@ -1,10 +1,4 @@
-import {
-  savedPlaylist,
-  playlistSongs,
-  suggestedArtists,
-  spotifyTransfer,
-  savedProfile,
-} from "@/Interface";
+import { playlistSongs, spotifyTransfer } from "@/Interface";
 import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
 import { RootState } from "./Store";
 
@@ -19,11 +13,8 @@ interface Player {
   isIphone: boolean;
   nextQueue: number;
   queue: playlistSongs[];
-  music: HTMLAudioElement | null;
   search: string;
-  feedMode: boolean;
   currentPlaying: playlistSongs | null;
-  currentSongId: string;
   currentToggle: string;
   searchToggle: string;
   PlaylistOrAlbum: string;
@@ -31,33 +22,19 @@ interface Player {
   duration: number | "--:--";
   isLoading: boolean;
   isLoop: boolean;
-  seek: number;
   uid: string | null;
   stopPlaying: boolean;
   SpotifyProgress: number;
-  sharePlayCode: string;
   Feed: playlistSongs[];
   isLikedSong: boolean;
   spotifyTrack: spotifyTransfer | null;
   currentArtistId: string;
-  savedPlaylist: savedPlaylist[];
-  savedAlbums: savedPlaylist[];
-  savedArtists: suggestedArtists[];
   sharePlayConnected: boolean;
   reels: playlistSongs[];
-  savedProfile: savedProfile[];
   loggedIn: boolean;
   reelsIndex: number;
   limit: number;
   sentQue: string[];
-  shareLyrics:
-    | [
-        {
-          time: number | string;
-          lyrics: string;
-        }
-      ]
-    | null;
 }
 
 const initialState: Player = {
@@ -66,7 +43,6 @@ const initialState: Player = {
   stopPlaying: false,
   sleepTimer: null,
   user: false,
-  sharePlayCode: "",
   uid: localStorage.getItem("uid"),
   currentArtistId: "",
   isIphone: false,
@@ -77,14 +53,11 @@ const initialState: Player = {
   duration: 0,
   SpotifyProgress: 0,
   isLoop: false,
-  seek: 0,
-  feedMode: true,
   sentQue: [],
   Feed: [],
   sharePlayConnected: false,
   currentToggle: "Playlists",
   searchToggle: "Music",
-  shareLyrics: null,
   playlistUrl: "",
   isLoading: false,
   queue: [],
@@ -94,14 +67,8 @@ const initialState: Player = {
   currentPlaying: null,
   currentIndex: 0,
   reelsIndex: 0,
-  music: null,
-  currentSongId: "",
   search: "",
   limit: 0,
-  savedPlaylist: [],
-  savedProfile: [],
-  savedAlbums: [],
-  savedArtists: [],
   reels: [],
 };
 
@@ -154,39 +121,14 @@ const MusicPlayer = createSlice({
     SetLoggedIn: (state, action: PayloadAction<boolean>) => {
       state.loggedIn = action.payload;
     },
-
-    SetSeek: (state, action: PayloadAction<number>) => {
-      state.seek = action.payload;
-    },
     SetSpotifyProgress: (state, action: PayloadAction<number>) => {
       state.SpotifyProgress = action.payload;
     },
-    SetCurrentSongId: (state, action: PayloadAction<string>) => {
-      state.currentSongId = action.payload;
-    },
-    SetFeedMode: (state, action: PayloadAction<boolean>) => {
-      state.feedMode = action.payload;
-    },
-    SetSharePlayCode: (state, action: PayloadAction<string>) => {
-      state.sharePlayCode = action.payload;
-    },
+
     SetSharePlayConnected: (state, action: PayloadAction<boolean>) => {
       state.sharePlayConnected = action.payload;
     },
-    SetShareLyrics: (
-      state,
-      action: PayloadAction<
-        | [
-            {
-              time: number | string;
-              lyrics: string;
-            }
-          ]
-        | null
-      >
-    ) => {
-      state.shareLyrics = action.payload;
-    },
+
     isLoop: (state, action: PayloadAction<boolean>) => {
       state.isLoop = action.payload;
     },
@@ -220,11 +162,6 @@ const MusicPlayer = createSlice({
     setSearch: (state, action: PayloadAction<string>) => {
       state.search = action.payload;
     },
-    setPlayer: (state, action: PayloadAction<HTMLAudioElement | null>) => {
-      if (state.music == null)
-        //@ts-expect-error:fix
-        state.music = action.payload;
-    },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
@@ -257,18 +194,7 @@ const MusicPlayer = createSlice({
         state.currentIndex = (state.currentIndex + 1) % state.playlist.length;
       }
     },
-    setSavedPlaylist: (state, action: PayloadAction<savedPlaylist[]>) => {
-      state.savedPlaylist = action.payload;
-    },
-    setSavedProfile: (state, action: PayloadAction<savedProfile[]>) => {
-      state.savedProfile = action.payload;
-    },
-    setSavedAlbums: (state, action: PayloadAction<savedPlaylist[]>) => {
-      state.savedAlbums = action.payload;
-    },
-    setSavedArtists: (state, action: PayloadAction<suggestedArtists[]>) => {
-      state.savedArtists = action.payload;
-    },
+
     setSpotifyTrack: (state, action: PayloadAction<spotifyTransfer | null>) => {
       state.spotifyTrack = action.payload;
     },
@@ -291,16 +217,10 @@ export const {
   Setuid,
   setUser,
   play,
-  SetFeedMode,
   SetSleepTimer,
   SetSharePlayConnected,
-  SetSeek,
-  SetShareLyrics,
   SetLoggedIn,
-  setSavedArtists,
   SetStopPlaying,
-  setSavedAlbums,
-  SetSharePlayCode,
   setCurrentToggle,
   SetSentQue,
   SetPlaylistOrAlbum,
@@ -308,7 +228,6 @@ export const {
   setCurrentIndex,
   SetQueue,
   SetCurrentPlaying,
-  setPlayer,
   setLimit,
   setSearchToggle,
   setNextQueue,
@@ -319,14 +238,11 @@ export const {
   SetSpotifyProgress,
   setSpotifyTrack,
   setPlaylistUrl,
-  setSavedProfile,
-  setSavedPlaylist,
   setIsLikedSong,
   setIsLoading,
   isLoop,
   setProgressLyrics,
   setNextPrev,
-  SetCurrentSongId,
   setIsIphone,
   setCurrentArtistId,
   setDurationLyrics,

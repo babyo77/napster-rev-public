@@ -17,12 +17,15 @@ import {
   arrayMove,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { setPlaylist } from "@/Store/Player";
-import { RiFocus3Line } from "react-icons/ri";
 
 function SuggestedComp() {
   const dispatch = useDispatch();
+  const [online, setOnline] = useState<boolean>();
+  useEffect(() => {
+    setOnline(navigator.onLine);
+  }, []);
   const PlaylistOrAlbum = useSelector(
     (state: RootState) => state.musicReducer.PlaylistOrAlbum
   );
@@ -61,48 +64,31 @@ function SuggestedComp() {
   }, []);
   const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor));
 
-  const currentIndex = useSelector(
-    (state: RootState) => state.musicReducer.currentIndex
-  );
-
-  const playlist = useSelector(
-    (state: RootState) => state.musicReducer.playlist
-  );
-
   const [Add, setAdd] = useState<boolean>(false);
   const handleAdd = useCallback(() => {
     setAdd((prev) => !prev);
     setEditQue(true);
   }, []);
-  const handleFocus = useCallback(() => {
-    const toFocus = document.getElementById(playlist[currentIndex].youtubeId);
-    toFocus?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [currentIndex, playlist]);
+
   return (
     <DndContext
       collisionDetection={closestCorners}
       sensors={sensors}
       onDragEnd={handleDRagEND}
     >
-      <div className="flex fade-in flex-col items-center">
+      <div className="flex  flex-col items-center">
         <>
           <div className="flex w-full z-10 fixed h-[3rem]  ">
             <GoBack />
 
-            <div
-              className="absolute top-4 z-10 right-3 animate-fade-left flex-col space-y-0.5"
-              onClick={handleFocus}
-            >
-              <RiFocus3Line className="h-8 w-8 fade-in mb-2  backdrop-blur-md text-white bg-black/30 rounded-full p-1.5" />
-            </div>
-            {!editQue && (
+            {!editQue && online && online && (
               <div
                 onClick={handleEdit}
-                className="absolute top-3 z-10 right-24 flex-col space-y-0.5"
+                className="absolute top-3 z-10 right-16 flex-col space-y-0.5"
               >
                 <div onClick={handleAdd} className="w-fit -mr-2">
-                  <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/0 rounded-xl p-1.5 px-2 w-fit">
-                    {Add ? "Cancel" : "Action"}
+                  <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/0 rounded-lg p-1.5 px-2 w-fit">
+                    {Add ? "Cancel" : "Option"}
                   </p>
                 </div>
               </div>
@@ -110,23 +96,18 @@ function SuggestedComp() {
             {!Add && (
               <div
                 onClick={handleEdit}
-                className="absolute top-3 z-10 right-14 flex-col space-y-0.5"
+                className="absolute top-3 z-10 right-4 flex-col space-y-0.5"
               >
                 <div className="w-fit -mr-2">
-                  <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/0 rounded-xl p-1.5 px-2 w-fit">
+                  <p className=" mb-2 text-zinc-100 animate-fade-left  backdrop-blur-md bg-black/0 rounded-lg p-1.5 px-2 w-fit">
                     {editQue ? "Cancel" : "Edit"}
                   </p>
                 </div>
               </div>
             )}
-
-            <div className=" absolute bottom-5  px-4 left-0  right-0">
-              <h1 className="text-center  font-semibold py-2 text-2xl capitalize"></h1>
-              <div className="flex space-x-4 py-1 px-2 justify-center  items-center w-full"></div>
-            </div>
           </div>
           {data && data.length > 0 && (
-            <div className="py-3 pt-14 pb-[8.5rem]">
+            <div className="py-3 pt-14 pb-[9.4rem]">
               <SortableContext
                 items={data.map((it, i) => ({
                   ...it,

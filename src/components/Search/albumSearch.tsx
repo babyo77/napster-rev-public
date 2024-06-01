@@ -1,6 +1,5 @@
 import { AspectRatio } from "../ui/aspect-ratio";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { GrNext } from "react-icons/gr";
 import { Link } from "react-router-dom";
 import { searchAlbumsInterface } from "@/Interface";
@@ -42,11 +41,10 @@ function AlbumSearchComp({
       <Link to={`/album/${albumId}`}>
         <div className="overflow-hidden h-14 w-14 space-y-2">
           <AspectRatio ratio={1 / 1}>
-            <LazyLoadImage
+            <img
               src={c || ""}
               width="100%"
               height="100%"
-              effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>

@@ -1,7 +1,6 @@
 import { AspectRatio } from "../ui/aspect-ratio";
 import { useCallback } from "react";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
+
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/Store/Store";
 import {
@@ -9,6 +8,7 @@ import {
   play,
   setCurrentArtistId,
   setCurrentIndex,
+  setPlayingPlaylistUrl,
   setPlaylist,
 } from "@/Store/Player";
 import { artists, playlistSongs } from "@/Interface";
@@ -19,6 +19,8 @@ import { SuggestionSearchApi } from "@/API/api";
 import { useQuery } from "react-query";
 import SongsOptions from "../Library/SongsOptions";
 import useImage from "@/hooks/useImage";
+import { motion } from "framer-motion";
+import useOptions from "../Library/useoptions";
 function SearchSong({
   title,
   artist,
@@ -49,9 +51,7 @@ function SearchSong({
   const { data } = useQuery<playlistSongs[]>(
     ["suggestedSongs", id],
     getSuggestedSongs,
-    {
-      refetchOnWindowFocus: false,
-    }
+    {}
   );
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
 
@@ -77,10 +77,10 @@ function SearchSong({
       thumbnailUrl: cover,
     };
 
-    dispatch(setPlaylist([m]));
-
     if (data) {
+      dispatch(setPlaylist([m]));
       dispatch(setPlaylist(data));
+      dispatch(setPlayingPlaylistUrl(id || ""));
       dispatch(setCurrentIndex(0));
       dispatch(SetPlaylistOrAlbum("suggested"));
     }
@@ -108,17 +108,36 @@ function SearchSong({
     (state: RootState) => state.musicReducer.playlist
   );
 
+  const { handleQueue } = useOptions({
+    music: {
+      youtubeId: id,
+      title: title,
+      thumbnailUrl: cover,
+      artists: [{ id: artistId, name: artist[0]?.name || artistName || "" }],
+    },
+  });
   const c = useImage(cover);
   return (
-    <div className="flex animate-fade-right py-2 space-x-2 items-center">
-      <div className="overflow-hidden h-14 w-14 space-y-2">
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      onDragEnd={(e, info) => {
+        if (info.offset.x > 250) {
+          handleQueue();
+        } else {
+          return console.log(e);
+        }
+      }}
+      transition={{ duration: 0.6 }}
+      className="flex animate-fade-right py-2 space-x-2 items-center"
+    >
+      <div className="overflow-scroll flex h-14 w-14 space-y-2">
         <AspectRatio ratio={1 / 1}>
-          <LazyLoadImage
+          <img
             onClick={handlePlay}
             src={c || ""}
             width="100%"
             height="100%"
-            effect="blur"
             alt="Image"
             loading="lazy"
             onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
@@ -128,7 +147,7 @@ function SearchSong({
           />
         </AspectRatio>
       </div>
-      <div className="flex space-y-0.5 flex-col pl-1 text-start w-[65dvw]">
+      <div className="flex space-y-0.5 flex-col pl-1 text-start w-[66.5dvw]">
         <p
           onClick={handlePlay}
           className={`w-[60dvw] ${
@@ -144,7 +163,6 @@ function SearchSong({
             {artist[0]?.name || artistName}
           </p>
         </Link>
-        {/* <div className="h-[.05rem] w-full bg-zinc-300/10 mt-1.5"></div> */}
       </div>
       <SongsOptions
         underline={true}
@@ -157,7 +175,7 @@ function SearchSong({
           ],
         }}
       />
-    </div>
+    </motion.div>
   );
 }
 

@@ -24,6 +24,23 @@
       "type": "image/png"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Search",
+      "description": "Search Music",
+      "url": "/search"
+    },
+    {
+      "name": "library",
+      "description": "Open Library",
+      "url": "/library"
+    },
+    {
+      "name": "Tunes",
+      "description": "Explore Tunes",
+      "url": "/share-play"
+    }
+  ],
   "start_url": "https://napster-drx.vercel.app/?utm_source=pwa_install",
   "scope": "https://napster-drx.vercel.app/",
   "display": "standalone",

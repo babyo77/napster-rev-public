@@ -1,10 +1,10 @@
-# Naspter - Outdated version
+# NaspterDrx
 
 [![X](https://img.shields.io/badge/X-%23000000.svg?style=for-the-badge&logo=X&logoColor=white)](https://twitter.com/tanmay11117)
 
 ## Introduction
 
-Napster is a Music PWA app. [Demo](https://napster-drx.vercel.app), [Docker](https://hub.docker.com/r/tanmayo7/napster)
+Napster is a Music PWA app,[npm package](https://www.npmjs.com/package/napster-info), [Docker-old-version](https://hub.docker.com/r/tanmayo7/napster) 
 
 ## Features
 
@@ -19,10 +19,6 @@ Napster is a Music PWA app. [Demo](https://napster-drx.vercel.app), [Docker](htt
 - Express
 - Appwrite
 
-## Future Updates
-
-- Will covert this to social media like snapchat(snap) and more....
-
 ## UI
 
-<img src="/public/ui/lyrics.PNG" alt="Lyrics" width="200" height="400"> <img src="/public/ui/home.PNG" alt="Home" width="200" height="400"> <img src="/public/ui/share.webp" alt="Share" width="200" height="400"> <img src="/public/ui/options.PNG" alt="Options" width="200" height="400"> 
+<img src="/public/ui/lyrics.webp" alt="Lyrics" width="200" height="400"> <img src="/public/ui/home.webp" alt="Home" width="200" height="400"> <img src="/public/ui/share.webp" alt="Share" width="200" height="400"> <img src="/public/ui/ai.webp" alt="Options" width="200" height="400"> 

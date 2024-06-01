@@ -1,71 +1,11 @@
 import { AspectRatio } from "../ui/aspect-ratio";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
-// import { GrNext } from "react-icons/gr";
+
 import { Link } from "react-router-dom";
-import { ArtistDetails, suggestedArtists } from "@/Interface";
-import { useCallback } from "react";
-import {
-  ARTIST_INSIGHTS,
-  DATABASE_ID,
-  ID,
-  db,
-} from "@/appwrite/appwriteConfig";
-import { Permission, Role } from "appwrite";
-import { useQuery } from "react-query";
-import { GetArtistDetails } from "@/API/api";
-import axios from "axios";
-import { useSelector } from "react-redux";
-import { RootState } from "@/Store/Store";
-import useImage from "@/hooks/useImage";
+import { suggestedArtists } from "@/Interface";
+import useSavedArtist from "@/hooks/useSavedArtist";
 
 function ArtistSearch({ name, artistId, thumbnailUrl }: suggestedArtists) {
-  const uid = useSelector((state: RootState) => state.musicReducer.uid);
-
-  const handleClick = useCallback(async () => {
-    try {
-      if (uid) {
-        db.createDocument(
-          DATABASE_ID,
-          ARTIST_INSIGHTS,
-          ID.unique(),
-          {
-            id: artistId,
-            name: name,
-            user: uid || "error",
-          },
-          [Permission.update(Role.user(uid)), Permission.delete(Role.user(uid))]
-        );
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  }, [artistId, name, uid]);
-
-  const getArtistDetails = useCallback(async () => {
-    const list = await axios.get(`${GetArtistDetails}${artistId}`);
-    return list.data as ArtistDetails;
-  }, [artistId]);
-
-  const { data, refetch } = useQuery<ArtistDetails>(
-    ["artist", artistId],
-    getArtistDetails,
-    {
-      retry: 5,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      staleTime: 60 * 60000,
-      onSuccess(d) {
-        d == null && refetch();
-      },
-    }
-  );
-
-  const c = useImage(
-    data
-      ? data?.thumbnails[0]?.url.replace("w540-h225", "w1080-h1080")
-      : thumbnailUrl
-  );
+  const { handleClick, c } = useSavedArtist({ name, artistId, thumbnailUrl });
   return (
     <div
       onClick={handleClick}
@@ -74,11 +14,10 @@ function ArtistSearch({ name, artistId, thumbnailUrl }: suggestedArtists) {
       <Link to={`/artist/${artistId}`}>
         <div className="overflow-hidden h-14 w-14 space-y-2">
           <AspectRatio ratio={1 / 1}>
-            <LazyLoadImage
-              src={c || ""}
+            <img
+              src={c || "/cache.jpg"}
               width="100%"
               height="100%"
-              effect="blur"
               alt="Image"
               loading="lazy"
               onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) =>
@@ -98,9 +37,6 @@ function ArtistSearch({ name, artistId, thumbnailUrl }: suggestedArtists) {
           </p>
         </div>
       </Link>
-      {/* <Link to={`/artist/${artistId}`}>
-        <GrNext />
-      </Link> */}
     </div>
   );
 }

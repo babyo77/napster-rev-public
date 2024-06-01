@@ -23,11 +23,10 @@ function Playlists() {
     return p;
   };
   const { data: savedPlaylist, isLoading } = useQuery(
-    "savedPublicPlaylists",
+    ["savedPublicPlaylists", id],
     loadSavedPlaylist,
     {
-      refetchOnWindowFocus: false,
-      keepPreviousData: true,
+      staleTime: Infinity,
     }
   );
   return (
@@ -39,7 +38,7 @@ function Playlists() {
         </div>
       ) : (
         <>
-          <div className="flex fade-in py-16 flex-col px-5">
+          <div className="flex  py-16 flex-col px-5">
             <div className=" space-y-3">
               {savedPlaylist &&
                 savedPlaylist.map((saved, id) => (

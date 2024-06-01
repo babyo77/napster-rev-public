@@ -25,6 +25,7 @@ import { useState } from "react";
 import { Toaster } from "../ui/toaster";
 import { toast } from "../ui/use-toast";
 import { SiPaytm } from "react-icons/si";
+import { useQueryClient } from "react-query";
 
 const FormSchema = z.object({
   insta: z
@@ -58,6 +59,11 @@ const FormSchema = z.object({
     .string()
     .refine((data) => !data || data)
     .optional(),
+  bio: z
+    .string()
+    .max(28)
+    .refine((data) => !data || data)
+    .optional(),
   other: z
     .string()
     .refine((data) => !data || data.startsWith("https://"))
@@ -69,12 +75,14 @@ export function LinkAccount({
   twitter,
   insta,
   paytm,
+  bio,
   other,
 }: {
   paytm?: string;
   snap?: string;
   twitter?: string;
   insta?: string;
+  bio: string;
   other?: string;
 }) {
   const form = useForm<z.infer<typeof FormSchema>>({
@@ -85,8 +93,10 @@ export function LinkAccount({
       twitter: twitter || "",
       other: other || "",
       paytm: paytm || "",
+      bio: bio || "",
     },
   });
+  const q = useQueryClient();
   const uid = useSelector((state: RootState) => state.musicReducer.uid);
   const [submit, setSubmit] = useState<boolean>(false);
   async function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -109,6 +119,7 @@ export function LinkAccount({
         setSubmit(false);
       }
     }
+    q.fetchQuery("dpImage");
   }
 
   return (
@@ -116,7 +127,7 @@ export function LinkAccount({
       <Toaster />
       <DrawerTrigger>
         <div className="animate-fade-up">
-          <p className=" animate-fade-up bg-neutral-950 rounded-xl py-2.5 mt-3  flex px-4 text-base items-center space-x-1">
+          <p className=" animate-fade-up bg-neutral-950 rounded-lg py-2.5 mt-3  flex px-4 text-base items-center space-x-1">
             <AiOutlineLink className="h-5 w-5" />
             <span>Link Account</span>
           </p>
@@ -129,6 +140,22 @@ export function LinkAccount({
               onSubmit={form.handleSubmit(onSubmit)}
               className="w-full space-y-2"
             >
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className=" ml-0.5 text-base flex mb-3 space-x-1.5 items-center">
+                      <BiWorld />
+                      <p>Bio</p>
+                    </FormLabel>{" "}
+                    <FormControl>
+                      <Input required={false} placeholder="Bio" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="insta"
@@ -210,12 +237,13 @@ export function LinkAccount({
                   </FormItem>
                 )}
               />
+
               <div className=""></div>
               <Button
                 type="submit"
                 variant={"secondary"}
                 disabled={submit}
-                className=" py-5 w-full rounded-xl border bg-neutral-950 animate-fade-up"
+                className=" py-5 w-full rounded-lg border bg-neutral-950 animate-fade-up"
               >
                 {submit ? (
                   <Loader size="20" loading={true} />
