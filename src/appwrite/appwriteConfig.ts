@@ -6,32 +6,33 @@ client
   .setEndpoint("https://cloud.appwrite.io/v1")
   .setProject(import.meta.env.VITE_PROJECT_ID);
 
-export const DATABASE_ID = import.meta.env.DATABASE_ID;
-export const PLAYLIST_COLLECTION_ID = import.meta.env.PLAYLIST_COLLECTION_ID;
-export const ALBUM_COLLECTION_ID = import.meta.env.ALBUM_COLLECTION_ID;
+export const DATABASE_ID = import.meta.env.VITE_DATABASE_ID;
+export const PLAYLIST_COLLECTION_ID = import.meta.env
+  .VITE_PLAYLIST_COLLECTION_ID;
+export const ALBUM_COLLECTION_ID = import.meta.env.VITE_ALBUM_COLLECTION_ID;
 export const LISTEN_NOW_COLLECTION_ID = import.meta.env
-  .LISTEN_NOW_COLLECTION_ID;
-export const MOST_PLAYED = import.meta.env.MOST_PLAYED;
-export const LIKE_SONG = import.meta.env.LIKE_SONG;
-export const EDITS = import.meta.env.EDITS;
-export const FAV_ARTIST = import.meta.env.FAV_ARTIST;
-export const INSIGHTS = import.meta.env.INSIGHTS;
-export const ARTIST_INSIGHTS = import.meta.env.ARTIST_INSIGHTS;
-export const PLAYLIST_INSIGHTS = import.meta.env.PLAYLIST_INSIGHTS;
-export const ALBUM_INSIGHTS = import.meta.env.ALBUM_INSIGHTS;
-export const NEW_USER = import.meta.env.NEW_USER;
-export const UPDATES = import.meta.env.UPDATES;
-export const SPONSORS = import.meta.env.SPONSORS;
-export const LAST_PLAYED = import.meta.env.LAST_PLAYED;
-export const ADD_TO_LIBRARY = import.meta.env.ADD_TO_LIBRARY;
-export const BUCKET = import.meta.env.BUCKET;
-export const STORAGE = import.meta.env.STORAGE;
+  .VITE_LISTEN_NOW_COLLECTION_ID;
+export const MOST_PLAYED = import.meta.env.VITE_MOST_PLAYED;
+export const LIKE_SONG = import.meta.env.VITE_LIKE_SONG;
+export const EDITS = import.meta.env.VITE_EDITS;
+export const FAV_ARTIST = import.meta.env.VITE_FAV_ARTIST;
+export const INSIGHTS = import.meta.env.VITE_INSIGHTS;
+export const ARTIST_INSIGHTS = import.meta.env.VITE_ARTIST_INSIGHTS;
+export const PLAYLIST_INSIGHTS = import.meta.env.VITE_PLAYLIST_INSIGHTS;
+export const ALBUM_INSIGHTS = import.meta.env.VITE_ALBUM_INSIGHTS;
+export const NEW_USER = import.meta.env.VITE_NEW_USER;
+export const UPDATES = import.meta.env.VITE_UPDATES;
+export const SPONSORS = import.meta.env.VITE_SPONSORS;
+export const LAST_PLAYED = import.meta.env.VITE_LAST_PLAYED;
+export const ADD_TO_LIBRARY = import.meta.env.VITE_ADD_TO_LIBRARY;
+export const BUCKET = import.meta.env.VITE_BUCKET;
+export const STORAGE = import.meta.env.VITE_STORAGE;
 export const storage = new Storage(client);
-export const LYRICS = import.meta.env.LYRICS;
-export const TUNEBOX = import.meta.env.TUNEBOX;
-export const FAV_PROFILES = import.meta.env.FAV_PROFILES;
-export const PLAYLIST_RATING = import.meta.env.PLAYLIST_RATING;
-export const BROWSE_ALL = import.meta.env.BROWSE_ALL;
+export const LYRICS = import.meta.env.VITE_LYRICS;
+export const TUNEBOX = import.meta.env.VITE_TUNEBOX;
+export const FAV_PROFILES = import.meta.env.VITE_FAV_PROFILES;
+export const PLAYLIST_RATING = import.meta.env.VITE_PLAYLIST_RATING;
+export const BROWSE_ALL = import.meta.env.VITE_BROWSE_ALL;
 
 export const db = new Databases(client);
 
