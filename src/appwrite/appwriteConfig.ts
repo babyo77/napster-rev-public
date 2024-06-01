@@ -4,33 +4,34 @@ export const client = new Client();
 
 client
   .setEndpoint("https://cloud.appwrite.io/v1")
-  .setProject("65c15bc8bfb586129eb4");
+  .setProject(import.meta.env.VITE_PROJECT_ID);
 
-export const DATABASE_ID = "65c16b42a63bdf7ae90b";
-export const PLAYLIST_COLLECTION_ID = "65d075413f130b648306";
-export const ALBUM_COLLECTION_ID = "65e4ee1041c081071ca6";
-export const LISTEN_NOW_COLLECTION_ID = "65d0c650c240cf202af4";
-export const MOST_PLAYED = "65d0d537137bf0bb6237";
-export const LIKE_SONG = "65daaf724f49c4ea1039";
-export const EDITS = "6618ee6339ea5ba6ba3b";
-export const FAV_ARTIST = "65e4b48e1e6c04f9d893";
-export const INSIGHTS = "65d7e476ad0f598faa84";
-export const ARTIST_INSIGHTS = "65d8e6554ce945db433b";
-export const PLAYLIST_INSIGHTS = "65d8e65fc23147683f5b";
-export const ALBUM_INSIGHTS = "65e16f879455cda020d4";
-export const NEW_USER = "65d8aa90aa8c5dcaa2ce";
-export const UPDATES = "65da232e478bcf5bbbad";
-export const SPONSORS = "65e08a335e4df7351d5a";
-export const LAST_PLAYED = "65e75b144ddb0ceccd5f";
-export const ADD_TO_LIBRARY = "65f4607deb80cb8d855a";
-export const BUCKET = "65f4fab3186d4eb687f6";
-export const STORAGE = "65f4fab3186d4eb687f6";
+export const DATABASE_ID = import.meta.env.DATABASE_ID;
+export const PLAYLIST_COLLECTION_ID = import.meta.env.PLAYLIST_COLLECTION_ID;
+export const ALBUM_COLLECTION_ID = import.meta.env.ALBUM_COLLECTION_ID;
+export const LISTEN_NOW_COLLECTION_ID = import.meta.env
+  .LISTEN_NOW_COLLECTION_ID;
+export const MOST_PLAYED = import.meta.env.MOST_PLAYED;
+export const LIKE_SONG = import.meta.env.LIKE_SONG;
+export const EDITS = import.meta.env.EDITS;
+export const FAV_ARTIST = import.meta.env.FAV_ARTIST;
+export const INSIGHTS = import.meta.env.INSIGHTS;
+export const ARTIST_INSIGHTS = import.meta.env.ARTIST_INSIGHTS;
+export const PLAYLIST_INSIGHTS = import.meta.env.PLAYLIST_INSIGHTS;
+export const ALBUM_INSIGHTS = import.meta.env.ALBUM_INSIGHTS;
+export const NEW_USER = import.meta.env.NEW_USER;
+export const UPDATES = import.meta.env.UPDATES;
+export const SPONSORS = import.meta.env.SPONSORS;
+export const LAST_PLAYED = import.meta.env.LAST_PLAYED;
+export const ADD_TO_LIBRARY = import.meta.env.ADD_TO_LIBRARY;
+export const BUCKET = import.meta.env.BUCKET;
+export const STORAGE = import.meta.env.STORAGE;
 export const storage = new Storage(client);
-export const LYRICS = "65fb85530b93d2da4a16";
-export const TUNEBOX = "6613ec4e44f69b37f90c";
-export const FAV_PROFILES = "66310c2400356359f291";
-export const PLAYLIST_RATING = "664792c00022f0a04fc2";
-export const BROWSE_ALL = "664fc30d000b292ee09a";
+export const LYRICS = import.meta.env.LYRICS;
+export const TUNEBOX = import.meta.env.TUNEBOX;
+export const FAV_PROFILES = import.meta.env.FAV_PROFILES;
+export const PLAYLIST_RATING = import.meta.env.PLAYLIST_RATING;
+export const BROWSE_ALL = import.meta.env.BROWSE_ALL;
 
 export const db = new Databases(client);
 
